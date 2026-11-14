@@ -8,26 +8,22 @@ import { Brand } from "../components/Brand";
 import { oilImg, riceImg, sugarImg, warehouseImg } from "../lib/assets";
 import { supabase, type Product } from "../lib/supabase";
 
-const UNITS = ["bag", "kg", "ton", "container", "carton"];
-const now = new Date().toISOString();
-const defaultProducts: Product[] = [
-  { id: "demo-rice", name: "Premium Rice", category: "Rice", sku: "RICE-50", description: null, image_url: riceImg, unit: "bag", package_size: "50kg bag", wholesale_price: 0, min_order_quantity: 20, stock_quantity: 0, reorder_level: 0, active: true, created_at: now },
-  { id: "demo-sugar", name: "White Sugar", category: "Sugar", sku: "SUG-50", description: null, image_url: sugarImg, unit: "bag", package_size: "50kg bag", wholesale_price: 0, min_order_quantity: 20, stock_quantity: 0, reorder_level: 0, active: true, created_at: now },
-  { id: "demo-oil", name: "Vegetable Oil", category: "Cooking Oil", sku: "OIL-20", description: null, image_url: oilImg, unit: "container", package_size: "20L container", wholesale_price: 0, min_order_quantity: 10, stock_quantity: 0, reorder_level: 0, active: true, created_at: now },
-];
+const CATEGORIES = ["Rice", "Sugar", "Cooking Oil"];
+const categoryImages = [riceImg, sugarImg, oilImg];
+type Status = "loading" | "ready" | "error" | "offline";
 
 function QuoteModal({ products, initialProduct, onClose }: { products: Product[]; initialProduct: string; onClose: () => void }) {
   const [productName, setProductName] = useState(initialProduct);
-  const [unit, setUnit] = useState("bag");
+  const [unit, setUnit] = useState(() => products.find(p => p.name === initialProduct)?.unit ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [quoteNumber, setQuoteNumber] = useState("");
 
   const pickProduct = (name: string) => {
     setProductName(name);
-    const u = products.find(p => p.name === name)?.unit;
-    if (u && UNITS.includes(u)) setUnit(u);
+    setUnit(products.find(p => p.name === name)?.unit ?? "");
   };
+  const chosen = products.find(p => p.name === productName);
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -75,14 +71,15 @@ function QuoteModal({ products, initialProduct, onClose }: { products: Product[]
                   {products.map(p => <option key={p.id}>{p.name}</option>)}
                 </select>
               </label>
-              <label>Required quantity<input name="quantity" type="number" required min="1" step="any" placeholder="e.g. 200" /></label>
-              <label>Unit<select value={unit} onChange={e => setUnit(e.target.value)}>{UNITS.map(u => <option key={u}>{u}</option>)}</select></label>
+              <label>Required quantity<input name="quantity" type="number" required min={chosen ? Number(chosen.min_order_quantity) : 1} step="any" placeholder={chosen ? `Minimum ${Number(chosen.min_order_quantity)}` : "e.g. 200"} /></label>
+              <label>Unit<input value={unit || "Choose a product first"} readOnly disabled aria-label="Unit" /></label>
               <label>Delivery location<input name="location" required maxLength={120} placeholder="City / town" /></label>
               <label className="full">Additional details<textarea name="notes" rows={3} maxLength={1000} placeholder="Package size, timing or other requirements" /></label>
               {/* Honeypot: hidden from people, filled by bots. */}
               <div className="honeypot" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
               {error && <p className="form-error full" role="alert">{error}</p>}
-              <button className="btn green full" type="submit" disabled={busy}>{busy ? "Sending…" : "Send Wholesale Enquiry"} <ArrowRight /></button>
+              {products.length === 0 && <p className="form-error full" role="alert">No products are available to order right now. Please check back soon.</p>}
+              <button className="btn green full" type="submit" disabled={busy || products.length === 0}>{busy ? "Sending…" : "Send Wholesale Enquiry"} <ArrowRight /></button>
             </form>
           </>
         )}
@@ -93,18 +90,28 @@ function QuoteModal({ products, initialProduct, onClose }: { products: Product[]
 
 export default function PublicHome() {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>(defaultProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [status, setStatus] = useState<Status>(supabase ? "loading" : "offline");
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [selected, setSelected] = useState("");
 
   useEffect(() => {
     if (!supabase) return;
     supabase.from("products").select("*").eq("active", true).order("name")
-      .then(({ data }) => { if (data?.length) setProducts(data as Product[]); });
+      .then(({ data, error }) => {
+        if (error) { setStatus("error"); return; }
+        setProducts((data ?? []) as Product[]);
+        setStatus("ready");
+      });
   }, []);
 
   const openQuote = (name = "") => { setSelected(name); setQuoteOpen(true); };
-  const categoryImages = [riceImg, sugarImg, oilImg];
+  const categories = CATEGORIES.map((cat, i) => ({ cat, i, product: products.find(x => x.category === cat) })).filter(c => c.product);
+  const emptyMessage =
+    status === "loading" ? "Loading our products…"
+    : status === "offline" ? "The product catalogue is not connected yet."
+    : status === "error" ? "We could not load the product list. Please refresh the page."
+    : "Our wholesale product list is being updated. Please check back soon or contact us.";
 
   return (
     <div className="public-site">
@@ -128,8 +135,9 @@ export default function PublicHome() {
       <section className="public-section" id="public-products">
         <div className="section-title"><i /><div><h2>Our Products – Large Quantity Orders</h2><p>Essential food products for your business</p></div><i /></div>
         <div className="category-grid">
-          {["Rice", "Sugar", "Cooking Oil"].map((cat, i) => {
-            const p = products.find(x => x.category === cat) || defaultProducts[i];
+          {categories.length === 0 && <p className="inline-note">{emptyMessage}</p>}
+          {categories.map(({ cat, i, product: p }) => {
+            if (!p) return null;
             return (
               <button className="category-card" key={cat} onClick={() => openQuote(p.name)}>
                 <img src={p.image_url || categoryImages[i]} alt={cat} />
@@ -144,6 +152,7 @@ export default function PublicHome() {
         </div>
       </section>
 
+      {products.length > 0 && (
       <section className="public-section featured-section">
         <div className="section-title"><i /><div><h2>Featured Wholesale Products</h2><p>Bulk quantities · Competitive wholesale prices</p></div><i /></div>
         <div className="public-products">
@@ -159,6 +168,7 @@ export default function PublicHome() {
           ))}
         </div>
       </section>
+      )}
 
       <section className="public-section why-section" id="why">
         <div className="section-title"><i /><div><h2>Why TradeLink?</h2></div><i /></div>
