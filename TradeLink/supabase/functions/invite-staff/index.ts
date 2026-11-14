@@ -13,10 +13,11 @@ Deno.serve(async (req) => {
     const userClient = createClient(url, anon, { global: { headers: { Authorization: authHeader } } });
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) throw new Error("Unauthorized");
-    const { data: actor } = await userClient.from("profiles").select("role").eq("id", user.id).single();
-    if (!actor || !["owner", "manager"].includes(actor.role)) throw new Error("Only owner or manager can invite staff");
+    const { data: actor } = await userClient.from("profiles").select("role, active").eq("id", user.id).single();
+    if (!actor || !actor.active || !["owner", "manager"].includes(actor.role)) throw new Error("Only an active owner or manager can invite staff");
     const { email, full_name, role } = await req.json();
     if (!email || !full_name || !["manager","sales","inventory","delivery","staff"].includes(role)) throw new Error("Invalid invitation details");
+    if (role === "manager" && actor.role !== "owner") throw new Error("Only the owner can invite a manager");
     const admin = createClient(url, service);
     const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name } });
     if (error) throw error;
