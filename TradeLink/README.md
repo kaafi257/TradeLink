@@ -24,7 +24,8 @@ Open the local URL printed by Vite.
 
 ## 2. Configure Supabase
 1. Create a Supabase project.
-2. Open SQL Editor and run `supabase/migrations/0001_tradelink_schema.sql`.
+2. Open SQL Editor and run `supabase/migrations/0001_tradelink_schema.sql`, then `0002_security_hardening.sql` (both are safe to re-run).
+   0002 adds: role-escalation protection, database-stamped activity log, validated + rate-limited quote submission, and recorded stock adjustments.
 3. In Project Settings → API, copy the Project URL and publishable key (or legacy anon key).
 4. Put them in `.env.local`:
 ```env
@@ -34,6 +35,9 @@ VITE_SUPABASE_ANON_KEY=YOUR_PUBLISHABLE_OR_ANON_KEY
 5. Restart the dev server.
 
 Never put the Supabase `service_role` key in a Vite environment variable or browser code.
+
+## 2b. Turn OFF public signups (important)
+In Supabase → Authentication → Sign In / Providers, disable **Allow new users to sign up**. Staff are added by invitation only. The app also refuses to open the admin area for any signed-in user without an active staff profile.
 
 ## 3. Create the first owner
 The schema creates new profiles as `staff` by default. Create the first user through Supabase Authentication → Users (invite user or add user), then run this SQL in the Supabase SQL Editor, replacing the email:
@@ -56,7 +60,7 @@ Deploy the Edge Function after installing and linking the Supabase CLI:
 supabase functions deploy invite-staff
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
 ```
-The function uses the service-role key server-side only. It is not exposed to the browser. The current UI lists staff; connect an invitation form to `supabase.functions.invoke("invite-staff", ...)` to invite staff from the dashboard.
+The function uses the service-role key server-side only. It is not exposed to the browser. The Staff Management page has an invitation form that calls this function. Only the owner can invite a manager.
 
 ## 7. GitHub and Vercel
 1. Create a GitHub repository and upload the contents of this folder (not the ZIP itself).
@@ -72,8 +76,14 @@ The function uses the service-role key server-side only. It is not exposed to th
 - Confirm actual product package sizes, price rules and minimum order quantities.
 - Add the real business contact details and support channels.
 - Connect sales/order creation, inventory movement RPC transactions, payment reconciliation, delivery assignment, expenses and profit reports to agreed business workflows. The current project includes their database foundations and dashboard sections but does not yet implement every transaction workflow.
-- Add staff invitation UI and role/permission editor. Current RLS uses role-based module access; granular per-action permissions are not yet implemented.
+- Granular per-action permissions are not implemented; RLS uses role-based module access (the menu mirrors it).
+- Consider adding Cloudflare Turnstile/hCaptcha to the public quote form. Today it has a honeypot field plus a database rate limit (3 requests per phone per hour, 100 per hour overall).
+- Orders, deliveries and sales recording screens are still to be built; the Sales page lists rows from the `sales` table once they exist.
 - Configure Storage buckets and policies if you want image uploads rather than image URLs.
 - Review and test RLS policies with anon, each staff role and owner before production.
 - Add email notifications and backups as required.
-- The chart currently displays sample trend data until real sales reporting is connected. KPI sales are intentionally shown as unavailable rather than inventing figures.
+- Charts and KPIs show only recorded sales; with no sales they show an empty state.
+
+## App structure
+- `src/pages` public site and login · `src/admin` signed-in workspace (lazy-loaded) · `src/lib` Supabase client, auth, formatting.
+- Routes: `/` public, `/login`, `/admin` (dashboard), `/admin/products|quotations|sales|staff|inventory|reports|customers|activity|settings`.
