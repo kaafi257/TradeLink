@@ -2,7 +2,10 @@
 -- Run this migration in Supabase SQL Editor.
 create extension if not exists pgcrypto;
 
-create type public.app_role as enum ('owner','manager','sales','inventory','delivery','staff');
+do $$ begin
+  create type public.app_role as enum ('owner','manager','sales','inventory','delivery','staff');
+exception when duplicate_object then null;
+end $$;
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -169,49 +172,64 @@ alter table public.deliveries enable row level security;
 alter table public.activity_logs enable row level security;
 
 -- Public catalogue read; authenticated management.
+drop policy if exists "Public can view active products" on public.products;
 create policy "Public can view active products" on public.products for select using (active = true or auth.uid() is not null);
+drop policy if exists "Managers manage products" on public.products;
 create policy "Managers manage products" on public.products for all to authenticated
 using (public.has_any_role(array['owner','manager','inventory']::public.app_role[]))
 with check (public.has_any_role(array['owner','manager','inventory']::public.app_role[]));
 
 -- Public customers may submit a quote request; only authenticated staff can read/manage it.
+drop policy if exists "Public submit quotations" on public.quotations;
 create policy "Public submit quotations" on public.quotations for insert to anon, authenticated with check (status = 'new');
+drop policy if exists "Staff read quotations" on public.quotations;
 create policy "Staff read quotations" on public.quotations for select to authenticated using (public.has_any_role(array['owner','manager','sales']::public.app_role[]));
+drop policy if exists "Staff update quotations" on public.quotations;
 create policy "Staff update quotations" on public.quotations for update to authenticated
 using (public.has_any_role(array['owner','manager','sales']::public.app_role[]))
 with check (public.has_any_role(array['owner','manager','sales']::public.app_role[]));
 
+drop policy if exists "Staff manage quotation items" on public.quotation_items;
 create policy "Staff manage quotation items" on public.quotation_items for all to authenticated
 using (public.has_any_role(array['owner','manager','sales']::public.app_role[]))
 with check (public.has_any_role(array['owner','manager','sales']::public.app_role[]));
 
+drop policy if exists "Staff manage orders" on public.orders;
 create policy "Staff manage orders" on public.orders for all to authenticated
 using (public.has_any_role(array['owner','manager','sales','delivery']::public.app_role[]))
 with check (public.has_any_role(array['owner','manager','sales','delivery']::public.app_role[]));
+drop policy if exists "Staff manage order items" on public.order_items;
 create policy "Staff manage order items" on public.order_items for all to authenticated
 using (public.has_any_role(array['owner','manager','sales']::public.app_role[]))
 with check (public.has_any_role(array['owner','manager','sales']::public.app_role[]));
 
+drop policy if exists "Staff manage inventory" on public.inventory_movements;
 create policy "Staff manage inventory" on public.inventory_movements for all to authenticated
 using (public.has_any_role(array['owner','manager','inventory']::public.app_role[]))
 with check (public.has_any_role(array['owner','manager','inventory']::public.app_role[]));
 
+drop policy if exists "Staff manage sales" on public.sales;
 create policy "Staff manage sales" on public.sales for all to authenticated
 using (public.has_any_role(array['owner','manager','sales']::public.app_role[]))
 with check (public.has_any_role(array['owner','manager','sales']::public.app_role[]));
 
+drop policy if exists "Staff manage deliveries" on public.deliveries;
 create policy "Staff manage deliveries" on public.deliveries for all to authenticated
 using (public.has_any_role(array['owner','manager','delivery']::public.app_role[]))
 with check (public.has_any_role(array['owner','manager','delivery']::public.app_role[]));
 
+drop policy if exists "Users view own profile and admins view all" on public.profiles;
 create policy "Users view own profile and admins view all" on public.profiles for select to authenticated
 using (id = auth.uid() or public.has_any_role(array['owner','manager']::public.app_role[]));
+drop policy if exists "Admins manage profiles" on public.profiles;
 create policy "Admins manage profiles" on public.profiles for update to authenticated
 using (public.has_any_role(array['owner','manager']::public.app_role[]))
 with check (public.has_any_role(array['owner','manager']::public.app_role[]));
 
+drop policy if exists "Staff read activity logs" on public.activity_logs;
 create policy "Staff read activity logs" on public.activity_logs for select to authenticated
 using (public.has_any_role(array['owner','manager']::public.app_role[]));
+drop policy if exists "Authenticated users append activity logs" on public.activity_logs;
 create policy "Authenticated users append activity logs" on public.activity_logs for insert to authenticated
 with check (actor_id = auth.uid() or actor_id is null);
 
