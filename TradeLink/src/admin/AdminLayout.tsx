@@ -97,12 +97,13 @@ function Shell() {
 
 /** Signing in is not enough: the user must also have an active staff profile. */
 export default function AdminLayout() {
-  const { loading, session, profile, signOut } = useAuth();
+  const { loading, session, profile, profileError, signOut } = useAuth();
   if (loading) return <div className="loading-screen"><Brand /><p>Loading TradeLink…</p></div>;
   if (!supabase || !session) return <Navigate to="/login" replace />;
   if (!profile || !profile.active) {
     return (
       <Screen title="No access yet" text="Your account is signed in, but it has not been activated for the TradeLink workspace. Ask the owner to give you access.">
+        {profileError && <p className="form-error" role="alert">Technical detail: {profileError}</p>}
         <button className="btn green wide" onClick={() => void signOut()}>Sign out</button>
       </Screen>
     );
