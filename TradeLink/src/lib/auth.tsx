@@ -7,16 +7,20 @@ type AuthState = {
   session: Session | null;
   /** null when signed out OR when the signed-in user has no staff profile. */
   profile: Profile | null;
+  /** Message from a failed profile read, so "No access" can say why. */
+  profileError: string;
   signOut: () => Promise<void>;
 };
-const AuthContext = createContext<AuthState>({ loading: true, session: null, profile: null, signOut: async () => {} });
+const AuthContext = createContext<AuthState>({ loading: true, session: null, profile: null, profileError: "", signOut: async () => {} });
 export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReady, setSessionReady] = useState(!supabase);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [profileReady, setProfileReady] = useState(true);
+  const [profileError, setProfileError] = useState("");
+  // Which user id the loaded profile belongs to; until it matches the session we are still loading.
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase) return;
@@ -28,22 +32,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Load the staff profile once per signed-in user (token refreshes keep the same id).
   const userId = session?.user.id;
   useEffect(() => {
-    if (!supabase || !userId) { setProfile(null); setProfileReady(true); return; }
+    if (!supabase || !userId) { setProfile(null); setProfileError(""); setLoadedFor(null); return; }
     let cancelled = false;
-    setProfileReady(false);
-    supabase.from("profiles").select("*").eq("id", userId).maybeSingle().then(({ data }) => {
+    supabase.from("profiles").select("*").eq("id", userId).maybeSingle().then(({ data, error }) => {
       if (cancelled) return;
       setProfile((data as Profile | null) ?? null);
-      setProfileReady(true);
+      setProfileError(error?.message ?? "");
+      setLoadedFor(userId);
     });
     return () => { cancelled = true; };
   }, [userId]);
 
   const value = useMemo<AuthState>(() => ({
-    loading: !sessionReady || !profileReady,
-    session, profile,
+    loading: !sessionReady || (!!userId && loadedFor !== userId),
+    session, profile, profileError,
     signOut: async () => { await supabase?.auth.signOut(); },
-  }), [sessionReady, profileReady, session, profile]);
+  }), [sessionReady, userId, loadedFor, session, profile, profileError]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
