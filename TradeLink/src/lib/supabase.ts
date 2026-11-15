@@ -35,6 +35,15 @@ export type SalesPoint = { sold_at: string; total_amount: number };
 export type SaleRow = { id: string; receipt_number: string; customer_name: string; total_amount: number; amount_paid: number; payment_method: string | null; sold_at: string };
 export type Activity = { id: string; action: string; entity_type: string; description: string; created_at: string; actor_name: string | null };
 
+/** Supabase database errors are often plain objects, not Error instances, so read their message directly. */
+export function errorText(err: unknown, fallback: string): string {
+  const e = err as { message?: unknown; code?: unknown } | null;
+  const msg = typeof e?.message === "string" ? e.message : "";
+  if (e?.code === "23505") return "A product with that SKU already exists. Use a different SKU or leave it empty.";
+  if (e?.code === "42501" || /row-level security|permission denied/i.test(msg)) return "Your role is not allowed to add or edit products.";
+  return msg || fallback;
+}
+
 export function requireSupabase() {
   if (!supabase) throw new Error("Supabase is not configured. Add your project URL and publishable key to .env.local.");
   return supabase;
