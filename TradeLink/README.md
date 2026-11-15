@@ -58,9 +58,14 @@ The public form inserts a row into `public.quotations`. Authenticated staff with
 Deploy the Edge Function after installing and linking the Supabase CLI:
 ```bash
 supabase functions deploy invite-staff
-supabase secrets set SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
 ```
-The function uses the service-role key server-side only. It is not exposed to the browser. The Staff Management page has an invitation form that calls this function. Only the owner can invite a manager.
+Supabase gives the function `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` automatically (do not try to set them with `supabase secrets set`; names starting with `SUPABASE_` are refused). Redeploy the function whenever `supabase/functions/invite-staff/index.ts` changes. The service-role key stays server-side only. It is not exposed to the browser. The Staff Management page has an invitation form that calls this function. Only the owner can invite a manager.
+
+## 6b. Staff set their own password
+The invitation email sends people to `/set-password`, where they choose a password. In Supabase → Authentication → URL Configuration add `https://YOUR-SITE/set-password` to Redirect URLs (and keep Site URL set to your site). The login page also has "Forgot password?".
+
+## 6c. Product images
+Run `supabase/migrations/0002_product_images.sql` once in the SQL Editor. Products now take an uploaded image (stored in the `product-images` bucket) instead of a link.
 
 ## 7. GitHub and Vercel
 1. Create a GitHub repository and upload the contents of this folder (not the ZIP itself). `.gitignore` keeps `.env.local` and `node_modules` out; check that no keys are committed.
