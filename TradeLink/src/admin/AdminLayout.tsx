@@ -11,6 +11,8 @@ import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Quotations from "./pages/Quotations";
 import SalesPage from "./pages/Sales";
+import Orders from "./pages/Orders";
+import Deliveries from "./pages/Deliveries";
 import Staff from "./pages/Staff";
 import Inventory from "./pages/Inventory";
 import Reports from "./pages/Reports";
@@ -81,6 +83,8 @@ function Shell() {
             <Route index element={<Dashboard />} />
             <Route path="products" element={g(["owner", "manager", "sales", "inventory", "delivery"], <Products />)} />
             <Route path="quotations" element={g(["owner", "manager", "sales"], <Quotations />)} />
+            <Route path="orders" element={g(["owner", "manager", "sales"], <Orders />)} />
+            <Route path="deliveries" element={g(["owner", "manager", "sales", "delivery"], <Deliveries />)} />
             <Route path="sales" element={g(["owner", "manager", "sales"], <SalesPage />)} />
             <Route path="staff" element={g(["owner", "manager"], <Staff />)} />
             <Route path="inventory" element={g(["owner", "manager", "inventory"], <Inventory />)} />

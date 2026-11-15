@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { TURNSTILE_SITE_KEY, Turnstile } from "../components/Turnstile";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Check, ClipboardList, Headphones, Menu, Phone, ShieldCheck, Tag, Truck, X } from "lucide-react";
 import { Brand } from "../components/Brand";
@@ -44,6 +45,8 @@ function QuoteModal({ products, initialProduct, onClose }: { products: PublicPro
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [quoteNumber, setQuoteNumber] = useState("");
+  const [token, setToken] = useState("");
+  const onToken = useCallback((t: string) => setToken(t), []);
 
   const chosen = products.find(p => p.id === productId);
   const unit = chosen?.unit ?? "";
@@ -53,19 +56,36 @@ function QuoteModal({ products, initialProduct, onClose }: { products: PublicPro
     if (!productId) { setError("Please choose a product."); return; }
     if (!supabase) { setError("This website is not connected to its database yet. Please contact us by phone."); return; }
     const f = new FormData(e.currentTarget);
+    const fields = {
+      name: String(f.get("name") ?? ""),
+      phone: String(f.get("phone") ?? ""),
+      email: String(f.get("email") ?? ""),
+      location: String(f.get("location") ?? ""),
+      quantity: Number(f.get("quantity")),
+      notes: String(f.get("notes") ?? ""),
+      website: String(f.get("website") ?? ""), // hidden honeypot field
+    };
+    if (TURNSTILE_SITE_KEY && !token) { setError("Please complete the security check."); return; }
     setBusy(true); setError("");
-    const { data, error: rpcError } = await supabase.rpc("submit_quote", {
-      p_name: String(f.get("name") ?? ""),
-      p_phone: String(f.get("phone") ?? ""),
-      p_email: String(f.get("email") ?? ""),
-      p_location: String(f.get("location") ?? ""),
-      p_product_id: productId,
-      p_quantity: Number(f.get("quantity")),
-      p_notes: String(f.get("notes") ?? ""),
-      p_website: String(f.get("website") ?? ""), // hidden honeypot field
-    });
+    let data: unknown; let failure = "";
+    if (TURNSTILE_SITE_KEY) {
+      // CAPTCHA on: the Edge Function checks the token, then submits the quote.
+      const res = await supabase.functions.invoke("submit-quote", { body: { ...fields, product_id: productId, token } });
+      if (res.error) {
+        let msg = res.error.message;
+        try { const body = await (res.error as { context?: Response }).context?.json(); if (body?.error) msg = body.error; } catch { /* keep generic message */ }
+        failure = msg;
+      } else if (res.data?.error) failure = String(res.data.error);
+      else data = res.data?.quote_number;
+    } else {
+      const { data: d, error: rpcError } = await supabase.rpc("submit_quote", {
+        p_name: fields.name, p_phone: fields.phone, p_email: fields.email, p_location: fields.location,
+        p_product_id: productId, p_quantity: fields.quantity, p_notes: fields.notes, p_website: fields.website,
+      });
+      if (rpcError) failure = rpcError.message; else data = d;
+    }
     setBusy(false);
-    if (rpcError) { setError(rpcError.message); return; }
+    if (failure) { setError(failure); return; }
     setQuoteNumber(String(data ?? ""));
   };
 
@@ -100,6 +120,7 @@ function QuoteModal({ products, initialProduct, onClose }: { products: PublicPro
               <label className="full">Additional details<textarea name="notes" rows={3} maxLength={1000} placeholder="Package size, timing or other requirements" /></label>
               {/* Honeypot: hidden from people, filled by bots. */}
               <div className="honeypot" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
+              {TURNSTILE_SITE_KEY && <Turnstile onToken={onToken} />}
               {error && <p className="form-error full" role="alert">{error}</p>}
               {products.length === 0 && <p className="form-error full" role="alert">No products are available to order right now. Please check back soon.</p>}
               <button className="btn green full" type="submit" disabled={busy || products.length === 0}>{busy ? "Sending…" : "Send Wholesale Enquiry"} <ArrowRight /></button>

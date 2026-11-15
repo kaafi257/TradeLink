@@ -7,10 +7,12 @@ A React + TypeScript + Vite wholesale business website with a public customer ho
 - Admin login using Supabase Auth.
 - Dashboard matching the supplied visual direction: dark teal sidebar, gold active navigation, welcome warehouse banner, four KPI cards, sales overview chart, top products, recent activities, product/staff management panels and quick actions.
 - Product catalogue create/edit, public catalogue reads from the same Supabase database.
-- Quotations list and status workflow.
+- Full sales workflow: price a quotation → create an order → record the sale (stock is deducted automatically) → assign a delivery → mark it delivered. Every step is a database function, so money, stock and statuses cannot be edited directly through the API.
+- Per-action permissions (price quotes, create orders, cancel orders, record sales, assign/update deliveries, adjust stock, edit products) that the owner switches on or off per role in Settings.
+- Optional Cloudflare Turnstile CAPTCHA on the public quote form.
 - Inventory overview, staff directory, customer enquiry directory, activity log, reports and settings pages.
-- One Supabase SQL migration with RLS policies, role helpers, append-only audit tables, trigger-written activity log and a public catalogue view.
-- Supabase Edge Function starter for securely inviting staff.
+- Three Supabase SQL migrations with RLS policies, role helpers, append-only audit tables, trigger-written activity log, a public catalogue view, the workflow functions and the permissions table.
+- Supabase Edge Functions: `invite-staff` (securely invite staff) and `submit-quote` (CAPTCHA-checked quote form).
 - Vercel SPA rewrite configuration.
 
 ## 1. Run locally
@@ -24,8 +26,11 @@ Open the local URL printed by Vite.
 
 ## 2. Configure Supabase
 1. Create a Supabase project.
-2. Open SQL Editor and run `supabase/migrations/0001_tradelink_schema.sql` **once**. It is the only migration: it is idempotent and always ends in the hardened state, so re-running it is safe. If you already ran the old 0001/0002, just run this file once over them (it also upgrades the quote function, so redeploy the site code at the same time).
-   It provides: role-escalation protection (only an owner can touch owner/manager accounts), an append-only inventory ledger and sales table, an activity log written only by database triggers, validated and rate-limited quote submission, and a `public_products` view so the public site never sees prices or stock.
+2. Open SQL Editor and run these three files, **in this order, once each** (every file is idempotent, so re-running is safe):
+   1. `supabase/migrations/0001_tradelink_schema.sql` - tables, role-escalation protection, append-only inventory ledger and sales table, trigger-written activity log, validated and rate-limited `submit_quote`, and the `public_products` view (the public site never sees prices or stock).
+   2. `supabase/migrations/0002_product_images.sql` - the `product-images` storage bucket for uploaded product photos.
+   3. `supabase/migrations/0003_workflow_permissions.sql` - per-action permissions and the quote → order → sale → stock → delivery functions. After this, orders, sales, deliveries and quotation prices can change only through those functions.
+   If you ran an older copy of 0001, run all three again in order, and redeploy the site code at the same time.
 3. In Project Settings → API, copy the Project URL and publishable key (or legacy anon key).
 4. Put them in `.env.local`:
 ```env
@@ -49,10 +54,17 @@ where email = 'YOUR-OWNER-EMAIL';
 Sign in using that user. Do not make public signup an owner workflow.
 
 ## 4. Add products
-Sign in as owner. Open Products → Add Product. Enter product name, category, SKU, package, unit, wholesale price, minimum order, stock, image URL and active status. Active products appear on the public homepage.
+Sign in as owner. Open Products → Add Product. Enter product name, category, SKU, package, unit, wholesale price, minimum order, stock, a photo (uploaded from your device, 5 MB max) and active status. Active products appear on the public homepage.
 
-## 5. Quote requests
-The public form inserts a row into `public.quotations`. Authenticated staff with owner/manager/sales role can view and update quotation status. The form does not take payments.
+## 5. Quotes, orders, sales and deliveries
+1. The public form creates a quotation (status `new`). It takes no payment.
+2. **Quotations** → *Price* each line, which marks it `quoted`. Then *Create order* turns it into a confirmed order (once per quotation).
+3. **Orders** → *Record sale*: saves the payment, deducts every line from stock and writes a `sale` movement per product in the inventory ledger. It refuses if stock is short. *Cancel* is only possible before a sale is recorded; after that, use an Inventory "return" adjustment.
+4. **Orders** → *Assign delivery* (sold orders only) → **Deliveries** → *Start delivery* → *Mark delivered* (or *Failed*, then re-assign). Delivery staff see only the deliveries assigned to them.
+5. Everything is written to the Activity Log by the database.
+
+### Permissions
+The owner always has every permission. In **Settings → Permissions by role** the owner chooses which of these each other role may do: price quotations, create orders, cancel orders, record sales, assign/manage any delivery, update own deliveries, adjust stock, edit products. Defaults are seeded by migration 0003 and never overwritten when you re-run it. The database enforces them, not just the menu. (Viewing pages is still decided by role, see `src/admin/nav.ts` and the RLS policies.)
 
 ## 6. Staff invitations
 Deploy the Edge Function after installing and linking the Supabase CLI:
@@ -65,7 +77,18 @@ Supabase gives the function `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SE
 The invitation email sends people to `/set-password`, where they choose a password. In Supabase → Authentication → URL Configuration add `https://YOUR-SITE/set-password` to Redirect URLs (and keep Site URL set to your site). The login page also has "Forgot password?".
 
 ## 6c. Product images
-Run `supabase/migrations/0002_product_images.sql` once in the SQL Editor. Products now take an uploaded image (stored in the `product-images` bucket) instead of a link.
+Handled by migration 0002 (step 2 above). Products take an uploaded image stored in the `product-images` bucket; there are no image URLs.
+
+## 6d. CAPTCHA on the quote form (optional, recommended)
+1. In Cloudflare → Turnstile, create a widget for your site. Copy the **site key** and **secret key**.
+2. Deploy the function and set the secret:
+```bash
+supabase secrets set TURNSTILE_SECRET_KEY=your-turnstile-secret
+supabase functions deploy submit-quote
+```
+3. Set `VITE_TURNSTILE_SITE_KEY` in `.env.local` and in Vercel, then redeploy. The form now shows the check and sends quotes through the function (the CSP in `vercel.json` already allows Turnstile).
+4. To make the check mandatory, stop the form being called directly: run the commented `revoke execute on function public.submit_quote(...) from anon, authenticated;` line at the end of migration 0003. Do this only after step 3 works. The function uses the service role, which is unaffected.
+Without `VITE_TURNSTILE_SITE_KEY` the form works as before (honeypot plus database rate limits).
 
 ## 7. GitHub and Vercel
 1. Create a GitHub repository and upload the contents of this folder (not the ZIP itself). `.gitignore` keeps `.env.local` and `node_modules` out; check that no keys are committed.
@@ -76,22 +99,22 @@ Run `supabase/migrations/0002_product_images.sql` once in the SQL Editor. Produc
 
 `vercel.json` includes an SPA rewrite so dashboard routes/client-side app rendering work after refresh.
 
-## Production checklist / limitations to finish before taking live orders
-- Replace sample external stock photos with TradeLink-approved product and warehouse images.
-- Confirm actual product package sizes, price rules and minimum order quantities.
-- Add the real business contact details and support channels.
-- Connect sales/order creation, inventory movement RPC transactions, payment reconciliation, delivery assignment, expenses and profit reports to agreed business workflows. The current project includes their database foundations and dashboard sections but does not yet implement every transaction workflow.
-- Granular per-action permissions are not implemented; RLS uses role-based module access (the menu mirrors it).
-- Consider adding Cloudflare Turnstile/hCaptcha to the public quote form. Today it has a honeypot field plus database rate limits (3 per phone, 8 per connection and 300 overall, per hour). Rate limiting by connection relies on the `x-forwarded-for` header Supabase passes to the database.
-- Orders, deliveries and sales recording screens are still to be built; the Sales page lists rows from the `sales` table once they exist.
-- Configure Storage buckets and policies if you want image uploads rather than image URLs.
-- Review and test RLS policies with anon, each staff role and owner before production. (The policies were exercised against a local Postgres: public cannot read `products`; inventory movements, sales and the activity log cannot be edited or deleted through the API; managers cannot change other managers.)
-- `npm audit` reports 2 moderate advisories in `react-router` 6.x; their fix needs the v7 upgrade. They concern SSR hydration and backslash redirects, which this client-only app does not use, but plan the upgrade.
-- Security headers (CSP etc.) are set in `vercel.json`. If you load images or scripts from new hosts, add them to the CSP.
+## Before you go live
+- **Add your real contact details**: set `VITE_CONTACT_PHONE`, `VITE_CONTACT_WHATSAPP` and `VITE_CONTACT_TELEGRAM` in Vercel (or `src/config.ts`). A channel left empty is hidden.
+- **Replace the sample photos** in `public/img` (homepage banners) with TradeLink's own, and upload real product photos in Products.
+- Confirm real package sizes, prices and minimum order quantities.
+- Run `npm install` once and commit the updated `package-lock.json` (the project now uses react-router 7, which clears the two moderate `npm audit` advisories that affected 6.x).
+- Test the RLS policies with anon, each staff role and the owner before taking real orders.
+- Security headers (CSP etc.) are in `vercel.json`. If you load images or scripts from new hosts, add them to the CSP.
 - Add email notifications and backups as required.
-- Charts and KPIs show only recorded sales (summed in the database by `sales_by_day`); with no sales they show an empty state.
-- The quote workflow is still only an inbox: staff cannot yet price a quote, convert it to an order, record the sale or deduct stock from the app.
+
+## Known limitations
+- Payments are recorded, not processed: one sale per order, with the amount paid at the time of sale (use method *Credit* for unpaid). There is no later part-payment or refund screen yet.
+- Stock is deducted when the sale is recorded, not reserved when the order is created.
+- Expenses and profit reports are not built; charts and KPIs show recorded sales only (summed by `sales_by_day`).
+- Page access is by role; only the actions listed under Permissions are configurable.
+- Rate limits on the public form: 3 per phone, 8 per connection and 300 overall, per hour (connection limiting uses the `x-forwarded-for` header).
 
 ## App structure
 - `src/pages` public site and login · `src/admin` signed-in workspace (lazy-loaded) · `src/lib` Supabase client, auth, formatting.
-- Routes: `/` public, `/login`, `/admin` (dashboard), `/admin/products|quotations|sales|staff|inventory|reports|customers|activity|settings`.
+- Routes: `/` public, `/login`, `/admin` (dashboard), `/admin/products|quotations|orders|sales|deliveries|staff|inventory|reports|customers|activity|settings`.

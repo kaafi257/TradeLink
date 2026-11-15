@@ -4,7 +4,6 @@ import { AlertTriangle, ArrowRight, ChartNoAxesCombined, Package, Plus, Shopping
 import { ActivityList, PanelHead, Stat } from "../../components/ui";
 import { RANGES, buildSeries, money, shortDate, type Range } from "../../lib/format";
 import type { Product, Quote } from "../../lib/supabase";
-import { canEditProducts } from "../nav";
 import { ProductModal } from "../modals";
 import { useAdmin } from "../AdminData";
 
@@ -23,7 +22,7 @@ const greeting = () => {
 };
 
 export default function Dashboard() {
-  const { profile, products, quotes, quoteCount, newQuoteCount, activities, staff, salesDaily } = useAdmin();
+  const { can, profile, products, quotes, quoteCount, newQuoteCount, activities, staff, salesDaily } = useAdmin();
   const navigate = useNavigate();
   const [range, setRange] = useState<Range>("This Month");
   const [productModal, setProductModal] = useState(false);
@@ -68,7 +67,7 @@ export default function Dashboard() {
           <p>{today}{canSeeQuotes && newQuoteCount > 0 ? ` · ${newQuoteCount} new ${newQuoteCount === 1 ? "enquiry" : "enquiries"} to review` : ""}</p>
         </div>
         <div className="dash-actions">
-          {canEditProducts(role) && <button className="btn green" onClick={() => setProductModal(true)}><Plus /> Add product</button>}
+          {can("products.edit") && <button className="btn green" onClick={() => setProductModal(true)}><Plus /> Add product</button>}
           {isLead && <button className="btn outline" onClick={() => navigate("/admin/staff")}><UserPlus /> Invite staff</button>}
           {canSeeQuotes && <button className="btn outline" onClick={() => navigate("/admin/quotations")}><ShoppingCart /> Quotations</button>}
         </div>

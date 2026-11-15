@@ -24,12 +24,33 @@ export type PublicProduct = {
   id: string; name: string; category: string; description: string | null; image_url: string | null;
   unit: string; package_size: string | null; min_order_quantity: number;
 };
-export type QuoteItem = { product_name: string; quantity: number; unit: string };
+export type QuoteItem = { id: string; product_name: string; quantity: number; unit: string; unit_price: number };
 export type Quote = {
   id: string; quote_number: string; customer_name: string; phone: string; email: string | null;
   delivery_location: string; status: string; notes: string | null; created_at: string;
+  estimated_total: number;
   quotation_items?: QuoteItem[];
 };
+export type OrderItem = { product_name: string; quantity: number; unit: string; unit_price: number };
+export type OrderRow = {
+  id: string; order_number: string; quotation_id: string | null; customer_name: string; phone: string; delivery_location: string;
+  status: string; total_amount: number; amount_paid: number; created_at: string; order_items?: OrderItem[];
+};
+export type DeliveryRow = {
+  id: string; order_id: string; assigned_to: string | null; status: string; scheduled_at: string | null; delivered_at: string | null;
+  notes: string | null; created_at: string; orders?: { order_number: string; customer_name: string; phone: string; delivery_location: string } | null;
+};
+/** Every action a role can be allowed to do; the database enforces these (see 0003 migration). */
+export const PERMISSIONS: { key: string; label: string }[] = [
+  { key: "quotes.price", label: "Price quotations" },
+  { key: "quotes.convert", label: "Create orders from quotations" },
+  { key: "orders.cancel", label: "Cancel orders" },
+  { key: "sales.record", label: "Record sales (deducts stock)" },
+  { key: "deliveries.assign", label: "Assign and manage any delivery" },
+  { key: "deliveries.update", label: "Update own assigned deliveries" },
+  { key: "stock.adjust", label: "Adjust stock" },
+  { key: "products.edit", label: "Add and edit products" },
+];
 /** Daily sales total from the sales_by_day() database function. */
 export type SalesPoint = { sold_at: string; total_amount: number };
 export type SaleRow = { id: string; receipt_number: string; customer_name: string; total_amount: number; amount_paid: number; payment_method: string | null; sold_at: string };

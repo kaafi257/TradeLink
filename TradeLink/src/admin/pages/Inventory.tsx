@@ -10,7 +10,7 @@ const levelOf = (p: Product): Level =>
 const LABEL: Record<Level, string> = { out: "Out of stock", low: "Low stock", ok: "In stock" };
 
 export default function Inventory() {
-  const { products, search } = useAdmin();
+  const { products, search, can } = useAdmin();
   const [adjusting, setAdjusting] = useState<Product | null>(null);
   const s = search.toLowerCase();
   const rows = products.filter(p => `${p.name} ${p.sku || ""}`.toLowerCase().includes(s));
@@ -32,7 +32,7 @@ export default function Inventory() {
               <td><b>{p.name}</b></td><td>{p.sku || "—"}</td><td>{p.package_size}</td>
               <td>{p.stock_quantity} {p.unit}</td><td>{Number(p.reorder_level) > 0 ? p.reorder_level : "Not set"}</td>
               <td><span className={`status ${lv === "ok" ? "good" : "warn"}`}>{LABEL[lv]}</span></td>
-              <td><button className="btn outline" onClick={() => setAdjusting(p)}>Adjust</button></td>
+              <td>{can("stock.adjust") ? <button className="btn outline" onClick={() => setAdjusting(p)}>Adjust</button> : "—"}</td>
             </tr>
           );
         })}

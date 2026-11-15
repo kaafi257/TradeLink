@@ -5,13 +5,12 @@ import { riceImg } from "../../lib/assets";
 import { money } from "../../lib/format";
 import type { Product } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
-import { canEditProducts } from "../nav";
 import { ProductModal } from "../modals";
 
 export default function Products() {
-  const { products, profile, search, setSearch } = useAdmin();
+  const { products, can, search, setSearch } = useAdmin();
   const [modal, setModal] = useState<{ editing: Product | null } | null>(null);
-  const canEdit = canEditProducts(profile.role);
+  const canEdit = can("products.edit");
   const q = search.toLowerCase();
   const rows = products.filter(p => `${p.name} ${p.category} ${p.sku || ""}`.toLowerCase().includes(q));
 
