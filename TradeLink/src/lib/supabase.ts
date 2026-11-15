@@ -18,17 +18,24 @@ export type Product = {
   id: string; name: string; category: string; sku: string | null; description: string | null;
   image_url: string | null; unit: string; package_size: string | null; wholesale_price: number;
   min_order_quantity: number; stock_quantity: number; reorder_level: number; active: boolean; created_at: string;
+  category_id: string | null; retail_price: number; audience: Audience;
 };
+export type Audience = "b2b" | "b2c" | "both";
+export type Industry = { id: string; name: string; description: string | null; icon: string; sort_order: number; active: boolean };
+export type Category = { id: string; industry_id: string; name: string; description: string | null; image_url: string | null; sort_order: number; active: boolean };
+export type PublicIndustry = Pick<Industry, "id" | "name" | "description" | "icon" | "sort_order">;
+export type PublicCategory = Pick<Category, "id" | "industry_id" | "name" | "description" | "image_url" | "sort_order">;
 /** What the public website may see (the public_products view): no price, stock or SKU. */
 export type PublicProduct = {
   id: string; name: string; category: string; description: string | null; image_url: string | null;
   unit: string; package_size: string | null; min_order_quantity: number;
+  category_id: string | null; audience: Audience; retail_price: number | null;
 };
 export type QuoteItem = { id: string; product_name: string; quantity: number; unit: string; unit_price: number };
 export type Quote = {
   id: string; quote_number: string; customer_name: string; phone: string; email: string | null;
   delivery_location: string; status: string; notes: string | null; created_at: string;
-  estimated_total: number;
+  estimated_total: number; customer_type?: "business" | "individual";
   quotation_items?: QuoteItem[];
 };
 export type OrderItem = { product_name: string; quantity: number; unit: string; unit_price: number };
@@ -50,6 +57,7 @@ export const PERMISSIONS: { key: string; label: string }[] = [
   { key: "deliveries.update", label: "Update own assigned deliveries" },
   { key: "stock.adjust", label: "Adjust stock" },
   { key: "products.edit", label: "Add and edit products" },
+  { key: "catalogue.manage", label: "Manage industries and categories" },
 ];
 /** Daily sales total from the sales_by_day() database function. */
 export type SalesPoint = { sold_at: string; total_amount: number };

@@ -21,12 +21,13 @@ export default function Products() {
       <div className="table-panel">
         <div className="table-toolbar"><b>{rows.length} Products</b><span><Search size={16} /><input aria-label="Search products" placeholder="Search products…" value={search} onChange={e => setSearch(e.target.value)} /></span></div>
         <div className="table-scroll"><table>
-          <thead><tr><th>Product</th><th>Category</th><th>Package</th><th>Wholesale price</th><th>Stock</th><th>Status</th>{canEdit && <th>Action</th>}</tr></thead>
+          <thead><tr><th>Product</th><th>Category</th><th>Package</th><th>Wholesale</th><th>Retail</th><th>Stock</th><th>Status</th>{canEdit && <th>Action</th>}</tr></thead>
           <tbody>{rows.map(p => (
             <tr key={p.id}>
               <td><div className="table-product"><img src={p.image_url || riceImg} alt="" /><b>{p.name}</b></div></td>
               <td>{p.category}</td><td>{p.package_size}</td>
               <td>{p.wholesale_price ? money(p.wholesale_price) : "Set price"}</td>
+              <td>{Number(p.retail_price) > 0 ? money(Number(p.retail_price)) : "—"}</td>
               <td>{p.stock_quantity} {p.unit}</td>
               <td><span className={`status ${p.active ? "good" : "muted"}`}>{p.active ? "Active" : "Inactive"}</span></td>
               {canEdit && <td><button className="icon-action" aria-label={`Edit ${p.name}`} onClick={() => setModal({ editing: p })}><Edit3 size={16} /></button></td>}

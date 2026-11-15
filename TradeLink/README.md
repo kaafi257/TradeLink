@@ -1,9 +1,12 @@
-# TradeLink Food Wholesale
+# TradeLink Marketplace
 
-A React + TypeScript + Vite wholesale business website with a public customer homepage and an authenticated admin workspace, styled to match the approved TradeLink design references.
+A React + TypeScript + Vite B2B and B2C marketplace with a public storefront and an authenticated admin workspace. TradeLink is the only seller. Businesses see wholesale terms, individuals see retail prices. Industries and categories (food today, anything tomorrow) are configured in the Admin Workspace, with no code changes.
 
 ## Included
-- Public wholesale homepage: rice, sugar, cooking oil, large-quantity positioning and quotation request form.
+- Public storefront: shop by industry and category, a Business / Individual switch (wholesale vs retail view), product search, and a request list that sends several products in one price request.
+- **Configurable industries and categories** (Admin → Industries & Categories): add an industry such as Electronics, give it an icon, add categories with pictures, and it appears on the website and in the product form straight away. The existing food products are migrated into a "Food & Groceries" industry.
+- Products have a wholesale price (never shown publicly), an optional retail price (shown to individuals) and an audience: businesses only, individuals only, or both.
+- New TradeLink logo (interlocked links) in `src/components/Brand.tsx` and `public/favicon.svg`.
 - Admin login using Supabase Auth.
 - Dashboard matching the supplied visual direction: dark teal sidebar, gold active navigation, welcome warehouse banner, four KPI cards, sales overview chart, top products, recent activities, product/staff management panels and quick actions.
 - Product catalogue create/edit, public catalogue reads from the same Supabase database.
@@ -11,7 +14,7 @@ A React + TypeScript + Vite wholesale business website with a public customer ho
 - Per-action permissions (price quotes, create orders, cancel orders, record sales, assign/update deliveries, adjust stock, edit products) that the owner switches on or off per role in Settings.
 - Optional Cloudflare Turnstile CAPTCHA on the public quote form.
 - Inventory overview, staff directory, customer enquiry directory, activity log, reports and settings pages.
-- Three Supabase SQL migrations with RLS policies, role helpers, append-only audit tables, trigger-written activity log, a public catalogue view, the workflow functions and the permissions table.
+- Five Supabase SQL migrations with RLS policies, role helpers, append-only audit tables, trigger-written activity log, a public catalogue view, the workflow functions and the permissions table.
 - Supabase Edge Functions: `invite-staff` (securely invite staff) and `submit-quote` (CAPTCHA-checked quote form).
 - Vercel SPA rewrite configuration.
 
@@ -26,11 +29,12 @@ Open the local URL printed by Vite.
 
 ## 2. Configure Supabase
 1. Create a Supabase project.
-2. Open SQL Editor and run these four files, **in this order, once each** (every file is idempotent, so re-running is safe):
+2. Open SQL Editor and run these five files, **in this order, once each** (every file is idempotent, so re-running is safe):
    1. `supabase/migrations/0001_tradelink_schema.sql` - tables, role-escalation protection, append-only inventory ledger and sales table, trigger-written activity log, validated and rate-limited `submit_quote`, and the `public_products` view (the public site never sees prices or stock).
    2. `supabase/migrations/0002_product_images.sql` - the `product-images` storage bucket for uploaded product photos.
    3. `supabase/migrations/0003_workflow_permissions.sql` - per-action permissions and the quote → order → sale → stock → delivery functions. After this, orders, sales, deliveries and quotation prices can change only through those functions.
    4. `supabase/migrations/0004_contact_settings.sql` - the contact channels (phone, WhatsApp, Telegram, email) shown on the website and edited in Admin → Communication.
+   5. `supabase/migrations/0005_marketplace.sql` - industries and categories, retail prices and audiences, multi-product requests (`submit_request`), the public catalogue views, and the table permissions the app needs. Existing products are moved into a "Food & Groceries" industry automatically.
    If you ran an older copy of 0001, run all of them again in order, and redeploy the site code at the same time.
 3. In Project Settings → API, copy the Project URL and publishable key (or legacy anon key).
 4. Put them in `.env.local`:
@@ -55,17 +59,17 @@ where email = 'YOUR-OWNER-EMAIL';
 Sign in using that user. Do not make public signup an owner workflow.
 
 ## 4. Add products
-Sign in as owner. Open Products → Add Product. Enter product name, category, SKU, package, unit, wholesale price, minimum order, stock, a photo (uploaded from your device, 5 MB max) and active status. Active products appear on the public homepage.
+Sign in as owner. Open Products → Add Product. First add your industries and categories under **Industries & Categories** (a category belongs to an industry). Then Products → Add Product: enter product name, category, SKU, package, unit, wholesale price, retail price (optional, shown to individual buyers), who it is sold to (businesses, individuals or both), minimum order, stock, a photo (uploaded from your device, 5 MB max) and active status. Active products appear on the public homepage.
 
 ## 5. Quotes, orders, sales and deliveries
-1. The public form creates a quotation (status `new`). It takes no payment.
+1. The public request form (Business or Individual) creates a quotation (status `new`) with one or more products. For individuals, the retail price is prefilled on each line; staff still confirm it by pricing the quote. It takes no payment.
 2. **Quotations** → *Price* each line, which marks it `quoted`. Then *Create order* turns it into a confirmed order (once per quotation).
 3. **Orders** → *Record sale*: saves the payment, deducts every line from stock and writes a `sale` movement per product in the inventory ledger. It refuses if stock is short. *Cancel* is only possible before a sale is recorded; after that, use an Inventory "return" adjustment.
 4. **Orders** → *Assign delivery* (sold orders only) → **Deliveries** → *Start delivery* → *Mark delivered* (or *Failed*, then re-assign). Delivery staff see only the deliveries assigned to them.
 5. Everything is written to the Activity Log by the database.
 
 ### Permissions
-The owner always has every permission. In **Settings → Permissions by role** the owner chooses which of these each other role may do: price quotations, create orders, cancel orders, record sales, assign/manage any delivery, update own deliveries, adjust stock, edit products. Defaults are seeded by migration 0003 and never overwritten when you re-run it. The database enforces them, not just the menu. (Viewing pages is still decided by role, see `src/admin/nav.ts` and the RLS policies.)
+The owner always has every permission. In **Settings → Permissions by role** the owner chooses which of these each other role may do: price quotations, create orders, cancel orders, record sales, assign/manage any delivery, update own deliveries, adjust stock, edit products, manage industries and categories. Defaults are seeded by migration 0003 and never overwritten when you re-run it. The database enforces them, not just the menu. (Viewing pages is still decided by role, see `src/admin/nav.ts` and the RLS policies.)
 
 ## 6. Staff invitations
 Deploy the Edge Function after installing and linking the Supabase CLI:

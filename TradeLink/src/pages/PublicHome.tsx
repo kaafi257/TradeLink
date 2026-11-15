@@ -1,76 +1,90 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { TURNSTILE_SITE_KEY, Turnstile } from "../components/Turnstile";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Check, ClipboardList, Headphones, Menu, Package, Phone, ShieldCheck, Tag, Truck, X } from "lucide-react";
+import { ArrowRight, Briefcase, Check, ClipboardList, Headphones, Menu, Package, Phone, Plus, Search, ShieldCheck, Tag, Trash2, Truck, User, X, Layers } from "lucide-react";
 import { Brand } from "../components/Brand";
 import { ContactCards, ContactPills, FloatingContact } from "../components/ContactActions";
+import { TURNSTILE_SITE_KEY, Turnstile } from "../components/Turnstile";
 import { useChannels, useContact } from "../lib/contact";
-import { oilImg, riceImg, sugarImg } from "../lib/assets";
-import { supabase, type PublicProduct } from "../lib/supabase";
+import { money } from "../lib/format";
+import { IconFor } from "../lib/icons";
+import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct } from "../lib/supabase";
 import "./home.css";
 
-const CATEGORIES = ["Rice", "Sugar", "Cooking Oil"];
 const NAV = [
   { id: "top", label: "Home" },
-  { id: "public-products", label: "Products" },
+  { id: "public-products", label: "Shop" },
   { id: "why", label: "About Us" },
   { id: "contact", label: "Contact" },
 ];
-const TAGS = [
-  { cat: "Rice", size: "25kg and 50kg+ bags" },
-  { cat: "Sugar", size: "25kg and 50kg+ bags" },
-  { cat: "Cooking Oil", size: "5L and 20L+ containers" },
-];
-const FEATURED = [
-  { cat: "Rice", title: "Rice", size: "25kg and 50kg bags", img: "/img/rice.jpg", cls: "rice", alt: "Stacked 50kg sacks of basmati rice on wooden pallets" },
-  { cat: "Sugar", title: "Sugar", size: "25kg and 50kg+ bags", img: "/img/sugar.jpg", cls: "sugar", alt: "Two 50kg sacks of refined cane sugar beside open sacks of lentils and chickpeas" },
-  { cat: "Cooking Oil", title: "Cooking oil", size: "5L and 20L+ containers", img: "/img/oil.jpg", cls: "oil", alt: "Stacked 20 litre jerrycans and cartons of cooking oil in a warehouse" },
-];
-const ROUTE = ["Shipped in bulk", "Cleared at the port", "Stored and ready", "Delivered to you"];
+const ROUTE = ["Sourced in bulk", "Cleared at the port", "Stored and ready", "Delivered to you"];
 const POINTS = [
-  { Icon: ShieldCheck, title: "Quality you can trust", text: "Sealed bulk packaging." },
-  { Icon: Tag, title: "Wholesale pricing", text: "Priced per order." },
-  { Icon: Truck, title: "Reliable supply", text: "Dependable delivery." },
+  { Icon: ShieldCheck, title: "Quality you can trust", text: "Checked, sealed and ready to ship." },
+  { Icon: Tag, title: "Wholesale and retail prices", text: "Bulk pricing for businesses, clear prices for individuals." },
+  { Icon: Layers, title: "Many industries", text: "More product categories are added all the time." },
   { Icon: Headphones, title: "A real person to talk to", text: "No account needed." },
 ];
-const imageFor = (p: PublicProduct) => p.image_url || (p.category === "Sugar" ? sugarImg : p.category === "Cooking Oil" ? oilImg : riceImg);
-const rank = (c: string) => { const i = CATEGORIES.indexOf(c); return i < 0 ? 99 : i; };
+
+type Mode = "business" | "individual";
+type Line = { key: string; productId: string; qty: string };
 type Status = "loading" | "ready" | "error" | "offline";
 
+const MODE_KEY = "tradelink-mode";
+const readMode = (): Mode => { try { return localStorage.getItem(MODE_KEY) === "individual" ? "individual" : "business"; } catch { return "business"; } };
+const audienceOf = (p: PublicProduct) => p.audience ?? "both";
+const allows = (p: PublicProduct, m: Mode) => audienceOf(p) === "both" || audienceOf(p) === (m === "individual" ? "b2c" : "b2b");
+const defaultQty = (p: PublicProduct | undefined, m: Mode) => (m === "individual" ? "1" : String(Number(p?.min_order_quantity ?? 1)));
+const catKey = (p: PublicProduct) => p.category_id ?? `name:${p.category}`;
 const productLabel = (p: PublicProduct) => (p.package_size ? `${p.name} — ${p.package_size}` : p.name);
+const newKey = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Math.random()));
 
-function QuoteModal({ products, initialProduct, onClose }: { products: PublicProduct[]; initialProduct: string; onClose: () => void }) {
-  // The product is identified by id, because two products can share a name (e.g. 25kg and 50kg bags).
-  const [productId, setProductId] = useState(initialProduct);
+function RequestModal({ products, mode, onMode, initial, onLines, onClose, onSent }: {
+  products: PublicProduct[]; mode: Mode; onMode: (m: Mode) => void; initial: Line[]; onLines: (l: Line[]) => void; onClose: () => void; onSent: () => void;
+}) {
+  const [type, setType] = useState<Mode>(mode);
+  const [lines, setLines] = useState<Line[]>(initial.length ? initial : [{ key: newKey(), productId: "", qty: defaultQty(undefined, mode) }]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [quoteNumber, setQuoteNumber] = useState("");
   const [token, setToken] = useState("");
   const onToken = useCallback((t: string) => setToken(t), []);
 
-  const chosen = products.find(p => p.id === productId);
-  const unit = chosen?.unit ?? "";
+  // Keep the request list in sync, so products added here are still there if the window is closed.
+  useEffect(() => { onLines(lines.filter(l => l.productId)); }, [lines]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const eligible = useMemo(() => products.filter(p => allows(p, type)), [products, type]);
+  const groups = useMemo(() => {
+    const m = new Map<string, PublicProduct[]>();
+    for (const p of eligible) m.set(p.category, [...(m.get(p.category) ?? []), p]);
+    return [...m.entries()];
+  }, [eligible]);
+  const byId = useMemo(() => new Map(products.map(p => [p.id, p])), [products]);
+
+  const switchType = (t: Mode) => {
+    setType(t); onMode(t);
+    setLines(ls => ls.map(l => { const p = byId.get(l.productId); return p && !allows(p, t) ? { ...l, productId: "", qty: defaultQty(undefined, t) } : l; }));
+  };
+  const setLine = (key: string, patch: Partial<Line>) => setLines(ls => ls.map(l => (l.key === key ? { ...l, ...patch } : l)));
+  const pickProduct = (key: string, id: string) => setLine(key, { productId: id, qty: defaultQty(byId.get(id), type) });
+  const chosen = lines.filter(l => l.productId);
+  const estimate = type === "individual" ? chosen.reduce((s, l) => s + Number(l.qty || 0) * Number(byId.get(l.productId)?.retail_price ?? 0), 0) : 0;
+  const estimateComplete = type === "individual" && chosen.length > 0 && chosen.every(l => Number(byId.get(l.productId)?.retail_price ?? 0) > 0);
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!productId) { setError("Please choose a product."); return; }
+    if (!chosen.length) { setError("Please choose at least one product."); return; }
+    if (new Set(chosen.map(l => l.productId)).size !== chosen.length) { setError("A product is listed twice. Please combine the quantities."); return; }
     if (!supabase) { setError("This website is not connected to its database yet. Please contact us by phone."); return; }
     const f = new FormData(e.currentTarget);
+    const items = chosen.map(l => ({ product_id: l.productId, quantity: Number(l.qty) }));
     const fields = {
-      name: String(f.get("name") ?? ""),
-      phone: String(f.get("phone") ?? ""),
-      email: String(f.get("email") ?? ""),
-      location: String(f.get("location") ?? ""),
-      quantity: Number(f.get("quantity")),
-      notes: String(f.get("notes") ?? ""),
-      website: String(f.get("website") ?? ""), // hidden honeypot field
+      name: String(f.get("name") ?? ""), phone: String(f.get("phone") ?? ""), email: String(f.get("email") ?? ""),
+      location: String(f.get("location") ?? ""), notes: String(f.get("notes") ?? ""), website: String(f.get("website") ?? ""),
     };
     if (TURNSTILE_SITE_KEY && !token) { setError("Please complete the security check."); return; }
     setBusy(true); setError("");
     let data: unknown; let failure = "";
     if (TURNSTILE_SITE_KEY) {
-      // CAPTCHA on: the Edge Function checks the token, then submits the quote.
-      const res = await supabase.functions.invoke("submit-quote", { body: { ...fields, product_id: productId, token } });
+      const res = await supabase.functions.invoke("submit-quote", { body: { ...fields, items, customer_type: type === "individual" ? "individual" : "business", token } });
       if (res.error) {
         let msg = res.error.message;
         try { const body = await (res.error as { context?: Response }).context?.json(); if (body?.error) msg = body.error; } catch { /* keep generic message */ }
@@ -78,53 +92,69 @@ function QuoteModal({ products, initialProduct, onClose }: { products: PublicPro
       } else if (res.data?.error) failure = String(res.data.error);
       else data = res.data?.quote_number;
     } else {
-      const { data: d, error: rpcError } = await supabase.rpc("submit_quote", {
-        p_name: fields.name, p_phone: fields.phone, p_email: fields.email, p_location: fields.location,
-        p_product_id: productId, p_quantity: fields.quantity, p_notes: fields.notes, p_website: fields.website,
+      const { data: d, error: rpcError } = await supabase.rpc("submit_request", {
+        p_name: fields.name, p_phone: fields.phone, p_email: fields.email, p_location: fields.location, p_items: items,
+        p_notes: fields.notes, p_website: fields.website, p_customer_type: type === "individual" ? "individual" : "business",
       });
       if (rpcError) failure = rpcError.message; else data = d;
     }
     setBusy(false);
     if (failure) { setError(failure); return; }
     setQuoteNumber(String(data ?? ""));
+    onSent();
   };
 
   return (
     <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal quote-modal" role="dialog" aria-modal="true" aria-label="Request a wholesale quote">
+      <div className="modal quote-modal" role="dialog" aria-modal="true" aria-label="Request a price">
         <button className="modal-x" aria-label="Close" onClick={onClose}><X /></button>
         {quoteNumber ? (
           <div className="success-state">
-            <Check size={48} /><h2>Quote request received</h2>
-            <p>Thank you. Your reference is <b>{quoteNumber}</b>. The TradeLink team will contact you about your wholesale enquiry.</p>
-            <ContactPills title="Want a faster reply? Message us with your reference" message={`Hello TradeLink, my quote reference is ${quoteNumber}.`} />
+            <Check size={48} /><h2>Request received</h2>
+            <p>Thank you. Your reference is <b>{quoteNumber}</b>. The TradeLink team will contact you shortly.</p>
+            <ContactPills title="Want a faster reply? Message us with your reference" message={`Hello TradeLink, my request reference is ${quoteNumber}.`} />
             <button className="btn green" onClick={onClose}>Close</button>
           </div>
         ) : (
           <>
-            <small className="kicker">Wholesale enquiry</small>
-            <h2>Request a Wholesale Quote</h2>
-            <p>Tell us what products and quantities your business needs.</p>
+            <small className="kicker">Price request</small>
+            <h2>Tell us what you need</h2>
+            <div className="seg" role="group" aria-label="I am buying as">
+              <button type="button" className={type === "business" ? "on" : ""} onClick={() => switchType("business")}><Briefcase size={15} /> Business (wholesale)</button>
+              <button type="button" className={type === "individual" ? "on" : ""} onClick={() => switchType("individual")}><User size={15} /> Individual (retail)</button>
+            </div>
             <form className="form-grid" onSubmit={submit}>
-              <label>Business / contact name<input name="name" required maxLength={120} placeholder="Your name or business" /></label>
+              <div className="full req-lines">
+                {lines.map(l => {
+                  const p = byId.get(l.productId);
+                  return (
+                    <div className="req-line" key={l.key}>
+                      <label>Product
+                        <select value={l.productId} required onChange={e => pickProduct(l.key, e.target.value)}>
+                          <option value="">Select product</option>
+                          {groups.map(([cat, ps]) => <optgroup key={cat} label={cat}>{ps.map(x => <option key={x.id} value={x.id}>{productLabel(x)}</option>)}</optgroup>)}
+                        </select>
+                      </label>
+                      <label>Quantity{p ? ` (${p.unit})` : ""}
+                        <input type="number" required step="any" min={type === "individual" ? 1 : Number(p?.min_order_quantity ?? 1)} value={l.qty} onChange={e => setLine(l.key, { qty: e.target.value })} placeholder={p && type === "business" ? `Min ${Number(p.min_order_quantity)}` : "1"} />
+                      </label>
+                      {lines.length > 1 && <button type="button" className="req-remove" aria-label="Remove this product" onClick={() => setLines(ls => ls.filter(x => x.key !== l.key))}><Trash2 size={16} /></button>}
+                    </div>
+                  );
+                })}
+                {lines.length < 20 && <button type="button" className="btn outline req-add" onClick={() => setLines(ls => [...ls, { key: newKey(), productId: "", qty: defaultQty(undefined, type) }])}><Plus size={15} /> Add another product</button>}
+                {type === "individual" && estimate > 0 && <p className="req-estimate">Estimated total: <b>{money(estimate)}</b>{estimateComplete ? "" : " (some items need a price from us)"}. We confirm the final price.</p>}
+              </div>
+              <label>{type === "individual" ? "Your name" : "Business / contact name"}<input name="name" required maxLength={120} placeholder={type === "individual" ? "Your name" : "Your name or business"} /></label>
               <label>Phone / WhatsApp<input name="phone" required maxLength={30} placeholder="+251 ..." /></label>
-              <label>Email (optional)<input name="email" type="email" maxLength={160} placeholder="name@business.com" /></label>
-              <label>Product
-                <select value={productId} required onChange={e => setProductId(e.target.value)}>
-                  <option value="">Select product</option>
-                  {products.map(p => <option key={p.id} value={p.id}>{productLabel(p)}</option>)}
-                </select>
-              </label>
-              <label>Required quantity<input name="quantity" type="number" required min={chosen ? Number(chosen.min_order_quantity) : 1} step="any" placeholder={chosen ? `Minimum ${Number(chosen.min_order_quantity)}` : "e.g. 200"} /></label>
-              <label>Unit<input value={unit || "Choose a product first"} readOnly disabled aria-label="Unit" /></label>
+              <label>Email (optional)<input name="email" type="email" maxLength={160} placeholder="name@email.com" /></label>
               <label>Delivery location<input name="location" required maxLength={120} placeholder="City / town" /></label>
-              <label className="full">Additional details<textarea name="notes" rows={3} maxLength={1000} placeholder="Package size, timing or other requirements" /></label>
-              {/* Honeypot: hidden from people, filled by bots. */}
+              <label className="full">Additional details<textarea name="notes" rows={2} maxLength={1000} placeholder="Timing or other requirements" /></label>
               <div className="honeypot" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
               {TURNSTILE_SITE_KEY && <Turnstile onToken={onToken} />}
               {error && <p className="form-error full" role="alert">{error}</p>}
-              {products.length === 0 && <p className="form-error full" role="alert">No products are available to order right now. Please check back soon.</p>}
-              <button className="btn green full" type="submit" disabled={busy || products.length === 0}>{busy ? "Sending…" : "Send Wholesale Enquiry"} <ArrowRight /></button>
+              {products.length === 0 && <p className="form-error full" role="alert">No products are available right now. Please check back soon.</p>}
+              <button className="btn green full" type="submit" disabled={busy || products.length === 0}>{busy ? "Sending…" : "Send request"} <ArrowRight /></button>
             </form>
           </>
         )}
@@ -135,16 +165,22 @@ function QuoteModal({ products, initialProduct, onClose }: { products: PublicPro
 
 export default function PublicHome() {
   const navigate = useNavigate();
+  const contact = useContact();
+  const reach = useChannels();
   const [products, setProducts] = useState<PublicProduct[]>([]);
+  const [industries, setIndustries] = useState<PublicIndustry[]>([]);
+  const [categories, setCategories] = useState<PublicCategory[]>([]);
   const [status, setStatus] = useState<Status>(supabase ? "loading" : "offline");
+  const [mode, setModeState] = useState<Mode>(readMode);
+  const [cart, setCart] = useState<Line[]>([]);
   const [quoteOpen, setQuoteOpen] = useState(false);
-  const [selected, setSelected] = useState("");
+  const [industryId, setIndustryId] = useState("all");
+  const [categoryId, setCategoryId] = useState("all");
+  const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState("top");
-  const [filter, setFilter] = useState("All");
   const [solid, setSolid] = useState(false);
 
-  // Smooth-scroll to a section, leaving room for the sticky header.
   const go = useCallback((id: string) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -156,7 +192,6 @@ export default function PublicHome() {
     setMenuOpen(false);
   }, []);
 
-  // Highlight the section currently on screen.
   useEffect(() => {
     const ids = NAV.map(n => n.id);
     const onScroll = () => {
@@ -176,7 +211,6 @@ export default function PublicHome() {
     return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); };
   }, [products.length]);
 
-  // Open the right section if the page is loaded with a #hash.
   useEffect(() => {
     const id = window.location.hash.slice(1);
     if (id) window.setTimeout(() => go(id), 300);
@@ -184,25 +218,63 @@ export default function PublicHome() {
 
   useEffect(() => {
     if (!supabase) return;
-    supabase.from("public_products").select("*").order("name")
-      .then(({ data, error }) => {
-        if (error) { setStatus("error"); return; }
-        setProducts((data ?? []) as PublicProduct[]);
-        setStatus("ready");
-      });
+    Promise.all([
+      supabase.from("public_products").select("*").order("name"),
+      supabase.from("public_industries").select("*").order("sort_order").order("name"),
+      supabase.from("public_categories").select("*").order("sort_order").order("name"),
+    ]).then(([p, i, c]) => {
+      if (p.error) { setStatus("error"); return; }
+      setProducts((p.data ?? []) as PublicProduct[]);
+      setIndustries(i.error ? [] : ((i.data ?? []) as PublicIndustry[]));
+      setCategories(c.error ? [] : ((c.data ?? []) as PublicCategory[]));
+      setStatus("ready");
+    });
   }, []);
 
-  const openQuote = (productId = "") => { setSelected(productId); setQuoteOpen(true); };
-  const cats = ["All", ...Array.from(new Set(products.map(p => p.category))).sort((a, b) => rank(a) - rank(b))];
-  const current = cats.includes(filter) ? filter : "All";
-  const shown = current === "All" ? products : products.filter(p => p.category === current);
-  const contact = useContact();
-  const reach = useChannels();
+  // Before migration 0005 (or with no industries), fall back to the category names found on the products.
+  const { inds, cats } = useMemo(() => {
+    if (industries.length && categories.length) return { inds: industries, cats: categories };
+    const names = Array.from(new Set(products.map(p => p.category))).sort();
+    return {
+      inds: [{ id: "__all", name: "All products", description: null, icon: "package", sort_order: 0 }] as PublicIndustry[],
+      cats: names.map((n, i) => ({ id: `name:${n}`, industry_id: "__all", name: n, description: null, image_url: null, sort_order: i })) as PublicCategory[],
+    };
+  }, [industries, categories, products]);
+
+  const catById = useMemo(() => new Map(cats.map(c => [c.id, c])), [cats]);
+  const indById = useMemo(() => new Map(inds.map(i => [i.id, i])), [inds]);
+  const visible = useMemo(() => products.filter(p => allows(p, mode)), [products, mode]);
+  const counts = useMemo(() => { const m = new Map<string, number>(); for (const p of visible) m.set(catKey(p), (m.get(catKey(p)) ?? 0) + 1); return m; }, [visible]);
+  const indTabs = inds.filter(i => cats.some(c => c.industry_id === i.id && (counts.get(c.id) ?? 0) > 0));
+  const effIndustry = indTabs.some(i => i.id === industryId) ? industryId : "all";
+  const tiles = cats.filter(c => (effIndustry === "all" || c.industry_id === effIndustry) && (counts.get(c.id) ?? 0) > 0);
+  const effCategory = categoryId !== "all" && tiles.some(c => c.id === categoryId) ? categoryId : "all";
+  const q = search.trim().toLowerCase();
+  const shown = visible.filter(p =>
+    (effCategory === "all" || catKey(p) === effCategory) &&
+    (effIndustry === "all" || catById.get(catKey(p))?.industry_id === effIndustry) &&
+    (!q || `${p.name} ${p.category} ${p.package_size ?? ""}`.toLowerCase().includes(q)));
+
+  const changeMode = (m: Mode) => {
+    setModeState(m);
+    try { localStorage.setItem(MODE_KEY, m); } catch { /* storage unavailable */ }
+    setCart(c => c.filter(l => { const p = products.find(x => x.id === l.productId); return !p || allows(p, m); }));
+  };
+  const inCart = (id: string) => cart.some(l => l.productId === id);
+  const addToRequest = (p: PublicProduct) => {
+    if (inCart(p.id)) { setQuoteOpen(true); return; }
+    setCart(c => [...c, { key: newKey(), productId: p.id, qty: defaultQty(p, mode) }]);
+  };
+  const pickIndustry = (id: string) => { setIndustryId(id); setCategoryId("all"); };
+  const chooseAudience = (m: Mode) => { changeMode(m); go("public-products"); };
+
   const emptyMessage =
     status === "loading" ? "Loading our products…"
     : status === "offline" ? "The product catalogue is not connected yet."
     : status === "error" ? "We could not load the product list. Please refresh the page."
-    : "Our wholesale product list is being updated. Please check back soon or contact us.";
+    : visible.length === 0 && products.length > 0 ? `No products are listed for ${mode === "business" ? "businesses" : "individuals"} yet. Try the other option above.`
+    : q ? "No products match your search."
+    : "Our product list is being updated. Please check back soon or contact us.";
 
   return (
     <div className="public-site">
@@ -215,7 +287,7 @@ export default function PublicHome() {
           ))}
         </nav>
         {contact.phone && <a className="hm-tel" href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}><Phone size={16} /> {contact.phone}</a>}
-        <button className="btn gold hm-quote" onClick={() => openQuote()}>Request a quote</button>
+        <button className="btn gold hm-quote" onClick={() => setQuoteOpen(true)}>Request a price{cart.length > 0 && ` (${cart.length})`}</button>
         <button className="hm-staff" onClick={() => navigate("/login")}>Staff login</button>
         <button className="hm-menu" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -231,28 +303,25 @@ export default function PublicHome() {
       )}
 
       <section className="hm-hero" id="top">
-        <img className="hm-hero-bg" src="/img/warehouse.jpg" alt="Racks and pallets stacked with sacks of rice, flour and cooking oil inside the TradeLink warehouse" />
+        <img className="hm-hero-bg" src="/img/warehouse.jpg" alt="Racks and pallets stacked with goods inside the TradeLink warehouse" />
         <div className="hm-hero-shade" />
         <div className="hm-hero-copy">
-          <h1>Bulk rice, sugar and cooking oil, delivered to your business</h1>
-          <p className="lead">Tell us what you need. An agent replies with a price.</p>
-          <div className="hm-actions">
-            <button className="btn gold hm-big" onClick={() => openQuote()}><ClipboardList size={18} /> Request a wholesale quote</button>
-            <button className="btn ghost hm-big" onClick={() => go("public-products")}>See products</button>
+          <h1>One marketplace for businesses and everyday buyers</h1>
+          <p className="lead">Browse our industries, add what you need and send one request. A real person replies with a price.</p>
+          <div className="hm-audience" role="group" aria-label="Who are you buying for?">
+            <button className={mode === "business" ? "on" : ""} onClick={() => chooseAudience("business")}>
+              <span className="ico"><Briefcase size={22} /></span><span><b>I buy for a business</b><small>Wholesale prices and bulk orders</small></span><ArrowRight size={18} />
+            </button>
+            <button className={mode === "individual" ? "on" : ""} onClick={() => chooseAudience("individual")}>
+              <span className="ico"><User size={22} /></span><span><b>I buy for myself</b><small>Retail prices, any quantity</small></span><ArrowRight size={18} />
+            </button>
           </div>
           {reach.length > 0 && <div className="hm-reach"><span>Talk to us now:</span><ContactPills /></div>}
-          <div className="hm-tags" role="group" aria-label="Start a quote for a product">
-            {TAGS.map(t => (
-              <button key={t.cat} className="hm-tag" onClick={() => openQuote(products.find(p => p.category === t.cat)?.id ?? "")}>
-                <b>{t.cat}</b><small>{t.size}</small>
-              </button>
-            ))}
-          </div>
         </div>
       </section>
 
       <section className="hm-route" aria-labelledby="route-title">
-        <img className="hm-scene" src="/img/port-scene.svg" alt="Illustration of a container ship unloading at a port crane, with a truck loaded with sacks driving past the warehouse" />
+        <img className="hm-scene" src="/img/port-scene.svg" alt="Illustration of a container ship unloading at a port crane, with a truck loaded with goods driving past the warehouse" />
         <div className="hm-route-body">
           <h2 id="route-title">From the port to your door</h2>
           <ol className="hm-route-steps">
@@ -262,56 +331,76 @@ export default function PublicHome() {
       </section>
 
       <section className="hm-section" id="public-products">
-        <div className="hm-head">
-          <h2>Wholesale products</h2>
-          <p>Ask for today’s price.</p>
+        <div className="hm-head hm-shop-head">
+          <div><h2>Shop by industry</h2><p>{mode === "business" ? "Wholesale: ask for today's price and order in bulk." : "Retail: clear prices, order any quantity."}</p></div>
+          <div className="seg seg-light" role="group" aria-label="I am buying as">
+            <button className={mode === "business" ? "on" : ""} aria-pressed={mode === "business"} onClick={() => changeMode("business")}><Briefcase size={15} /> Business</button>
+            <button className={mode === "individual" ? "on" : ""} aria-pressed={mode === "individual"} onClick={() => changeMode("individual")}><User size={15} /> Individual</button>
+          </div>
         </div>
-        <div className="hm-featured">
-          {FEATURED.map(f => (
-            <article key={f.cat} className={`hm-feature ${f.cls}`}>
-              <img src={f.img} alt={f.alt} loading="lazy" />
-              <div className="hm-feature-info">
-                <div><h3>{f.title}</h3><p>{f.size}</p></div>
-                <button className="btn gold" onClick={() => openQuote(products.find(p => p.category === f.cat)?.id ?? "")}>Request a quote</button>
-              </div>
-            </article>
-          ))}
+
+        {indTabs.length > 1 && (
+          <div className="hm-filters hm-industries" role="group" aria-label="Filter by industry">
+            <button className={effIndustry === "all" ? "on" : ""} aria-pressed={effIndustry === "all"} onClick={() => pickIndustry("all")}>All industries</button>
+            {indTabs.map(i => <button key={i.id} className={effIndustry === i.id ? "on" : ""} aria-pressed={effIndustry === i.id} onClick={() => pickIndustry(i.id)}><IconFor name={i.icon} size={15} /> {i.name}</button>)}
+          </div>
+        )}
+
+        {tiles.length > 0 && (
+          <div className="hm-tiles">
+            {tiles.map(c => (
+              <button key={c.id} className={`hm-tile${effCategory === c.id ? " on" : ""}`} aria-pressed={effCategory === c.id} onClick={() => setCategoryId(effCategory === c.id ? "all" : c.id)}>
+                {c.image_url ? <img src={c.image_url} alt="" loading="lazy" /> : <span className="tile-ph"><IconFor name={indById.get(c.industry_id)?.icon} size={34} /></span>}
+                <span className="tile-info"><b>{c.name}</b><small>{counts.get(c.id)} {counts.get(c.id) === 1 ? "product" : "products"}</small></span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="hm-toolbar">
+          <label className="hm-search"><Search size={17} /><input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products" aria-label="Search products" /></label>
+          <span className="hm-count">{shown.length} {shown.length === 1 ? "product" : "products"}{effCategory !== "all" && <button onClick={() => setCategoryId("all")}>Clear category</button>}</span>
         </div>
-        {status === "error" && <p className="hm-empty">{emptyMessage}</p>}
-        {products.length > 0 && (
-          <div className="hm-catalogue">
-            <div className="hm-head hm-sub">
-              <h3>Available now</h3>
-              <div className="hm-filters" role="group" aria-label="Filter by category">
-                {cats.map(c => <button key={c} className={c === current ? "on" : ""} aria-pressed={c === current} onClick={() => setFilter(c)}>{c}</button>)}
-              </div>
-            </div>
-            <div className="hm-grid">
-              {shown.map(p => (
+
+        {shown.length === 0 ? <p className="hm-empty">{emptyMessage}</p> : (
+          <div className="hm-grid">
+            {shown.map(p => {
+              const catImg = catById.get(catKey(p))?.image_url;
+              const img = p.image_url || catImg;
+              const ind = indById.get(catById.get(catKey(p))?.industry_id ?? "");
+              const added = inCart(p.id);
+              return (
                 <article className="hm-card" key={p.id}>
                   <div className="media">
-                    <img src={imageFor(p)} alt={p.name} loading="lazy" />
+                    {img ? <img src={img} alt={p.name} loading="lazy" /> : <div className="ph" role="img" aria-label={p.name}><IconFor name={ind?.icon} size={44} /></div>}
                     <span className="badge">{p.category}</span>
                   </div>
                   <div className="body">
                     <h3>{p.name}</h3>
                     <div className="chips">
                       <span className="chip"><Package size={14} />{p.package_size || p.unit}</span>
-                      <span className="chip gold"><Tag size={14} />Min. {Number(p.min_order_quantity)} {p.unit}</span>
+                      {mode === "business" && <span className="chip gold"><Tag size={14} />Min. {Number(p.min_order_quantity)} {p.unit}</span>}
                     </div>
-                    <button className="btn green cta" onClick={() => openQuote(p.id)}>Request price <ArrowRight size={16} /></button>
-                    <ContactPills message={`Hello TradeLink, I would like a wholesale price for ${productLabel(p)}.`} />
+                    <div className="price">
+                      {mode === "individual" && Number(p.retail_price) > 0
+                        ? <><b>{money(Number(p.retail_price))}</b><small>per {p.unit}</small></>
+                        : <small>{mode === "individual" ? "Ask us for today's price" : "Wholesale price on request"}</small>}
+                    </div>
+                    <button className={`btn cta ${added ? "gold" : "green"}`} onClick={() => addToRequest(p)}>
+                      {added ? <><Check size={16} /> In your request</> : <><Plus size={16} /> Add to request</>}
+                    </button>
+                    <ContactPills message={`Hello TradeLink, I would like ${mode === "individual" ? "a price" : "a wholesale price"} for ${productLabel(p)}.`} />
                   </div>
                 </article>
-              ))}
-            </div>
+              );
+            })}
           </div>
         )}
       </section>
 
       <section className="hm-why" id="why">
         <div className="hm-section hm-about">
-          <div><h2>Built for businesses that buy in volume</h2><p>Steady supply at wholesale prices.</p></div>
+          <div><h2>Built for businesses that buy in volume, and people who don't</h2><p>Steady supply, fair prices and a real person to talk to.</p></div>
           <div className="hm-points">
             {POINTS.map(({ Icon, title, text }) => (
               <div key={title}><span className="hm-ico"><Icon size={24} /></span><h3>{title}</h3><p>{text}</p></div>
@@ -326,7 +415,7 @@ export default function PublicHome() {
             <h2>Order by phone, WhatsApp or Telegram</h2>
             <p>No account needed.</p>
             <ol className="hm-steps">
-              <li><b>Choose a product and quantity</b></li>
+              <li><b>Choose products and quantities</b></li>
               <li><b>Get your price</b></li>
               <li><b>Confirm and receive delivery</b></li>
             </ol>
@@ -335,7 +424,7 @@ export default function PublicHome() {
             {reach.length > 0
               ? <ContactCards />
               : <p className="hm-note">Contact numbers coming soon.</p>}
-            <button className="btn gold hm-big" onClick={() => openQuote()}><ClipboardList size={18} /> Send a quote request</button>
+            <button className="btn gold hm-big" onClick={() => setQuoteOpen(true)}><ClipboardList size={18} /> Send a request</button>
           </div>
         </div>
       </section>
@@ -352,8 +441,14 @@ export default function PublicHome() {
         </div>
       </footer>
 
+      {cart.length > 0 && !quoteOpen && (
+        <div className="hm-cartbar" role="status">
+          <span><b>{cart.length}</b> {cart.length === 1 ? "product" : "products"} in your request</span>
+          <button className="btn gold" onClick={() => setQuoteOpen(true)}>Review &amp; send <ArrowRight size={15} /></button>
+        </div>
+      )}
       <FloatingContact />
-      {quoteOpen && <QuoteModal products={products} initialProduct={selected} onClose={() => setQuoteOpen(false)} />}
+      {quoteOpen && <RequestModal products={products} mode={mode} onMode={changeMode} initial={cart} onLines={setCart} onClose={() => setQuoteOpen(false)} onSent={() => setCart([])} />}
     </div>
   );
 }

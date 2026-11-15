@@ -91,3 +91,8 @@
 .pill-whatsapp{background:#1faa59}.pill-telegram{background:#229ed9}.pill-call{background:var(--deep)}
 .hm-reach .contact-pills{justify-content:flex-start}
 .success-state .contact-pills-wrap{justify-items:center;margin:14px 0}
+/* Logo mark */
+.brand-mark{display:block;flex:none;border-radius:12px;box-shadow:0 2px 8px #062a2133}
+.sidebar .brand-mark{width:40px;height:40px}
+.admin-footer .brand-mark{width:34px;height:34px}
+.login-card .brand-mark{width:48px;height:48px}

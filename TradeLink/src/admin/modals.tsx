@@ -5,7 +5,7 @@ import { errorText, requireSupabase, type Product } from "../lib/supabase";
 import { useAdmin } from "./AdminData";
 
 export function ProductModal({ editing, onClose }: { editing: Product | null; onClose: () => void }) {
-  const { notify, reload } = useAdmin();
+  const { notify, reload, industries, categories } = useAdmin();
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -35,12 +35,14 @@ export function ProductModal({ editing, onClose }: { editing: Product | null; on
     const text = (k: string) => String(f.get(k) ?? "").trim();
     const row: Record<string, unknown> = {
       name: text("name"),
-      category: text("category"),
+      category_id: text("category_id") || null,
       sku: text("sku") || null, // empty SKU must be NULL: SKU is unique and "" would collide
       description: text("description") || null,
       package_size: text("package_size") || null,
       unit: text("unit"),
       wholesale_price: Number(f.get("wholesale_price") || 0),
+      retail_price: Number(f.get("retail_price") || 0),
+      audience: text("audience") || "both",
       min_order_quantity: Number(f.get("min_order_quantity") || 1),
       reorder_level: Number(f.get("reorder_level") || 0),
       active: f.get("active") === "on",
@@ -72,11 +74,23 @@ export function ProductModal({ editing, onClose }: { editing: Product | null; on
         <h2>{editing ? "Edit Product" : "Add Wholesale Product"}</h2>
         <form className="form-grid" onSubmit={save}>
           <label>Product name<input name="name" required defaultValue={editing?.name} /></label>
-          <label>Category<select name="category" defaultValue={editing?.category || "Rice"}><option>Rice</option><option>Sugar</option><option>Cooking Oil</option><option>Other Food Products</option></select></label>
+          <label>Category
+            <select name="category_id" required defaultValue={editing?.category_id || ""}>
+              <option value="" disabled>Choose a category…</option>
+              {industries.map(i => (
+                <optgroup key={i.id} label={i.active ? i.name : `${i.name} (hidden)`}>
+                  {categories.filter(c => c.industry_id === i.id && (c.active || c.id === editing?.category_id)).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </optgroup>
+              ))}
+            </select>
+            {!categories.length && <small>No categories yet. Add them under Industries &amp; Categories first.</small>}
+          </label>
           <label>SKU<input name="sku" defaultValue={editing?.sku || ""} placeholder="e.g. RICE-50 (optional)" /></label>
           <label>Package size<input name="package_size" defaultValue={editing?.package_size || ""} placeholder="e.g. 50kg bag" /></label>
           <label>Unit<select name="unit" defaultValue={editing?.unit || "bag"}><option>bag</option><option>kg</option><option>ton</option><option>container</option><option>carton</option></select></label>
           <label>Wholesale price (ETB)<input name="wholesale_price" type="number" min="0" step="0.01" defaultValue={editing?.wholesale_price || 0} /></label>
+          <label>Retail price (ETB, for individuals)<input name="retail_price" type="number" min="0" step="0.01" defaultValue={editing?.retail_price || 0} /><small>Shown publicly to individual buyers. 0 means "ask for a price".</small></label>
+          <label>Sold to<select name="audience" defaultValue={editing?.audience || "both"}><option value="both">Businesses and individuals</option><option value="b2b">Businesses only (wholesale)</option><option value="b2c">Individuals only (retail)</option></select></label>
           <label>Minimum order quantity<input name="min_order_quantity" type="number" min="1" step="any" defaultValue={editing?.min_order_quantity || 1} /></label>
           <label>Reorder level (low-stock alert)<input name="reorder_level" type="number" min="0" step="any" defaultValue={editing?.reorder_level || 0} /></label>
           {editing

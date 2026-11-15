@@ -1,7 +1,7 @@
 // Public quote form with a Cloudflare Turnstile check.
 // Deploy:  supabase functions deploy submit-quote
 // Secret:  supabase secrets set TURNSTILE_SECRET_KEY=your-turnstile-secret
-// The function verifies the CAPTCHA token, then calls submit_quote() with the service role,
+// The function verifies the CAPTCHA token, then calls submit_request() with the service role,
 // forwarding the visitor's IP so the database rate limits still work per connection.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
@@ -28,9 +28,10 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
       global: { headers: ip ? { "x-forwarded-for": ip } : {} },
     });
-    const { data, error } = await admin.rpc("submit_quote", {
+    const { data, error } = await admin.rpc("submit_request", {
       p_name: b.name ?? "", p_phone: b.phone ?? "", p_email: b.email ?? "", p_location: b.location ?? "",
-      p_product_id: b.product_id, p_quantity: Number(b.quantity), p_notes: b.notes ?? "", p_website: b.website ?? "",
+      p_items: Array.isArray(b.items) ? b.items : [], p_notes: b.notes ?? "", p_website: b.website ?? "",
+      p_customer_type: b.customer_type === "individual" ? "individual" : "business",
     });
     if (error) throw new Error(error.message);
     return json({ quote_number: data });
