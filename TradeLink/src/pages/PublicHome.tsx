@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowRight, Check, ChevronRight, ClipboardList, Cuboid, Droplet, Headset, Package,
-  Menu, ShieldCheck, ShoppingCart, Truck, Users, Wheat, X,
-} from "lucide-react";
+import { ArrowRight, Check, ClipboardList, Menu, Phone, X } from "lucide-react";
 import { Brand } from "../components/Brand";
-import { ContactCards, ContactIcons, FloatingContact, hasContact } from "../components/ContactActions";
+import { ContactCards, ContactIcons, FloatingContact, channels, hasContact } from "../components/ContactActions";
 import { ProductShowcase } from "../components/ProductShowcase";
-import { oilImg, riceImg, sugarImg, warehouseImg } from "../lib/assets";
+import { CONTACT } from "../config";
+import { oilImg, riceImg, sugarImg } from "../lib/assets";
 import { supabase, type PublicProduct } from "../lib/supabase";
+import "./home.css";
 
 const CATEGORIES = ["Rice", "Sugar", "Cooking Oil"];
 const NAV = [
@@ -17,7 +16,13 @@ const NAV = [
   { id: "why", label: "About Us" },
   { id: "contact", label: "Contact" },
 ];
-const categoryImages = [riceImg, sugarImg, oilImg];
+const TAGS = [
+  { cat: "Rice", size: "25kg and 50kg+ bags" },
+  { cat: "Sugar", size: "25kg and 50kg+ bags" },
+  { cat: "Cooking Oil", size: "5L and 20L+ containers" },
+];
+const imageFor = (p: PublicProduct) => p.image_url || (p.category === "Sugar" ? sugarImg : p.category === "Cooking Oil" ? oilImg : riceImg);
+const rank = (c: string) => { const i = CATEGORIES.indexOf(c); return i < 0 ? 99 : i; };
 type Status = "loading" | "ready" | "error" | "offline";
 
 const productLabel = (p: PublicProduct) => (p.package_size ? `${p.name} — ${p.package_size}` : p.name);
@@ -65,7 +70,7 @@ function QuoteModal({ products, initialProduct, onClose }: { products: PublicPro
           </div>
         ) : (
           <>
-            <small className="kicker">TRADELINK · WHOLESALE ENQUIRY</small>
+            <small className="kicker">Wholesale enquiry</small>
             <h2>Request a Wholesale Quote</h2>
             <p>Tell us what products and quantities your business needs.</p>
             <form className="form-grid" onSubmit={submit}>
@@ -103,13 +108,14 @@ export default function PublicHome() {
   const [selected, setSelected] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState("top");
+  const [filter, setFilter] = useState("All");
 
   // Smooth-scroll to a section, leaving room for the sticky header.
   const go = useCallback((id: string) => {
     const el = document.getElementById(id);
     if (!el) return;
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const header = document.querySelector<HTMLElement>(".public-header")?.offsetHeight ?? 80;
+    const header = document.querySelector<HTMLElement>(".hm-header")?.offsetHeight ?? 72;
     const y = id === "top" ? 0 : el.getBoundingClientRect().top + window.scrollY - header + 1;
     window.scrollTo({ top: y, behavior: reduce ? "auto" : "smooth" });
     history.replaceState(null, "", `#${id}`);
@@ -120,7 +126,7 @@ export default function PublicHome() {
   useEffect(() => {
     const ids = NAV.map(n => n.id);
     const onScroll = () => {
-      const header = document.querySelector<HTMLElement>(".public-header")?.offsetHeight ?? 80;
+      const header = document.querySelector<HTMLElement>(".hm-header")?.offsetHeight ?? 72;
       const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
       let current = "top";
       for (const id of ids) {
@@ -152,7 +158,10 @@ export default function PublicHome() {
   }, []);
 
   const openQuote = (productId = "") => { setSelected(productId); setQuoteOpen(true); };
-  const categories = CATEGORIES.map((cat, i) => ({ cat, i, product: products.find(x => x.category === cat) })).filter(c => c.product);
+  const cats = ["All", ...Array.from(new Set(products.map(p => p.category))).sort((a, b) => rank(a) - rank(b))];
+  const current = cats.includes(filter) ? filter : "All";
+  const shown = current === "All" ? products : products.filter(p => p.category === current);
+  const reach = channels();
   const emptyMessage =
     status === "loading" ? "Loading our products…"
     : status === "offline" ? "The product catalogue is not connected yet."
@@ -161,7 +170,7 @@ export default function PublicHome() {
 
   return (
     <div className="public-site">
-      <header className="public-header">
+      <header className="hm-header">
         <a href="#top" className="brand-link" onClick={e => { e.preventDefault(); go("top"); }}><Brand /></a>
         <nav aria-label="Main">
           {NAV.map(n => (
@@ -169,102 +178,106 @@ export default function PublicHome() {
                onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>
           ))}
         </nav>
-        <button className="btn gold" onClick={() => openQuote()}><ClipboardList size={17} /> Request a Quote</button>
-        <button className="admin-link" onClick={() => navigate("/login")}>Staff Login</button>
-        <button className="menu-btn" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>
+        {CONTACT.phone && <a className="hm-tel" href={`tel:${CONTACT.phone.replace(/[^\d+]/g, "")}`}><Phone size={16} /> {CONTACT.phone}</a>}
+        <button className="btn gold hm-quote" onClick={() => openQuote()}>Request a quote</button>
+        <button className="hm-staff" onClick={() => navigate("/login")}>Staff login</button>
+        <button className="hm-menu" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </header>
       {menuOpen && (
-        <div className="mobile-panel" role="menu">
+        <div className="hm-mobile" role="menu">
           {NAV.map(n => (
             <a key={n.id} href={`#${n.id}`} role="menuitem" className={active === n.id ? "active" : ""} onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>
           ))}
-          <a href="/login" role="menuitem" onClick={e => { e.preventDefault(); navigate("/login"); }}>Staff Login</a>
+          <a href="/login" role="menuitem" onClick={e => { e.preventDefault(); navigate("/login"); }}>Staff login</a>
         </div>
       )}
 
-      <section className="public-hero" id="top" style={{ backgroundImage: `linear-gradient(90deg,rgba(2,48,46,.96),rgba(4,75,67,.78) 44%,rgba(4,69,62,.1)),url(${warehouseImg})` }}>
-        <div className="hero-copy">
-          <div className="eyebrow"><i /> QUALITY · TRUST · PARTNERSHIP <i /></div>
-          <h1>Your Trusted Partner in <em>Food Wholesale.</em></h1>
-          <p>Bulk food products at competitive prices.<br />Reliable supply for your business.</p>
-          <button className="btn gold hero-cta" onClick={() => openQuote()}><ClipboardList size={18} /> Request Wholesale Quote <ArrowRight size={18} /></button>
-        </div>
-        <div className="hero-bottom-note"><Package size={17} /> Bulk supply for retailers, distributors and businesses</div>
-      </section>
-
-      <section className="public-section" id="public-products">
-        <div className="section-title"><i /><div><h2>Our Products – Large Quantity Orders</h2><p>Essential food products for your business</p></div><i /></div>
-        <div className="category-grid">
-          {categories.length === 0 && <p className="inline-note">{emptyMessage}</p>}
-          {categories.map(({ cat, i, product: p }) => {
-            if (!p) return null;
-            return (
-              <button className="category-card" key={cat} onClick={() => openQuote(p.id)}>
-                <img src={p.image_url || categoryImages[i]} alt={cat} />
-                <div className="category-label">
-                  <span className="category-icon">{i === 0 ? <Wheat /> : i === 1 ? <Cuboid /> : <Droplet />}</span>
-                  <span><b>{cat}</b><small>{i === 2 ? "Bulk supply (5L / 20L+ containers)" : "Bulk supply (25kg / 50kg+ bags)"}</small></span>
-                  <span className="circle-arrow"><ChevronRight /></span>
-                </div>
+      <section className="hm-hero" id="top">
+        <div className="hm-hero-copy">
+          <h1>Bulk rice, sugar and cooking oil for your business</h1>
+          <p className="lead">Tell us the product and quantity. A TradeLink agent replies with a wholesale price and delivery details.</p>
+          <div className="hm-actions">
+            <button className="btn gold hm-big" onClick={() => openQuote()}><ClipboardList size={18} /> Request a wholesale quote</button>
+            {reach.length > 0 && <div className="hm-reach"><span>Or message us:</span><ContactIcons /></div>}
+          </div>
+          <div className="hm-tags" role="group" aria-label="Start a quote for a product">
+            {TAGS.map(t => (
+              <button key={t.cat} className="hm-tag" onClick={() => openQuote(products.find(p => p.category === t.cat)?.id ?? "")}>
+                <b>{t.cat}</b><small>{t.size}</small>
               </button>
-            );
-          })}
+            ))}
+          </div>
         </div>
+        <ProductShowcase products={products} onQuote={openQuote} />
       </section>
 
-      {products.length > 0 && (
-      <section className="public-section featured-section">
-        <div className="section-title"><i /><div><h2>Featured Wholesale Products</h2><p>Bulk quantities · Competitive wholesale prices</p></div><i /></div>
-        <div className="public-products">
-          {products.slice(0, 6).map(p => (
-            <article className="public-product" key={p.id}>
-              <img src={p.image_url || riceImg} alt={p.name} />
-              <div>
+      <section className="hm-section" id="public-products">
+        <div className="hm-head">
+          <div><h2>Wholesale products</h2><p>Sold in bulk quantities. Ask for today’s price and we’ll reply with a quote.</p></div>
+          {products.length > 0 && (
+            <div className="hm-filters" role="group" aria-label="Filter by category">
+              {cats.map(c => <button key={c} className={c === current ? "on" : ""} aria-pressed={c === current} onClick={() => setFilter(c)}>{c}</button>)}
+            </div>
+          )}
+        </div>
+        {products.length === 0 && <p className="hm-empty">{emptyMessage}</p>}
+        <div className="hm-grid">
+          {shown.map(p => (
+            <article className="hm-card" key={p.id}>
+              <img src={imageFor(p)} alt={p.name} loading="lazy" />
+              <div className="body">
                 <h3>{p.name}</h3>
-                <p>{p.package_size || p.unit} · Large orders</p>
-                <button className="btn green" onClick={() => openQuote(p.id)}><ShoppingCart size={15} /> Request Wholesale Price <ArrowRight size={15} /></button>
-                <ContactIcons message={`Hello TradeLink, I would like a wholesale price for ${productLabel(p)}.`} />
+                <span className="meta">{p.package_size || p.unit}</span>
+                <span className="min">Minimum order: {Number(p.min_order_quantity)} {p.unit}</span>
+                <div className="row">
+                  <button className="btn green" onClick={() => openQuote(p.id)}>Request price <ArrowRight size={15} /></button>
+                  <ContactIcons message={`Hello TradeLink, I would like a wholesale price for ${productLabel(p)}.`} />
+                </div>
               </div>
             </article>
           ))}
         </div>
       </section>
-      )}
 
-      <section className="public-section why-section" id="why">
-        <div className="section-title"><i /><div><h2>Why TradeLink?</h2></div><i /></div>
-        <div className="why-grid">
-          <div><ShieldCheck /><b>Premium Quality</b><p>Trusted food products</p></div>
-          <div><Users /><b>Competitive Prices</b><p>Wholesale value for bulk buyers</p></div>
-          <div><Truck /><b>Reliable Supply</b><p>Organized orders and dependable delivery</p></div>
-          <div><Headset /><b>Dedicated Support</b><p>Our business, our priority</p></div>
+      <section className="hm-section hm-about" id="why">
+        <div><h2>Built for businesses that buy in volume</h2><p>Shops, restaurants and distributors rely on TradeLink for steady supply of everyday staples, at wholesale prices agreed for each order.</p></div>
+        <div className="hm-points">
+          <div><b>Quality you can trust</b><p>Trusted food products, supplied in sealed bulk packaging.</p></div>
+          <div><b>Wholesale pricing</b><p>Prices are quoted per order, so bigger orders get better value.</p></div>
+          <div><b>Reliable supply</b><p>Organised orders and dependable delivery to your location.</p></div>
+          <div><b>A real person to talk to</b><p>Message or call an agent directly. No account needed.</p></div>
         </div>
       </section>
 
-      <section className="contact-section" id="contact">
-        <div className="contact-copy">
-          <small className="kicker">TALK TO US</small>
-          <h2>Order by phone, WhatsApp or Telegram</h2>
-          <p>Tell us the product and quantity. We reply with a wholesale price and delivery details.</p>
-          {hasContact
-            ? <ContactCards />
-            : <p className="inline-note">Contact numbers will appear here soon. You can still send a quote request below.</p>}
-          <button className="btn green" onClick={() => openQuote()}><ClipboardList size={17} /> Or send a quote request <ArrowRight size={17} /></button>
+      <section className="hm-contact" id="contact">
+        <div className="hm-section hm-contact-grid">
+          <div>
+            <h2>Order by phone, WhatsApp or Telegram</h2>
+            <p>You don’t need to register. Contact an agent or send a quote request and we’ll reply with a price.</p>
+            <ol className="hm-steps">
+              <li><b>Choose a product and quantity</b><span>Use the quote form, or message us the details.</span></li>
+              <li><b>An agent sends your price</b><span>You get the wholesale price and delivery details for your order.</span></li>
+              <li><b>Confirm and receive delivery</b><span>Agree the order and we deliver to your location.</span></li>
+            </ol>
+          </div>
+          <div className="hm-contact-panel">
+            {hasContact
+              ? <ContactCards />
+              : <p className="hm-note">Contact numbers will appear here soon. You can still send a quote request.</p>}
+            <button className="btn gold hm-big" onClick={() => openQuote()}><ClipboardList size={18} /> Send a quote request</button>
+          </div>
         </div>
-        <ProductShowcase products={products} onQuote={openQuote} />
       </section>
 
-      <section className="quote-banner">
-        <Package />
-        <div><h2>Need a Large Order?</h2><p>Tell us what you need. We’ll provide a wholesale quotation.</p></div>
-        <button className="btn gold" onClick={() => openQuote()}><ClipboardList /> Request a Wholesale Quote <ArrowRight /></button>
-      </section>
-
-      <footer className="public-footer">
-        <Brand light /><p>Growing Together. Supplying Better.</p>
-        <small>© {new Date().getFullYear()} TradeLink. All rights reserved.</small>
+      <footer className="hm-footer">
+        <div><Brand light /><p>Growing Together. Supplying Better.</p></div>
+        <nav aria-label="Footer">{NAV.map(n => <a key={n.id} href={`#${n.id}`} onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>)}</nav>
+        <div className="hm-footer-contact">
+          {reach.map(c => <a key={c.key} href={c.href} {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{c.label}: {c.detail}</a>)}
+          <small>© {new Date().getFullYear()} TradeLink. All rights reserved.</small>
+        </div>
       </footer>
 
       <FloatingContact />
