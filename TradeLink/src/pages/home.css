@@ -82,16 +82,6 @@
 .hm-filters button:hover{color:var(--ink);border-color:#b9c7c0}
 .hm-filters button.on{background:var(--deep);border-color:var(--deep);color:#fff}
 .hm-empty{padding:28px 0 0;color:var(--muted)}
-.hm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px}
-.hm-card{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
-.hm-card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--bg)}
-.hm-card .body{display:flex;flex-direction:column;gap:5px;padding:16px;flex:1}
-.hm-card h3{margin:0;font-size:19px;font-stretch:100%;line-height:1.25;letter-spacing:-.01em}
-.hm-card .meta{color:var(--muted);font-size:14px}
-.hm-card .min{font-size:13px;font-weight:700;color:var(--deep)}
-.hm-card .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:14px;flex-wrap:wrap}
-.hm-card .btn{min-height:40px;padding:0 14px;font-size:13px}
-.hm-card .contact-icons{margin:0;justify-content:flex-start}
 
 /* About */
 .hm-why{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);scroll-margin-top:72px}
@@ -158,3 +148,30 @@
   .public-site{scroll-behavior:auto}
 }
 .hm-reach .contact-pills-wrap{margin:0}
+
+/* Product cards */
+.hm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:24px}
+.hm-card{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 1px 2px #063d3a0d,0 8px 24px -12px #063d3a26;transition:transform .25s ease,box-shadow .25s ease}
+.hm-card:hover{transform:translateY(-4px);box-shadow:0 2px 4px #063d3a10,0 22px 40px -16px #063d3a40}
+.hm-card .media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--bg)}
+.hm-card .media::after{content:"";position:absolute;inset:auto 0 0 0;height:45%;background:linear-gradient(to top,#063d3a59,transparent);pointer-events:none}
+.hm-card .media img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease}
+.hm-card:hover .media img{transform:scale(1.06)}
+.hm-card .badge{position:absolute;top:14px;left:14px;z-index:1;background:#ffffffeb;color:var(--deep);font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:6px 12px;border-radius:99px;backdrop-filter:blur(6px)}
+.hm-card .body{display:flex;flex-direction:column;gap:14px;padding:20px 20px 22px;flex:1}
+.hm-card h3{margin:0;font-size:22px;font-stretch:100%;line-height:1.2;letter-spacing:-.015em;color:var(--deep)}
+.hm-card .chips{display:flex;flex-wrap:wrap;gap:8px}
+.hm-card .chip{display:inline-flex;align-items:center;gap:6px;background:#eef5f2;color:var(--ocean);font-size:13px;font-weight:700;padding:6px 11px;border-radius:99px}
+.hm-card .chip.gold{background:#fdf3d6;color:#7a5600}
+.hm-card .cta{width:100%;min-height:48px;border-radius:13px;font-size:15px;justify-content:center;margin-top:auto;box-shadow:0 8px 18px -8px #063d3a80}
+.hm-card .contact-pills-wrap{margin:0;position:relative;padding-top:16px}
+.hm-card .contact-pills-wrap::before{content:"or chat now";position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#fff;padding:0 10px;color:var(--muted);font-size:12px;font-weight:600;white-space:nowrap}
+.hm-card .contact-pills-wrap{border-top:1px solid var(--line);margin-top:2px}
+.hm-card .contact-pills{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.hm-card .pill{justify-content:center;min-height:42px;padding:0 8px;border-radius:12px;font-size:13px;font-weight:700;border:1px solid transparent}
+.hm-card .pill-whatsapp{background:#e8f7ee;color:#117a3d;border-color:#c9ecd7}
+.hm-card .pill-telegram{background:#e6f4fb;color:#12709e;border-color:#c6e4f3}
+.hm-card .pill-call{background:#eaf2f0;color:var(--deep);border-color:#d2e3df}
+.hm-card .pill:hover{filter:none;transform:translateY(-1px);box-shadow:0 6px 14px -8px #063d3a66}
+.hm-card .pill-whatsapp:hover{background:#1faa59;color:#fff}.hm-card .pill-telegram:hover{background:#229ed9;color:#fff}.hm-card .pill-call:hover{background:var(--deep);color:#fff}
+@media(prefers-reduced-motion:reduce){.hm-card,.hm-card .media img{transition:none}.hm-card:hover{transform:none}.hm-card:hover .media img{transform:none}}

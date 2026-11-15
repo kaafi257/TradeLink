@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { TURNSTILE_SITE_KEY, Turnstile } from "../components/Turnstile";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Check, ClipboardList, Headphones, Menu, Phone, ShieldCheck, Tag, Truck, X } from "lucide-react";
+import { ArrowRight, Check, ClipboardList, Headphones, Menu, Package, Phone, ShieldCheck, Tag, Truck, X } from "lucide-react";
 import { Brand } from "../components/Brand";
 import { ContactCards, ContactPills, FloatingContact } from "../components/ContactActions";
 import { useChannels, useContact } from "../lib/contact";
@@ -289,15 +289,18 @@ export default function PublicHome() {
             <div className="hm-grid">
               {shown.map(p => (
                 <article className="hm-card" key={p.id}>
-                  <img src={imageFor(p)} alt={p.name} loading="lazy" />
+                  <div className="media">
+                    <img src={imageFor(p)} alt={p.name} loading="lazy" />
+                    <span className="badge">{p.category}</span>
+                  </div>
                   <div className="body">
                     <h3>{p.name}</h3>
-                    <span className="meta">{p.package_size || p.unit}</span>
-                    <span className="min">Minimum order: {Number(p.min_order_quantity)} {p.unit}</span>
-                    <div className="row">
-                      <button className="btn green" onClick={() => openQuote(p.id)}>Request price <ArrowRight size={15} /></button>
+                    <div className="chips">
+                      <span className="chip"><Package size={14} />{p.package_size || p.unit}</span>
+                      <span className="chip gold"><Tag size={14} />Min. {Number(p.min_order_quantity)} {p.unit}</span>
                     </div>
-                    <ContactPills title="Or ask us directly" message={`Hello TradeLink, I would like a wholesale price for ${productLabel(p)}.`} />
+                    <button className="btn green cta" onClick={() => openQuote(p.id)}>Request price <ArrowRight size={16} /></button>
+                    <ContactPills message={`Hello TradeLink, I would like a wholesale price for ${productLabel(p)}.`} />
                   </div>
                 </article>
               ))}
