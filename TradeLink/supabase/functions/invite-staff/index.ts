@@ -16,13 +16,17 @@ Deno.serve(async (req) => {
     const { data: actor } = await userClient.from("profiles").select("role, active").eq("id", user.id).single();
     if (!actor || !actor.active || !["owner", "manager"].includes(actor.role)) throw new Error("Only an active owner or manager can invite staff");
     const { email, full_name, role } = await req.json();
-    if (!email || !full_name || !["manager","sales","inventory","delivery","staff"].includes(role)) throw new Error("Invalid invitation details");
+    if (typeof email !== "string" || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || email.length > 160) throw new Error("Please enter a valid email address");
+    if (typeof full_name !== "string" || full_name.trim().length < 2 || full_name.length > 120) throw new Error("Please enter the staff member's full name");
+    if (!["manager","sales","inventory","delivery","staff"].includes(role)) throw new Error("Invalid invitation details");
     if (role === "manager" && actor.role !== "owner") throw new Error("Only the owner can invite a manager");
     const admin = createClient(url, service);
     const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name } });
     if (error) throw error;
     if (data.user) {
-      await admin.from("profiles").upsert({ id: data.user.id, full_name, email, role, active: true });
+      // If this fails the invitee would silently stay a plain "staff" user, so report it instead of ignoring it.
+      const { error: profileError } = await admin.from("profiles").upsert({ id: data.user.id, full_name, email, role, active: true });
+      if (profileError) throw new Error(`Invitation email was sent, but the role could not be saved: ${profileError.message}. Set the role on the Staff page.`);
       await admin.from("activity_logs").insert({ actor_id: user.id, actor_name: user.email, action: "staff_invited", entity_type: "staff", description: `Invited ${full_name} as ${role}` });
     }
     return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
