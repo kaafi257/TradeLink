@@ -1,21 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { ClipboardList } from "lucide-react";
 import { oilImg, riceImg, sugarImg } from "../lib/assets";
-import type { Product } from "../lib/supabase";
+import type { PublicProduct } from "../lib/supabase";
 import { ContactIcons } from "./ContactActions";
 
-type Slide = { key: string; name: string; sub: string; image: string; product: string };
+type Slide = { key: string; name: string; sub: string; image: string; product: string; productId: string };
 
 const STOCK: Slide[] = [
-  { key: "c-rice", name: "Rice", sub: "Bulk supply · 25kg / 50kg+ bags", image: riceImg, product: "" },
-  { key: "c-sugar", name: "Sugar", sub: "Bulk supply · 25kg / 50kg+ bags", image: sugarImg, product: "" },
-  { key: "c-oil", name: "Cooking Oil", sub: "Bulk supply · 5L / 20L+ containers", image: oilImg, product: "" },
+  { key: "c-rice", name: "Rice", sub: "Bulk supply · 25kg / 50kg+ bags", image: riceImg, product: "", productId: "" },
+  { key: "c-sugar", name: "Sugar", sub: "Bulk supply · 25kg / 50kg+ bags", image: sugarImg, product: "", productId: "" },
+  { key: "c-oil", name: "Cooking Oil", sub: "Bulk supply · 5L / 20L+ containers", image: oilImg, product: "", productId: "" },
 ];
 
 /** Crossfading product photos with a slow zoom. Uses real products that have an image; stock photos otherwise. */
-export function ProductShowcase({ products, onQuote }: { products: Product[]; onQuote: (name: string) => void }) {
+export function ProductShowcase({ products, onQuote }: { products: PublicProduct[]; onQuote: (productId: string) => void }) {
   const real: Slide[] = products.filter(p => p.image_url).slice(0, 6)
-    .map(p => ({ key: p.id, name: p.name, sub: `${p.package_size || p.unit} · Large orders`, image: p.image_url!, product: p.name }));
+    .map(p => ({ key: p.id, name: p.name, sub: `${p.package_size || p.unit} · Large orders`, image: p.image_url!, product: p.package_size ? `${p.name} (${p.package_size})` : p.name, productId: p.id }));
   const slides = real.length ? real : STOCK;
 
   const [index, setIndex] = useState(0);
@@ -49,7 +49,7 @@ export function ProductShowcase({ products, onQuote }: { products: Product[]; on
         </div>
         <div className="showcase-actions">
           <ContactIcons message={message} />
-          <button className="btn gold" onClick={() => onQuote(s.product)}><ClipboardList size={15} /> Quote</button>
+          <button className="btn gold" onClick={() => onQuote(s.productId)}><ClipboardList size={15} /> Quote</button>
         </div>
       </div>
       {count > 1 && (
