@@ -1,11 +1,33 @@
-import { useState, type FormEvent } from "react";
-import { ArrowRight, X } from "lucide-react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { ArrowRight, ImagePlus, X } from "lucide-react";
+import { IMAGE_ACCEPT, checkImage, removeProductImage, uploadProductImage } from "../lib/upload";
 import { requireSupabase, type Product } from "../lib/supabase";
 import { useAdmin } from "./AdminData";
 
 export function ProductModal({ editing, onClose }: { editing: Product | null; onClose: () => void }) {
   const { notify, reload } = useAdmin();
   const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [removed, setRemoved] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!file) { setPreview(null); return; }
+    const u = URL.createObjectURL(file);
+    setPreview(u);
+    return () => URL.revokeObjectURL(u);
+  }, [file]);
+  const shown = preview ?? (removed ? null : editing?.image_url ?? null);
+
+  const pick = (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    const problem = checkImage(f);
+    if (problem) { notify(problem); return; }
+    setFile(f); setRemoved(false);
+  };
 
   const save = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -16,7 +38,6 @@ export function ProductModal({ editing, onClose }: { editing: Product | null; on
       category: text("category"),
       sku: text("sku") || null, // empty SKU must be NULL: SKU is unique and "" would collide
       description: text("description") || null,
-      image_url: text("image_url") || null,
       package_size: text("package_size") || null,
       unit: text("unit"),
       wholesale_price: Number(f.get("wholesale_price") || 0),
@@ -29,8 +50,10 @@ export function ProductModal({ editing, onClose }: { editing: Product | null; on
     setBusy(true);
     try {
       const s = requireSupabase();
+      row.image_url = file ? await uploadProductImage(file) : removed ? null : editing?.image_url ?? null;
       const result = editing ? await s.from("products").update(row).eq("id", editing.id) : await s.from("products").insert(row);
       if (result.error) throw result.error;
+      if ((file || removed) && editing?.image_url) void removeProductImage(editing.image_url);
       notify("Product saved successfully.");
       onClose();
       await reload();
@@ -57,10 +80,22 @@ export function ProductModal({ editing, onClose }: { editing: Product | null; on
           {editing
             ? <label>Available stock<input value={`${editing.stock_quantity} ${editing.unit}`} disabled readOnly /><small>Change it from Inventory → Adjust.</small></label>
             : <label>Opening stock<input name="stock_quantity" type="number" min="0" step="any" defaultValue={0} /></label>}
-          <label className="full">Product image URL<input name="image_url" type="url" defaultValue={editing?.image_url || ""} placeholder="https://..." /></label>
+          <div className="full image-field">
+            <span className="image-label">Product image</span>
+            <div className="image-drop">
+              {shown
+                ? <img src={shown} alt="Product preview" />
+                : <div className="image-empty"><ImagePlus /><b>No image yet</b><small>JPG, PNG or WebP. Large photos are resized automatically.</small></div>}
+              <div className="image-actions">
+                <button type="button" className="btn outline" onClick={() => fileRef.current?.click()}><ImagePlus /> {shown ? "Replace image" : "Choose image"}</button>
+                {shown && <button type="button" className="btn outline" onClick={() => { setFile(null); setRemoved(true); }}>Remove</button>}
+              </div>
+              <input ref={fileRef} type="file" accept={IMAGE_ACCEPT} onChange={pick} hidden />
+            </div>
+          </div>
           <label className="full">Description<textarea name="description" rows={2} defaultValue={editing?.description || ""} /></label>
           <label className="checkbox-label full"><input name="active" type="checkbox" defaultChecked={editing?.active ?? true} /> Product is active and visible on public website</label>
-          <button className="btn green full" type="submit" disabled={busy}>{editing ? "Save Changes" : "Add Product"} <ArrowRight /></button>
+          <button className="btn green full" type="submit" disabled={busy}>{busy ? (file ? "Uploading image…" : "Saving…") : editing ? "Save Changes" : "Add Product"} <ArrowRight /></button>
         </form>
       </div>
     </div>
