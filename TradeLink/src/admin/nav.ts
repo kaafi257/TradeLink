@@ -10,7 +10,7 @@ export const NAV: NavItem[] = [
   { path: "/admin", label: "Dashboard", icon: Home, roles: "all", end: true },
   { path: "/admin/products", label: "Products", icon: Box, roles: ["owner", "manager", "sales", "inventory", "delivery"] },
   { path: "/admin/quotations", label: "Orders & Quotations", icon: FileText, roles: ["owner", "manager", "sales"] },
-  { path: "/admin/sales", label: "Sales & Deliveries", icon: Truck, roles: ["owner", "manager", "sales", "delivery"] },
+  { path: "/admin/sales", label: "Sales & Deliveries", icon: Truck, roles: ["owner", "manager", "sales"] },
   { path: "/admin/staff", label: "Staff Management", icon: Users, roles: ["owner", "manager"] },
   { path: "/admin/inventory", label: "Inventory", icon: Boxes, roles: ["owner", "manager", "inventory"] },
   { path: "/admin/reports", label: "Reports & Analytics", icon: ChartNoAxesCombined, roles: ["owner", "manager"] },

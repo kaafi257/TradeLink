@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ArrowRight, X } from "lucide-react";
-import { logActivity, requireSupabase, type Product } from "../lib/supabase";
+import { requireSupabase, type Product } from "../lib/supabase";
 import { useAdmin } from "./AdminData";
 
 export function ProductModal({ editing, onClose }: { editing: Product | null; onClose: () => void }) {
@@ -31,7 +31,6 @@ export function ProductModal({ editing, onClose }: { editing: Product | null; on
       const s = requireSupabase();
       const result = editing ? await s.from("products").update(row).eq("id", editing.id) : await s.from("products").insert(row);
       if (result.error) throw result.error;
-      await logActivity(editing ? "product_updated" : "product_created", "product", `${editing ? "Updated" : "Added"} product ${row.name}`);
       notify("Product saved successfully.");
       onClose();
       await reload();
@@ -89,8 +88,7 @@ export function StockModal({ product, onClose }: { product: Product; onClose: ()
         p_product: product.id, p_type: String(f.get("type")), p_quantity: Number(f.get("quantity")), p_notes: String(f.get("notes") ?? ""),
       });
       if (error) throw error;
-      await logActivity("stock_adjusted", "inventory", `Stock of ${product.name} is now ${data} ${product.unit}`);
-      notify("Stock updated.");
+      notify(`Stock updated. ${product.name} is now ${data} ${product.unit}.`);
       onClose();
       await reload();
     } catch (err) {

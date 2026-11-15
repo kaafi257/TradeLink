@@ -78,7 +78,7 @@ function Shell() {
             <Route index element={<Dashboard />} />
             <Route path="products" element={g(["owner", "manager", "sales", "inventory", "delivery"], <Products />)} />
             <Route path="quotations" element={g(["owner", "manager", "sales"], <Quotations />)} />
-            <Route path="sales" element={g(["owner", "manager", "sales", "delivery"], <SalesPage />)} />
+            <Route path="sales" element={g(["owner", "manager", "sales"], <SalesPage />)} />
             <Route path="staff" element={g(["owner", "manager"], <Staff />)} />
             <Route path="inventory" element={g(["owner", "manager", "inventory"], <Inventory />)} />
             <Route path="reports" element={g(["owner", "manager"], <Reports />)} />
