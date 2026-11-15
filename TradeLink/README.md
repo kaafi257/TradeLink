@@ -9,7 +9,7 @@ A React + TypeScript + Vite wholesale business website with a public customer ho
 - Product catalogue create/edit, public catalogue reads from the same Supabase database.
 - Quotations list and status workflow.
 - Inventory overview, staff directory, customer enquiry directory, activity log, reports and settings pages.
-- Supabase SQL schema with RLS policies, role helper functions and profile creation trigger.
+- One Supabase SQL migration with RLS policies, role helpers, append-only audit tables, trigger-written activity log and a public catalogue view.
 - Supabase Edge Function starter for securely inviting staff.
 - Vercel SPA rewrite configuration.
 
@@ -17,15 +17,15 @@ A React + TypeScript + Vite wholesale business website with a public customer ho
 Install Node.js 20+ then:
 ```bash
 npm install
-cp .env.example .env.local
+cp .env.example .env.local   # then edit .env.local (it is git-ignored)
 npm run dev
 ```
 Open the local URL printed by Vite.
 
 ## 2. Configure Supabase
 1. Create a Supabase project.
-2. Open SQL Editor and run `supabase/migrations/0001_tradelink_schema.sql`, then `0002_security_hardening.sql` (both are safe to re-run).
-   0002 adds: role-escalation protection, database-stamped activity log, validated + rate-limited quote submission, and recorded stock adjustments.
+2. Open SQL Editor and run `supabase/migrations/0001_tradelink_schema.sql` **once**. It is the only migration: it is idempotent and always ends in the hardened state, so re-running it is safe. If you already ran the old 0001/0002, just run this file once over them (it also upgrades the quote function, so redeploy the site code at the same time).
+   It provides: role-escalation protection (only an owner can touch owner/manager accounts), an append-only inventory ledger and sales table, an activity log written only by database triggers, validated and rate-limited quote submission, and a `public_products` view so the public site never sees prices or stock.
 3. In Project Settings → API, copy the Project URL and publishable key (or legacy anon key).
 4. Put them in `.env.local`:
 ```env
@@ -63,7 +63,7 @@ supabase secrets set SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVICE_ROLE_KEY
 The function uses the service-role key server-side only. It is not exposed to the browser. The Staff Management page has an invitation form that calls this function. Only the owner can invite a manager.
 
 ## 7. GitHub and Vercel
-1. Create a GitHub repository and upload the contents of this folder (not the ZIP itself).
+1. Create a GitHub repository and upload the contents of this folder (not the ZIP itself). `.gitignore` keeps `.env.local` and `node_modules` out; check that no keys are committed.
 2. In Vercel, import that GitHub repository.
 3. Framework preset: Vite. Build command: `npm run build`. Output directory: `dist`.
 4. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel → Project Settings → Environment Variables.
@@ -77,12 +77,15 @@ The function uses the service-role key server-side only. It is not exposed to th
 - Add the real business contact details and support channels.
 - Connect sales/order creation, inventory movement RPC transactions, payment reconciliation, delivery assignment, expenses and profit reports to agreed business workflows. The current project includes their database foundations and dashboard sections but does not yet implement every transaction workflow.
 - Granular per-action permissions are not implemented; RLS uses role-based module access (the menu mirrors it).
-- Consider adding Cloudflare Turnstile/hCaptcha to the public quote form. Today it has a honeypot field plus a database rate limit (3 requests per phone per hour, 100 per hour overall).
+- Consider adding Cloudflare Turnstile/hCaptcha to the public quote form. Today it has a honeypot field plus database rate limits (3 per phone, 8 per connection and 300 overall, per hour). Rate limiting by connection relies on the `x-forwarded-for` header Supabase passes to the database.
 - Orders, deliveries and sales recording screens are still to be built; the Sales page lists rows from the `sales` table once they exist.
 - Configure Storage buckets and policies if you want image uploads rather than image URLs.
-- Review and test RLS policies with anon, each staff role and owner before production.
+- Review and test RLS policies with anon, each staff role and owner before production. (The policies were exercised against a local Postgres: public cannot read `products`; inventory movements, sales and the activity log cannot be edited or deleted through the API; managers cannot change other managers.)
+- `npm audit` reports 2 moderate advisories in `react-router` 6.x; their fix needs the v7 upgrade. They concern SSR hydration and backslash redirects, which this client-only app does not use, but plan the upgrade.
+- Security headers (CSP etc.) are set in `vercel.json`. If you load images or scripts from new hosts, add them to the CSP.
 - Add email notifications and backups as required.
-- Charts and KPIs show only recorded sales; with no sales they show an empty state.
+- Charts and KPIs show only recorded sales (summed in the database by `sales_by_day`); with no sales they show an empty state.
+- The quote workflow is still only an inbox: staff cannot yet price a quote, convert it to an order, record the sale or deduct stock from the app.
 
 ## App structure
 - `src/pages` public site and login · `src/admin` signed-in workspace (lazy-loaded) · `src/lib` Supabase client, auth, formatting.
