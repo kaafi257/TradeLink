@@ -6,10 +6,9 @@ import type { Activity } from "../lib/supabase";
 export function Stat({ icon, color, value, label, note }: { icon: ReactNode; color: string; value: string; label: string; note: string }) {
   return (
     <div className={`stat-card ${color}`}>
-      <div className="stat-icon">{icon}</div>
-      <div className="stat-copy"><b>{value}</b><small>{label}</small></div>
+      <div className="stat-top"><span className="stat-icon">{icon}</span>{label}</div>
+      <b>{value}</b>
       <span className="stat-trend">{note}</span>
-      <div className="sparkline" />
     </div>
   );
 }
