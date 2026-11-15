@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { ArrowRight, ImagePlus, X } from "lucide-react";
 import { IMAGE_ACCEPT, checkImage, removeProductImage, uploadProductImage } from "../lib/upload";
-import { requireSupabase, type Product } from "../lib/supabase";
+import { errorText, requireSupabase, type Product } from "../lib/supabase";
 import { useAdmin } from "./AdminData";
 
 export function ProductModal({ editing, onClose }: { editing: Product | null; onClose: () => void }) {
@@ -48,9 +48,10 @@ export function ProductModal({ editing, onClose }: { editing: Product | null; on
     // Opening stock is allowed on creation only; afterwards stock changes go through Inventory → Adjust.
     if (!editing) row.stock_quantity = Number(f.get("stock_quantity") || 0);
     setBusy(true);
+    let uploaded: string | null = null;
     try {
       const s = requireSupabase();
-      row.image_url = file ? await uploadProductImage(file) : removed ? null : editing?.image_url ?? null;
+      row.image_url = file ? (uploaded = await uploadProductImage(file)) : removed ? null : editing?.image_url ?? null;
       const result = editing ? await s.from("products").update(row).eq("id", editing.id) : await s.from("products").insert(row);
       if (result.error) throw result.error;
       if ((file || removed) && editing?.image_url) void removeProductImage(editing.image_url);
@@ -58,7 +59,8 @@ export function ProductModal({ editing, onClose }: { editing: Product | null; on
       onClose();
       await reload();
     } catch (err) {
-      notify(err instanceof Error ? err.message : "Could not save product");
+      if (uploaded) void removeProductImage(uploaded); // do not leave an unused image behind
+      notify(errorText(err, "Could not save product"));
     } finally { setBusy(false); }
   };
 
@@ -127,7 +129,7 @@ export function StockModal({ product, onClose }: { product: Product; onClose: ()
       onClose();
       await reload();
     } catch (err) {
-      notify(err instanceof Error ? err.message : "Could not adjust stock");
+      notify(errorText(err, "Could not adjust stock"));
     } finally { setBusy(false); }
   };
 
