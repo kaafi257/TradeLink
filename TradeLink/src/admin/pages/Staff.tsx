@@ -35,11 +35,11 @@ export default function Staff() {
     setBusy(true);
     try {
       const { data, error } = await requireSupabase().functions.invoke("invite-staff", {
-        body: { email: String(f.get("email")).trim(), full_name: String(f.get("full_name")).trim(), role: String(f.get("role")), redirect_to: `${window.location.origin}/set-password` },
+        body: { email: String(f.get("email")).trim(), full_name: String(f.get("full_name")).trim(), role: String(f.get("role")), password: String(f.get("password") ?? ""), redirect_to: `${window.location.origin}/set-password` },
       });
       if (error) throw new Error(await inviteError(error));
       if (data?.error) throw new Error(data.error);
-      notify("Invitation sent. They will get an email to set their password.");
+      notify(String(f.get("password") ?? "") ? "Account created. Give them the email and password you typed." : "Invitation sent. They will get an email to set their password.");
       form.reset();
       await reload();
     } catch (err) { notify(err instanceof Error ? err.message : "Could not send invitation"); }
@@ -58,12 +58,13 @@ export default function Staff() {
   return (
     <>
       <PageHeading title="Staff Management" sub="Invite employees and manage their access roles." />
-      <div className="info-banner"><ShieldCheck /> Invitations are sent by a secure server function. Only the owner can grant the manager role.</div>
+      <div className="info-banner"><ShieldCheck /> Add staff by email invitation (they choose their own password) or type a password yourself and give it to them. Only the owner can grant the manager role.</div>
       <form className="inline-form" onSubmit={invite}>
         <label>Full name<input name="full_name" required placeholder="Staff member name" /></label>
         <label>Email<input name="email" type="email" required placeholder="name@company.com" /></label>
+        <label>Password (optional)<input name="password" type="text" minLength={8} autoComplete="off" placeholder="Leave empty to email an invite" /></label>
         <label>Role<select name="role" defaultValue="staff">{assignable.map(r => <option key={r}>{r}</option>)}</select></label>
-        <button className="btn green" disabled={busy}>{busy ? "Sending…" : "Send invitation"}</button>
+        <button className="btn green" disabled={busy}>{busy ? "Saving…" : "Add staff"}</button>
       </form>
       <DataTable headers={["Staff member", "Email", "Role", "Account status"]} isEmpty={!rows.length} empty="No staff profiles found.">
         {rows.map(m => (
