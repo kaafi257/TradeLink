@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Check, ClipboardList, Menu, Phone, X } from "lucide-react";
+import { ArrowRight, Check, ClipboardList, Headphones, Menu, Phone, ShieldCheck, Tag, Truck, X } from "lucide-react";
 import { Brand } from "../components/Brand";
 import { ContactCards, ContactIcons, FloatingContact, channels, hasContact } from "../components/ContactActions";
-import { ProductShowcase } from "../components/ProductShowcase";
 import { CONTACT } from "../config";
 import { oilImg, riceImg, sugarImg } from "../lib/assets";
 import { supabase, type PublicProduct } from "../lib/supabase";
@@ -20,6 +19,18 @@ const TAGS = [
   { cat: "Rice", size: "25kg and 50kg+ bags" },
   { cat: "Sugar", size: "25kg and 50kg+ bags" },
   { cat: "Cooking Oil", size: "5L and 20L+ containers" },
+];
+const FEATURED = [
+  { cat: "Rice", title: "Rice", size: "25kg and 50kg bags", img: "/img/rice.jpg", cls: "rice", alt: "Stacked 50kg sacks of basmati rice on wooden pallets" },
+  { cat: "Sugar", title: "Sugar", size: "25kg and 50kg+ bags", img: "/img/sugar.jpg", cls: "sugar", alt: "Two 50kg sacks of refined cane sugar beside open sacks of lentils and chickpeas" },
+  { cat: "Cooking Oil", title: "Cooking oil", size: "5L and 20L+ containers", img: "/img/oil.jpg", cls: "oil", alt: "Stacked 20 litre jerrycans and cartons of cooking oil in a warehouse" },
+];
+const ROUTE = ["Shipped in bulk", "Cleared at the port", "Stored and ready", "Delivered to you"];
+const POINTS = [
+  { Icon: ShieldCheck, title: "Quality you can trust", text: "Sealed bulk packaging." },
+  { Icon: Tag, title: "Wholesale pricing", text: "Priced per order." },
+  { Icon: Truck, title: "Reliable supply", text: "Dependable delivery." },
+  { Icon: Headphones, title: "A real person to talk to", text: "No account needed." },
 ];
 const imageFor = (p: PublicProduct) => p.image_url || (p.category === "Sugar" ? sugarImg : p.category === "Cooking Oil" ? oilImg : riceImg);
 const rank = (c: string) => { const i = CATEGORIES.indexOf(c); return i < 0 ? 99 : i; };
@@ -109,6 +120,7 @@ export default function PublicHome() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState("top");
   const [filter, setFilter] = useState("All");
+  const [solid, setSolid] = useState(false);
 
   // Smooth-scroll to a section, leaving room for the sticky header.
   const go = useCallback((id: string) => {
@@ -134,6 +146,7 @@ export default function PublicHome() {
         if (el && el.getBoundingClientRect().top <= header + 120) current = id;
       }
       setActive(atBottom ? "contact" : current);
+      setSolid(window.scrollY > 24);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -170,8 +183,8 @@ export default function PublicHome() {
 
   return (
     <div className="public-site">
-      <header className="hm-header">
-        <a href="#top" className="brand-link" onClick={e => { e.preventDefault(); go("top"); }}><Brand /></a>
+      <header className={`hm-header${solid || menuOpen ? " solid" : ""}`}>
+        <a href="#top" className="brand-link" onClick={e => { e.preventDefault(); go("top"); }}><Brand light /></a>
         <nav aria-label="Main">
           {NAV.map(n => (
             <a key={n.id} href={`#${n.id}`} className={active === n.id ? "active" : ""} aria-current={active === n.id ? "true" : undefined}
@@ -195,13 +208,16 @@ export default function PublicHome() {
       )}
 
       <section className="hm-hero" id="top">
+        <img className="hm-hero-bg" src="/img/warehouse.jpg" alt="Racks and pallets stacked with sacks of rice, flour and cooking oil inside the TradeLink warehouse" />
+        <div className="hm-hero-shade" />
         <div className="hm-hero-copy">
-          <h1>Bulk rice, sugar and cooking oil for your business</h1>
-          <p className="lead">Tell us the product and quantity. A TradeLink agent replies with a wholesale price and delivery details.</p>
+          <h1>Bulk rice, sugar and cooking oil, delivered to your business</h1>
+          <p className="lead">Tell us what you need. An agent replies with a price.</p>
           <div className="hm-actions">
             <button className="btn gold hm-big" onClick={() => openQuote()}><ClipboardList size={18} /> Request a wholesale quote</button>
-            {reach.length > 0 && <div className="hm-reach"><span>Or message us:</span><ContactIcons /></div>}
+            <button className="btn ghost hm-big" onClick={() => go("public-products")}>See products</button>
           </div>
+          {reach.length > 0 && <div className="hm-reach"><span>Or message us:</span><ContactIcons /></div>}
           <div className="hm-tags" role="group" aria-label="Start a quote for a product">
             {TAGS.map(t => (
               <button key={t.cat} className="hm-tag" onClick={() => openQuote(products.find(p => p.category === t.cat)?.id ?? "")}>
@@ -210,44 +226,71 @@ export default function PublicHome() {
             ))}
           </div>
         </div>
-        <ProductShowcase products={products} onQuote={openQuote} />
+      </section>
+
+      <section className="hm-route" aria-labelledby="route-title">
+        <img className="hm-scene" src="/img/port-scene.svg" alt="Illustration of a container ship unloading at a port crane, with a truck loaded with sacks driving past the warehouse" />
+        <div className="hm-route-body">
+          <h2 id="route-title">From the port to your door</h2>
+          <ol className="hm-route-steps">
+            {ROUTE.map(r => <li key={r}><h3>{r}</h3></li>)}
+          </ol>
+        </div>
       </section>
 
       <section className="hm-section" id="public-products">
         <div className="hm-head">
-          <div><h2>Wholesale products</h2><p>Sold in bulk quantities. Ask for today’s price and we’ll reply with a quote.</p></div>
-          {products.length > 0 && (
-            <div className="hm-filters" role="group" aria-label="Filter by category">
-              {cats.map(c => <button key={c} className={c === current ? "on" : ""} aria-pressed={c === current} onClick={() => setFilter(c)}>{c}</button>)}
-            </div>
-          )}
+          <h2>Wholesale products</h2>
+          <p>Ask for today’s price.</p>
         </div>
-        {products.length === 0 && <p className="hm-empty">{emptyMessage}</p>}
-        <div className="hm-grid">
-          {shown.map(p => (
-            <article className="hm-card" key={p.id}>
-              <img src={imageFor(p)} alt={p.name} loading="lazy" />
-              <div className="body">
-                <h3>{p.name}</h3>
-                <span className="meta">{p.package_size || p.unit}</span>
-                <span className="min">Minimum order: {Number(p.min_order_quantity)} {p.unit}</span>
-                <div className="row">
-                  <button className="btn green" onClick={() => openQuote(p.id)}>Request price <ArrowRight size={15} /></button>
-                  <ContactIcons message={`Hello TradeLink, I would like a wholesale price for ${productLabel(p)}.`} />
-                </div>
+        <div className="hm-featured">
+          {FEATURED.map(f => (
+            <article key={f.cat} className={`hm-feature ${f.cls}`}>
+              <img src={f.img} alt={f.alt} loading="lazy" />
+              <div className="hm-feature-info">
+                <div><h3>{f.title}</h3><p>{f.size}</p></div>
+                <button className="btn gold" onClick={() => openQuote(products.find(p => p.category === f.cat)?.id ?? "")}>Request a quote</button>
               </div>
             </article>
           ))}
         </div>
+        {status === "error" && <p className="hm-empty">{emptyMessage}</p>}
+        {products.length > 0 && (
+          <div className="hm-catalogue">
+            <div className="hm-head hm-sub">
+              <h3>Available now</h3>
+              <div className="hm-filters" role="group" aria-label="Filter by category">
+                {cats.map(c => <button key={c} className={c === current ? "on" : ""} aria-pressed={c === current} onClick={() => setFilter(c)}>{c}</button>)}
+              </div>
+            </div>
+            <div className="hm-grid">
+              {shown.map(p => (
+                <article className="hm-card" key={p.id}>
+                  <img src={imageFor(p)} alt={p.name} loading="lazy" />
+                  <div className="body">
+                    <h3>{p.name}</h3>
+                    <span className="meta">{p.package_size || p.unit}</span>
+                    <span className="min">Minimum order: {Number(p.min_order_quantity)} {p.unit}</span>
+                    <div className="row">
+                      <button className="btn green" onClick={() => openQuote(p.id)}>Request price <ArrowRight size={15} /></button>
+                      <ContactIcons message={`Hello TradeLink, I would like a wholesale price for ${productLabel(p)}.`} />
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
-      <section className="hm-section hm-about" id="why">
-        <div><h2>Built for businesses that buy in volume</h2><p>Shops, restaurants and distributors rely on TradeLink for steady supply of everyday staples, at wholesale prices agreed for each order.</p></div>
-        <div className="hm-points">
-          <div><b>Quality you can trust</b><p>Trusted food products, supplied in sealed bulk packaging.</p></div>
-          <div><b>Wholesale pricing</b><p>Prices are quoted per order, so bigger orders get better value.</p></div>
-          <div><b>Reliable supply</b><p>Organised orders and dependable delivery to your location.</p></div>
-          <div><b>A real person to talk to</b><p>Message or call an agent directly. No account needed.</p></div>
+      <section className="hm-why" id="why">
+        <div className="hm-section hm-about">
+          <div><h2>Built for businesses that buy in volume</h2><p>Steady supply at wholesale prices.</p></div>
+          <div className="hm-points">
+            {POINTS.map(({ Icon, title, text }) => (
+              <div key={title}><span className="hm-ico"><Icon size={24} /></span><h3>{title}</h3><p>{text}</p></div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -255,17 +298,17 @@ export default function PublicHome() {
         <div className="hm-section hm-contact-grid">
           <div>
             <h2>Order by phone, WhatsApp or Telegram</h2>
-            <p>You don’t need to register. Contact an agent or send a quote request and we’ll reply with a price.</p>
+            <p>No account needed.</p>
             <ol className="hm-steps">
-              <li><b>Choose a product and quantity</b><span>Use the quote form, or message us the details.</span></li>
-              <li><b>An agent sends your price</b><span>You get the wholesale price and delivery details for your order.</span></li>
-              <li><b>Confirm and receive delivery</b><span>Agree the order and we deliver to your location.</span></li>
+              <li><b>Choose a product and quantity</b></li>
+              <li><b>Get your price</b></li>
+              <li><b>Confirm and receive delivery</b></li>
             </ol>
           </div>
           <div className="hm-contact-panel">
             {hasContact
               ? <ContactCards />
-              : <p className="hm-note">Contact numbers will appear here soon. You can still send a quote request.</p>}
+              : <p className="hm-note">Contact numbers coming soon.</p>}
             <button className="btn gold hm-big" onClick={() => openQuote()}><ClipboardList size={18} /> Send a quote request</button>
           </div>
         </div>
