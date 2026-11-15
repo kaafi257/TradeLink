@@ -1,4 +1,4 @@
-import type { SaleRow } from "./supabase";
+import type { SalesPoint } from "./supabase";
 
 export const money = (n: number) => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(n) + " ETB";
 export const shortDate = (v: string) =>
@@ -8,7 +8,7 @@ export type Range = "This Month" | "Last Month" | "This Year";
 export const RANGES: Range[] = ["This Month", "Last Month", "This Year"];
 
 /** Real sales totals grouped by day (month views) or by month (year view). */
-export function buildSeries(sales: SaleRow[], range: Range) {
+export function buildSeries(sales: SalesPoint[], range: Range) {
   const now = new Date();
   if (range === "This Year") {
     const months = Array.from({ length: 12 }, (_, m) => ({
