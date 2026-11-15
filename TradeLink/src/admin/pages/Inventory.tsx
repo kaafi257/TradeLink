@@ -14,13 +14,12 @@ export default function Inventory() {
   const [adjusting, setAdjusting] = useState<Product | null>(null);
   const s = search.toLowerCase();
   const rows = products.filter(p => `${p.name} ${p.sku || ""}`.toLowerCase().includes(s));
-  const totalStock = products.reduce((n, p) => n + Number(p.stock_quantity || 0), 0);
 
   return (
     <>
       <PageHeading title="Inventory Management" sub="Monitor available stock and record every stock movement." />
       <div className="summary-strip">
-        <div><b>{totalStock.toLocaleString()}</b><small>Total stock units</small></div>
+        <div><b>{products.filter(p => levelOf(p) === "ok").length}</b><small>In stock</small></div>
         <div><b>{products.filter(p => levelOf(p) === "low").length}</b><small>Low stock items</small></div>
         <div><b>{products.filter(p => levelOf(p) === "out").length}</b><small>Out of stock</small></div>
         <div><b>{products.length}</b><small>Tracked products</small></div>

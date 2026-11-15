@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { ShieldCheck } from "lucide-react";
 import { DataTable, PageHeading } from "../../components/ui";
-import { logActivity, requireSupabase, type Profile, type Role } from "../../lib/supabase";
+import { requireSupabase, type Profile, type Role } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
 
 const ALL_ROLES: Role[] = ["manager", "sales", "inventory", "delivery", "staff"];
@@ -34,11 +34,10 @@ export default function Staff() {
     finally { setBusy(false); }
   };
 
-  const change = async (m: Profile, patch: Partial<Pick<Profile, "role" | "active">>, what: string) => {
+  const change = async (m: Profile, patch: Partial<Pick<Profile, "role" | "active">>) => {
     try {
       const { error } = await requireSupabase().from("profiles").update(patch).eq("id", m.id);
       if (error) throw error;
-      await logActivity("staff_updated", "staff", `${what} for ${m.full_name || m.email}`);
       notify("Staff member updated.");
       await reload();
     } catch (err) { notify(err instanceof Error ? err.message : "Update failed"); }
@@ -59,12 +58,12 @@ export default function Staff() {
           <tr key={m.id}>
             <td><b>{m.full_name || "—"}</b></td><td>{m.email}</td>
             <td>{canEdit(m)
-              ? <select aria-label={`Role of ${m.email}`} value={m.role} onChange={e => void change(m, { role: e.target.value as Role }, `Role changed to ${e.target.value}`)}>
+              ? <select aria-label={`Role of ${m.email}`} value={m.role} onChange={e => void change(m, { role: e.target.value as Role })}>
                   {[...assignable, ...(assignable.includes(m.role) ? [] : [m.role])].map(r => <option key={r}>{r}</option>)}
                 </select>
               : <span className="role-pill">{m.role}</span>}</td>
             <td><span className={`status ${m.active ? "good" : "muted"}`}>{m.active ? "Active" : "Inactive"}</span>{" "}
-              {canEdit(m) && <button className="btn outline" onClick={() => void change(m, { active: !m.active }, m.active ? "Account deactivated" : "Account activated")}>{m.active ? "Deactivate" : "Activate"}</button>}</td>
+              {canEdit(m) && <button className="btn outline" onClick={() => void change(m, { active: !m.active })}>{m.active ? "Deactivate" : "Activate"}</button>}</td>
           </tr>
         ))}
       </DataTable>

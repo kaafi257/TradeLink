@@ -11,15 +11,19 @@ import { useAdmin } from "../AdminData";
 const SalesChart = lazy(() => import("../SalesChart"));
 
 export default function Dashboard() {
-  const { profile, products, quoteCount, newQuoteCount, activities, staff, sales } = useAdmin();
+  const { profile, products, quoteCount, newQuoteCount, activities, staff, salesDaily } = useAdmin();
   const navigate = useNavigate();
   const [range, setRange] = useState<Range>("This Month");
   const [productModal, setProductModal] = useState(false);
 
-  const series = useMemo(() => buildSeries(sales, range), [sales, range]);
+  const series = useMemo(() => buildSeries(salesDaily, range), [salesDaily, range]);
   const hasSales = series.some(p => p.sales > 0);
-  const monthSales = useMemo(() => buildSeries(sales, "This Month").reduce((n, p) => n + p.sales, 0), [sales]);
-  const totalStock = products.reduce((n, p) => n + Number(p.stock_quantity || 0), 0);
+  const monthSales = useMemo(() => buildSeries(salesDaily, "This Month").reduce((n, p) => n + p.sales, 0), [salesDaily]);
+  // Stock is in different units (bags, kg, tons...), so we count products instead of adding quantities together.
+  const outCount = products.filter(p => Number(p.stock_quantity) <= 0).length;
+  const lowCount = products.filter(p => Number(p.stock_quantity) > 0 && Number(p.reorder_level) > 0 && Number(p.stock_quantity) <= Number(p.reorder_level)).length;
+  const canSeeStaff = ["owner", "manager"].includes(profile.role);
+  const activeStaff = staff.filter(m => m.active).length;
   const stockLevels = [...products].sort((a, b) => b.stock_quantity - a.stock_quantity).slice(0, 4);
   const maxStock = Math.max(1, ...stockLevels.map(p => Number(p.stock_quantity)));
   const canSeeQuotes = ["owner", "manager", "sales"].includes(profile.role);
@@ -36,9 +40,9 @@ export default function Dashboard() {
 
       <section className="stats-grid">
         <Stat icon={<ShoppingCart />} color="mint" value={canSeeQuotes ? String(quoteCount) : "—"} label="Total Orders & Enquiries" note={canSeeQuotes ? `${newQuoteCount} new` : "No access"} />
-        <Stat icon={<ChartNoAxesCombined />} color="gold" value={canSeeSales && sales.length ? money(monthSales) : "—"} label="Sales This Month" note={sales.length ? "Recorded sales" : "No sales recorded yet"} />
-        <Stat icon={<Package />} color="blue" value={totalStock.toLocaleString()} label="Current Stock Units" note={`${products.length} products`} />
-        <Stat icon={<Users />} color="teal" value={String(staff.length)} label="Total Staff" note="Team" />
+        <Stat icon={<ChartNoAxesCombined />} color="gold" value={canSeeSales && salesDaily.length ? money(monthSales) : "—"} label="Sales This Month" note={salesDaily.length ? "Recorded sales" : "No sales recorded yet"} />
+        <Stat icon={<Package />} color="blue" value={String(products.length)} label="Products in Catalogue" note={lowCount + outCount > 0 ? `${lowCount} low · ${outCount} out` : "All in stock"} />
+        <Stat icon={<Users />} color="teal" value={canSeeStaff ? String(activeStaff) : "—"} label="Active Staff" note={canSeeStaff ? `${staff.length - activeStaff} inactive` : "No access"} />
       </section>
 
       <section className="dashboard-grid">

@@ -7,9 +7,9 @@ import { useAdmin } from "../AdminData";
 const SalesChart = lazy(() => import("../SalesChart"));
 
 export default function Reports() {
-  const { sales } = useAdmin();
+  const { salesDaily } = useAdmin();
   const [range, setRange] = useState<Range>("This Year");
-  const series = useMemo(() => buildSeries(sales, range), [sales, range]);
+  const series = useMemo(() => buildSeries(salesDaily, range), [salesDaily, range]);
   const total = series.reduce((n, p) => n + p.sales, 0);
   return (
     <>

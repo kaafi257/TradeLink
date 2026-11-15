@@ -1,6 +1,6 @@
 import { DataTable, PageHeading } from "../../components/ui";
 import { shortDate } from "../../lib/format";
-import { logActivity, requireSupabase, type Quote } from "../../lib/supabase";
+import { requireSupabase, type Quote } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
 
 const STATUSES = ["new", "reviewing", "quoted", "accepted", "rejected", "converted"];
@@ -15,7 +15,6 @@ export default function Quotations() {
     try {
       const { error } = await requireSupabase().from("quotations").update({ status }).eq("id", q.id);
       if (error) throw error;
-      await logActivity("quotation_status_changed", "quotation", `Quotation ${q.quote_number} changed to ${status}`);
       notify("Quotation updated.");
       await reload();
     } catch (e) { notify(e instanceof Error ? e.message : "Update failed"); }
