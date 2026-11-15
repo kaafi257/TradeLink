@@ -1,5 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 
+// Read before the client starts: supabase-js removes the auth tokens from the address bar once it has used them.
+const startHash = typeof window !== "undefined" ? window.location.hash : "";
+export const arrivedFromEmailLink = /[#&]type=(invite|recovery)\b/.test(startHash);
+
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
