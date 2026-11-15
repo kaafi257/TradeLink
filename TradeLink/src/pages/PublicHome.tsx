@@ -3,8 +3,8 @@ import { TURNSTILE_SITE_KEY, Turnstile } from "../components/Turnstile";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Check, ClipboardList, Headphones, Menu, Phone, ShieldCheck, Tag, Truck, X } from "lucide-react";
 import { Brand } from "../components/Brand";
-import { ContactCards, ContactIcons, FloatingContact, channels, hasContact } from "../components/ContactActions";
-import { CONTACT } from "../config";
+import { ContactCards, ContactPills, FloatingContact } from "../components/ContactActions";
+import { useChannels, useContact } from "../lib/contact";
 import { oilImg, riceImg, sugarImg } from "../lib/assets";
 import { supabase, type PublicProduct } from "../lib/supabase";
 import "./home.css";
@@ -97,6 +97,7 @@ function QuoteModal({ products, initialProduct, onClose }: { products: PublicPro
           <div className="success-state">
             <Check size={48} /><h2>Quote request received</h2>
             <p>Thank you. Your reference is <b>{quoteNumber}</b>. The TradeLink team will contact you about your wholesale enquiry.</p>
+            <ContactPills title="Want a faster reply? Message us with your reference" message={`Hello TradeLink, my quote reference is ${quoteNumber}.`} />
             <button className="btn green" onClick={onClose}>Close</button>
           </div>
         ) : (
@@ -195,7 +196,8 @@ export default function PublicHome() {
   const cats = ["All", ...Array.from(new Set(products.map(p => p.category))).sort((a, b) => rank(a) - rank(b))];
   const current = cats.includes(filter) ? filter : "All";
   const shown = current === "All" ? products : products.filter(p => p.category === current);
-  const reach = channels();
+  const contact = useContact();
+  const reach = useChannels();
   const emptyMessage =
     status === "loading" ? "Loading our products…"
     : status === "offline" ? "The product catalogue is not connected yet."
@@ -212,7 +214,7 @@ export default function PublicHome() {
                onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>
           ))}
         </nav>
-        {CONTACT.phone && <a className="hm-tel" href={`tel:${CONTACT.phone.replace(/[^\d+]/g, "")}`}><Phone size={16} /> {CONTACT.phone}</a>}
+        {contact.phone && <a className="hm-tel" href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}><Phone size={16} /> {contact.phone}</a>}
         <button className="btn gold hm-quote" onClick={() => openQuote()}>Request a quote</button>
         <button className="hm-staff" onClick={() => navigate("/login")}>Staff login</button>
         <button className="hm-menu" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>
@@ -238,7 +240,7 @@ export default function PublicHome() {
             <button className="btn gold hm-big" onClick={() => openQuote()}><ClipboardList size={18} /> Request a wholesale quote</button>
             <button className="btn ghost hm-big" onClick={() => go("public-products")}>See products</button>
           </div>
-          {reach.length > 0 && <div className="hm-reach"><span>Or message us:</span><ContactIcons /></div>}
+          {reach.length > 0 && <div className="hm-reach"><span>Talk to us now:</span><ContactPills /></div>}
           <div className="hm-tags" role="group" aria-label="Start a quote for a product">
             {TAGS.map(t => (
               <button key={t.cat} className="hm-tag" onClick={() => openQuote(products.find(p => p.category === t.cat)?.id ?? "")}>
@@ -294,8 +296,8 @@ export default function PublicHome() {
                     <span className="min">Minimum order: {Number(p.min_order_quantity)} {p.unit}</span>
                     <div className="row">
                       <button className="btn green" onClick={() => openQuote(p.id)}>Request price <ArrowRight size={15} /></button>
-                      <ContactIcons message={`Hello TradeLink, I would like a wholesale price for ${productLabel(p)}.`} />
                     </div>
+                    <ContactPills title="Or ask us directly" message={`Hello TradeLink, I would like a wholesale price for ${productLabel(p)}.`} />
                   </div>
                 </article>
               ))}
@@ -327,7 +329,7 @@ export default function PublicHome() {
             </ol>
           </div>
           <div className="hm-contact-panel">
-            {hasContact
+            {reach.length > 0
               ? <ContactCards />
               : <p className="hm-note">Contact numbers coming soon.</p>}
             <button className="btn gold hm-big" onClick={() => openQuote()}><ClipboardList size={18} /> Send a quote request</button>
@@ -340,6 +342,9 @@ export default function PublicHome() {
         <nav aria-label="Footer">{NAV.map(n => <a key={n.id} href={`#${n.id}`} onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>)}</nav>
         <div className="hm-footer-contact">
           {reach.map(c => <a key={c.key} href={c.href} {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{c.label}: {c.detail}</a>)}
+          {contact.email && <a href={`mailto:${contact.email}`}>{contact.email}</a>}
+          {contact.address && <span>{contact.address}</span>}
+          {contact.hours && <span>{contact.hours}</span>}
           <small>© {new Date().getFullYear()} TradeLink. All rights reserved.</small>
         </div>
       </footer>

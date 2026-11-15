@@ -1,5 +1,5 @@
 import {
-  Activity as ActivityIcon, Boxes, Box, ChartNoAxesCombined, ClipboardList, FileText, Home, Settings, Truck, Users, Receipt,
+  Activity as ActivityIcon, Boxes, Box, ChartNoAxesCombined, ClipboardList, FileText, MessageCircle, Home, Settings, Truck, Users, Receipt,
 } from "lucide-react";
 import type { Role } from "../lib/supabase";
 
@@ -16,6 +16,7 @@ export const NAV: NavItem[] = [
   { path: "/admin/staff", label: "Staff Management", icon: Users, roles: ["owner", "manager"] },
   { path: "/admin/inventory", label: "Inventory", icon: Boxes, roles: ["owner", "manager", "inventory"] },
   { path: "/admin/reports", label: "Reports & Analytics", icon: ChartNoAxesCombined, roles: ["owner", "manager"] },
+  { path: "/admin/communication", label: "Communication", icon: MessageCircle, roles: ["owner", "manager", "sales"] },
   { path: "/admin/customers", label: "Customers", icon: Users, roles: ["owner", "manager", "sales"] },
   { path: "/admin/activity", label: "Activity Log", icon: ActivityIcon, roles: ["owner", "manager"] },
   { path: "/admin/settings", label: "Settings", icon: Settings, roles: ["owner", "manager"] },

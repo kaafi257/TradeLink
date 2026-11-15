@@ -26,11 +26,12 @@ Open the local URL printed by Vite.
 
 ## 2. Configure Supabase
 1. Create a Supabase project.
-2. Open SQL Editor and run these three files, **in this order, once each** (every file is idempotent, so re-running is safe):
+2. Open SQL Editor and run these four files, **in this order, once each** (every file is idempotent, so re-running is safe):
    1. `supabase/migrations/0001_tradelink_schema.sql` - tables, role-escalation protection, append-only inventory ledger and sales table, trigger-written activity log, validated and rate-limited `submit_quote`, and the `public_products` view (the public site never sees prices or stock).
    2. `supabase/migrations/0002_product_images.sql` - the `product-images` storage bucket for uploaded product photos.
    3. `supabase/migrations/0003_workflow_permissions.sql` - per-action permissions and the quote → order → sale → stock → delivery functions. After this, orders, sales, deliveries and quotation prices can change only through those functions.
-   If you ran an older copy of 0001, run all three again in order, and redeploy the site code at the same time.
+   4. `supabase/migrations/0004_contact_settings.sql` - the contact channels (phone, WhatsApp, Telegram, email) shown on the website and edited in Admin → Communication.
+   If you ran an older copy of 0001, run all of them again in order, and redeploy the site code at the same time.
 3. In Project Settings → API, copy the Project URL and publishable key (or legacy anon key).
 4. Put them in `.env.local`:
 ```env
@@ -100,7 +101,7 @@ Without `VITE_TURNSTILE_SITE_KEY` the form works as before (honeypot plus databa
 `vercel.json` includes an SPA rewrite so dashboard routes/client-side app rendering work after refresh.
 
 ## Before you go live
-- **Add your real contact details**: set `VITE_CONTACT_PHONE`, `VITE_CONTACT_WHATSAPP` and `VITE_CONTACT_TELEGRAM` in Vercel (or `src/config.ts`). A channel left empty is hidden.
+- **Add your real contact details** in Admin → Communication (needs migration 0004). Channels left empty are hidden from the website. The `VITE_CONTACT_*` variables still work as a fallback.
 - **Replace the sample photos** in `public/img` (homepage banners) with TradeLink's own, and upload real product photos in Products.
 - Confirm real package sizes, prices and minimum order quantities.
 - Run `npm install` once and commit the updated `package-lock.json` (the project now uses react-router 7, which clears the two moderate `npm audit` advisories that affected 6.x).

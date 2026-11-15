@@ -17,6 +17,7 @@ import Staff from "./pages/Staff";
 import Inventory from "./pages/Inventory";
 import Reports from "./pages/Reports";
 import Customers from "./pages/Customers";
+import Communication from "./pages/Communication";
 import ActivityLog from "./pages/ActivityLog";
 import SettingsPage from "./pages/Settings";
 
@@ -89,6 +90,7 @@ function Shell() {
             <Route path="staff" element={g(["owner", "manager"], <Staff />)} />
             <Route path="inventory" element={g(["owner", "manager", "inventory"], <Inventory />)} />
             <Route path="reports" element={g(["owner", "manager"], <Reports />)} />
+            <Route path="communication" element={g(["owner", "manager", "sales"], <Communication />)} />
             <Route path="customers" element={g(["owner", "manager", "sales"], <Customers />)} />
             <Route path="activity" element={g(["owner", "manager"], <ActivityLog />)} />
             <Route path="settings" element={g(["owner", "manager"], <SettingsPage />)} />
