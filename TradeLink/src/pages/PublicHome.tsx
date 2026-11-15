@@ -8,7 +8,7 @@ import { Brand } from "../components/Brand";
 import { ContactCards, ContactIcons, FloatingContact, hasContact } from "../components/ContactActions";
 import { ProductShowcase } from "../components/ProductShowcase";
 import { oilImg, riceImg, sugarImg, warehouseImg } from "../lib/assets";
-import { supabase, type Product } from "../lib/supabase";
+import { supabase, type PublicProduct } from "../lib/supabase";
 
 const CATEGORIES = ["Rice", "Sugar", "Cooking Oil"];
 const NAV = [
@@ -20,21 +20,21 @@ const NAV = [
 const categoryImages = [riceImg, sugarImg, oilImg];
 type Status = "loading" | "ready" | "error" | "offline";
 
-function QuoteModal({ products, initialProduct, onClose }: { products: Product[]; initialProduct: string; onClose: () => void }) {
-  const [productName, setProductName] = useState(initialProduct);
-  const [unit, setUnit] = useState(() => products.find(p => p.name === initialProduct)?.unit ?? "");
+const productLabel = (p: PublicProduct) => (p.package_size ? `${p.name} — ${p.package_size}` : p.name);
+
+function QuoteModal({ products, initialProduct, onClose }: { products: PublicProduct[]; initialProduct: string; onClose: () => void }) {
+  // The product is identified by id, because two products can share a name (e.g. 25kg and 50kg bags).
+  const [productId, setProductId] = useState(initialProduct);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [quoteNumber, setQuoteNumber] = useState("");
 
-  const pickProduct = (name: string) => {
-    setProductName(name);
-    setUnit(products.find(p => p.name === name)?.unit ?? "");
-  };
-  const chosen = products.find(p => p.name === productName);
+  const chosen = products.find(p => p.id === productId);
+  const unit = chosen?.unit ?? "";
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!productId) { setError("Please choose a product."); return; }
     if (!supabase) { setError("This website is not connected to its database yet. Please contact us by phone."); return; }
     const f = new FormData(e.currentTarget);
     setBusy(true); setError("");
@@ -43,9 +43,8 @@ function QuoteModal({ products, initialProduct, onClose }: { products: Product[]
       p_phone: String(f.get("phone") ?? ""),
       p_email: String(f.get("email") ?? ""),
       p_location: String(f.get("location") ?? ""),
-      p_product: productName,
+      p_product_id: productId,
       p_quantity: Number(f.get("quantity")),
-      p_unit: unit,
       p_notes: String(f.get("notes") ?? ""),
       p_website: String(f.get("website") ?? ""), // hidden honeypot field
     });
@@ -74,9 +73,9 @@ function QuoteModal({ products, initialProduct, onClose }: { products: Product[]
               <label>Phone / WhatsApp<input name="phone" required maxLength={30} placeholder="+251 ..." /></label>
               <label>Email (optional)<input name="email" type="email" maxLength={160} placeholder="name@business.com" /></label>
               <label>Product
-                <select value={productName} required onChange={e => pickProduct(e.target.value)}>
+                <select value={productId} required onChange={e => setProductId(e.target.value)}>
                   <option value="">Select product</option>
-                  {products.map(p => <option key={p.id}>{p.name}</option>)}
+                  {products.map(p => <option key={p.id} value={p.id}>{productLabel(p)}</option>)}
                 </select>
               </label>
               <label>Required quantity<input name="quantity" type="number" required min={chosen ? Number(chosen.min_order_quantity) : 1} step="any" placeholder={chosen ? `Minimum ${Number(chosen.min_order_quantity)}` : "e.g. 200"} /></label>
@@ -98,7 +97,7 @@ function QuoteModal({ products, initialProduct, onClose }: { products: Product[]
 
 export default function PublicHome() {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<PublicProduct[]>([]);
   const [status, setStatus] = useState<Status>(supabase ? "loading" : "offline");
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [selected, setSelected] = useState("");
@@ -144,15 +143,15 @@ export default function PublicHome() {
 
   useEffect(() => {
     if (!supabase) return;
-    supabase.from("products").select("*").eq("active", true).order("name")
+    supabase.from("public_products").select("*").order("name")
       .then(({ data, error }) => {
         if (error) { setStatus("error"); return; }
-        setProducts((data ?? []) as Product[]);
+        setProducts((data ?? []) as PublicProduct[]);
         setStatus("ready");
       });
   }, []);
 
-  const openQuote = (name = "") => { setSelected(name); setQuoteOpen(true); };
+  const openQuote = (productId = "") => { setSelected(productId); setQuoteOpen(true); };
   const categories = CATEGORIES.map((cat, i) => ({ cat, i, product: products.find(x => x.category === cat) })).filter(c => c.product);
   const emptyMessage =
     status === "loading" ? "Loading our products…"
@@ -202,7 +201,7 @@ export default function PublicHome() {
           {categories.map(({ cat, i, product: p }) => {
             if (!p) return null;
             return (
-              <button className="category-card" key={cat} onClick={() => openQuote(p.name)}>
+              <button className="category-card" key={cat} onClick={() => openQuote(p.id)}>
                 <img src={p.image_url || categoryImages[i]} alt={cat} />
                 <div className="category-label">
                   <span className="category-icon">{i === 0 ? <Wheat /> : i === 1 ? <Cuboid /> : <Droplet />}</span>
@@ -225,8 +224,8 @@ export default function PublicHome() {
               <div>
                 <h3>{p.name}</h3>
                 <p>{p.package_size || p.unit} · Large orders</p>
-                <button className="btn green" onClick={() => openQuote(p.name)}><ShoppingCart size={15} /> Request Wholesale Price <ArrowRight size={15} /></button>
-                <ContactIcons message={`Hello TradeLink, I would like a wholesale price for ${p.name}.`} />
+                <button className="btn green" onClick={() => openQuote(p.id)}><ShoppingCart size={15} /> Request Wholesale Price <ArrowRight size={15} /></button>
+                <ContactIcons message={`Hello TradeLink, I would like a wholesale price for ${productLabel(p)}.`} />
               </div>
             </article>
           ))}
@@ -265,7 +264,6 @@ export default function PublicHome() {
 
       <footer className="public-footer">
         <Brand light /><p>Growing Together. Supplying Better.</p>
-        <div className="footer-social"><span>f</span><span>➤</span><span>◔</span></div>
         <small>© {new Date().getFullYear()} TradeLink. All rights reserved.</small>
       </footer>
 
