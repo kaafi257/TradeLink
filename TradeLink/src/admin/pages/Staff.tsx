@@ -4,6 +4,18 @@ import { DataTable, PageHeading } from "../../components/ui";
 import { requireSupabase, type Profile, type Role } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
 
+/** supabase-js hides the function's own message behind "non-2xx status code"; dig the real reason out. */
+async function inviteError(error: unknown): Promise<string> {
+  const e = error as { name?: string; message?: string; context?: unknown };
+  if (e?.context instanceof Response) {
+    try { const body = await e.context.clone().json(); if (body?.error) return String(body.error); } catch { /* not JSON */ }
+    if (e.context.status === 404) return "The invite-staff function is not deployed yet. Deploy it with: supabase functions deploy invite-staff";
+    if (e.context.status === 401) return "Your session has expired. Sign in again and retry.";
+  }
+  if (e?.name === "FunctionsFetchError") return "Could not reach the invite-staff function. Check that it is deployed and your connection is working.";
+  return e?.message || "Could not send invitation";
+}
+
 const ALL_ROLES: Role[] = ["manager", "sales", "inventory", "delivery", "staff"];
 
 export default function Staff() {
@@ -23,11 +35,11 @@ export default function Staff() {
     setBusy(true);
     try {
       const { data, error } = await requireSupabase().functions.invoke("invite-staff", {
-        body: { email: String(f.get("email")).trim(), full_name: String(f.get("full_name")).trim(), role: String(f.get("role")) },
+        body: { email: String(f.get("email")).trim(), full_name: String(f.get("full_name")).trim(), role: String(f.get("role")), redirect_to: `${window.location.origin}/set-password` },
       });
-      if (error) throw error;
+      if (error) throw new Error(await inviteError(error));
       if (data?.error) throw new Error(data.error);
-      notify("Invitation sent.");
+      notify("Invitation sent. They will get an email to set their password.");
       form.reset();
       await reload();
     } catch (err) { notify(err instanceof Error ? err.message : "Could not send invitation"); }
