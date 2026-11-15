@@ -175,3 +175,4 @@
 .hm-card .pill:hover{filter:none;transform:translateY(-1px);box-shadow:0 6px 14px -8px #063d3a66}
 .hm-card .pill-whatsapp:hover{background:#1faa59;color:#fff}.hm-card .pill-telegram:hover{background:#229ed9;color:#fff}.hm-card .pill-call:hover{background:var(--deep);color:#fff}
 @media(prefers-reduced-motion:reduce){.hm-card,.hm-card .media img{transition:none}.hm-card:hover{transform:none}.hm-card:hover .media img{transform:none}}
+@media(max-width:640px){.hm-grid{grid-template-columns:minmax(0,1fr)}.hm-card .body{padding:18px}}
