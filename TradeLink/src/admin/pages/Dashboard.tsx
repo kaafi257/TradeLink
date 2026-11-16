@@ -1,7 +1,8 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowRight, ChartNoAxesCombined, Package, Plus, ShoppingCart, UserPlus, Users, Wheat } from "lucide-react";
-import { ActivityList, PanelHead, Stat } from "../../components/ui";
+import { ActivityList, PanelHead } from "../../components/ui";
+import { GlassStat, StockDonut } from "../DashWidgets";
 import { RANGES, buildSeries, money, shortDate, type Range } from "../../lib/format";
 import type { Product, Quote } from "../../lib/supabase";
 import { ProductModal } from "../modals";
@@ -29,7 +30,13 @@ export default function Dashboard() {
 
   const series = useMemo(() => buildSeries(salesDaily, range), [salesDaily, range]);
   const hasSales = series.some(p => p.sales > 0);
-  const monthSales = useMemo(() => buildSeries(salesDaily, "This Month").reduce((n, p) => n + p.sales, 0), [salesDaily]);
+  const monthSeries = useMemo(() => buildSeries(salesDaily, "This Month"), [salesDaily]);
+  const monthSales = useMemo(() => monthSeries.reduce((n, p) => n + p.sales, 0), [monthSeries]);
+  // Compare like with like: sales so far this month against the same number of days last month.
+  const sameDaysLast = useMemo(() => buildSeries(salesDaily, "Last Month").slice(0, new Date().getDate()).reduce((n, p) => n + p.sales, 0), [salesDaily]);
+  const salesDelta = sameDaysLast > 0 ? ((monthSales - sameDaysLast) / sameDaysLast) * 100 : null;
+  const rangeTotal = series.reduce((n, p) => n + p.sales, 0);
+  const best = series.reduce((b, p) => (p.sales > b.sales ? p : b), { day: "", sales: 0 });
 
   const role = profile.role;
   const isLead = ["owner", "manager"].includes(role);
@@ -40,6 +47,7 @@ export default function Dashboard() {
   // Stock is in different units (bags, kg, tons...), so products are counted, never added together.
   const outCount = products.filter(p => levelOf(p) === "out").length;
   const lowCount = products.filter(p => levelOf(p) === "low").length;
+  const okCount = products.length - outCount - lowCount;
   const activeStaff = staff.filter(m => m.active).length;
 
   const stockRows = [...products]
@@ -60,7 +68,7 @@ export default function Dashboard() {
   const today = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 
   return (
-    <>
+    <div className="dash-glass">
       <section className="dash-head">
         <div>
           <h1>{greeting()}, {firstName}</h1>
@@ -74,17 +82,18 @@ export default function Dashboard() {
       </section>
 
       <section className="stats-grid" aria-label="Key figures">
-        <Stat icon={<ShoppingCart />} color="mint" value={canSeeQuotes ? String(quoteCount) : "—"} label="Orders & enquiries" note={canSeeQuotes ? `${newQuoteCount} new` : "No access"} />
-        <Stat icon={<ChartNoAxesCombined />} color="gold" value={canSeeSales && salesDaily.length ? money(monthSales) : "—"} label="Sales this month" note={salesDaily.length ? "From recorded sales" : "No sales recorded yet"} />
-        <Stat icon={<Package />} color="blue" value={String(products.length)} label="Products" note={lowCount + outCount > 0 ? `${lowCount} low, ${outCount} out of stock` : "All in stock"} />
-        <Stat icon={<Users />} color="teal" value={isLead ? String(activeStaff) : "—"} label="Active staff" note={isLead ? `${staff.length - activeStaff} inactive` : "No access"} />
+        <GlassStat icon={<ShoppingCart />} tone="mint" value={canSeeQuotes ? String(quoteCount) : "—"} label="Orders & enquiries" note={canSeeQuotes ? `${newQuoteCount} new` : "No access"} onOpen={canSeeQuotes ? () => navigate("/admin/quotations") : undefined} />
+        <GlassStat icon={<ChartNoAxesCombined />} tone="gold" value={canSeeSales && salesDaily.length ? money(monthSales) : "—"} label="Sales this month" note={salesDaily.length ? "vs same days last month" : "No sales recorded yet"} spark={canSeeSales ? monthSeries.slice(0, new Date().getDate()).map(p => p.sales) : undefined} delta={canSeeSales && salesDaily.length ? salesDelta : undefined} onOpen={canSeeSales ? () => navigate("/admin/sales") : undefined} />
+        <GlassStat icon={<Package />} tone="blue" value={String(products.length)} label="Products" note={lowCount + outCount > 0 ? `${lowCount} low, ${outCount} out of stock` : "All in stock"} onOpen={() => navigate("/admin/products")} />
+        <GlassStat icon={<Users />} tone="teal" value={isLead ? String(activeStaff) : "—"} label="Active staff" note={isLead ? `${staff.length - activeStaff} inactive` : "No access"} onOpen={isLead ? () => navigate("/admin/staff") : undefined} />
       </section>
 
       <section className="dash-grid">
-        <div className="panel sales-panel">
+        <div className="panel glass sales-panel">
           <PanelHead icon={<ChartNoAxesCombined />} title="Sales overview">
             <div className="range-tabs">{RANGES.map(r => <button className={range === r ? "on" : ""} key={r} onClick={() => setRange(r)}>{r}</button>)}</div>
           </PanelHead>
+          {hasSales && <div className="chart-kpis"><div><small>{range} total</small><b>{money(rangeTotal)}</b></div>{best.sales > 0 && <div><small>Best {range === "This Year" ? "month" : "day"}</small><b>{best.day} · {money(best.sales)}</b></div>}</div>}
           <div className="chart-wrap">
             {hasSales
               ? <Suspense fallback={<p className="inline-note">Loading chart…</p>}><SalesChart data={series} /></Suspense>
@@ -94,7 +103,7 @@ export default function Dashboard() {
         </div>
 
         {showAttention && (
-          <div className={`panel ${needsAttention ? "attention" : ""}`}>
+          <div className={`panel glass ${needsAttention ? "attention" : ""}`}>
             <PanelHead icon={<AlertTriangle />} title="Needs attention" />
             {canSeeQuotes && (
               <div className="attn-group">
@@ -123,8 +132,9 @@ export default function Dashboard() {
       </section>
 
       <section className="dash-grid even">
-        <div className="panel">
+        <div className="panel glass">
           <PanelHead icon={<Wheat />} title="Stock levels"><button className="text-action" onClick={() => navigate("/admin/products")}>All products <ArrowRight size={14} /></button></PanelHead>
+          {products.length > 0 && <StockDonut split={{ ok: okCount, low: lowCount, out: outCount }} />}
           {stockRows.length === 0 && <p className="attn-clear">No products yet. Add your first product to start tracking stock.</p>}
           {stockRows.map(p => {
             const lv = levelOf(p);
@@ -138,7 +148,7 @@ export default function Dashboard() {
           })}
         </div>
 
-        <div className="panel recent-panel">
+        <div className="panel glass recent-panel">
           <PanelHead icon={<ChartNoAxesCombined />} title="Recent activity">
             {isLead && <button className="text-action" onClick={() => navigate("/admin/activity")}>Full log <ArrowRight size={14} /></button>}
           </PanelHead>
@@ -147,6 +157,6 @@ export default function Dashboard() {
       </section>
 
       {productModal && <ProductModal editing={null} onClose={() => setProductModal(false)} />}
-    </>
+    </div>
   );
 }
