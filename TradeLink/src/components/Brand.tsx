@@ -6,7 +6,7 @@ export function LogoMark({ size = 44 }: { size?: number }) {
   return (
     <svg className="brand-mark" width={size} height={size} viewBox="0 0 48 48" role="img" aria-label="TradeLink logo">
       <defs>
-        <linearGradient id={`g${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#0b5a4d" /><stop offset="1" stopColor="#062a21" /></linearGradient>
+        <linearGradient id={`g${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#1479c2" /><stop offset="1" stopColor="#08467a" /></linearGradient>
         <clipPath id={`c${id}`}><rect x="0" y="24" width="48" height="24" /></clipPath>
       </defs>
       <rect width="48" height="48" rx="12" fill={`url(#g${id})`} />
