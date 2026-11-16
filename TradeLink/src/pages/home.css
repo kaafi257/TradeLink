@@ -493,3 +493,8 @@ body:has(.hm-mobile){overflow:hidden}
   .hm-floaters span,.hm-scene,.contact-icons .ci::after,.hm-contact-panel .contact-card .cc-icon::after,.hm-big svg{animation:none}
   .hm-card,.hm-tile,.hm-points>div{animation:none!important;opacity:1!important;transform:none!important}
 }
+
+/* Hero without a headline: the photo and the two choices lead */
+.public-site .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.hm-hero-copy>.hm-audience{margin-top:0}
+.hm-hero-shade{background:linear-gradient(0deg,var(--deep) 0%,#0b5d9900 22%),linear-gradient(90deg,#062a4acc 0%,#062a4a99 50%,#062a4a40 100%)}
