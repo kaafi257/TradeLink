@@ -359,7 +359,7 @@ export default function PublicHome() {
           <span style={{ "--d": "-3.8s" } as React.CSSProperties}><Truck size={26} /></span>
         </div>
         <div className="hm-hero-copy">
-          <h1>Rice, sugar and oil, straight from the port</h1>
+          <h1 className="sr-only">TradeLink: rice, sugar and oil, straight from the port</h1>
           <div className="hm-audience" role="group" aria-label="Who are you buying for?">
             <button className={mode === "business" ? "on" : ""} aria-pressed={mode === "business"} onClick={() => chooseAudience("business")}>
               <span className="tag-ico"><Briefcase size={26} /></span>
