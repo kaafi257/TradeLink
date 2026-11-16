@@ -1,6 +1,6 @@
 @font-face{font-family:'Big Shoulders Display';font-weight:900;font-style:normal;font-display:swap;src:url(/fonts/big-shoulders-900.woff2) format('woff2')}
 /* TradeLink public homepage. Scoped to .public-site; admin and login are untouched. */
-.public-site{--hh:72px;--gutter:clamp(16px,4vw,56px);--ink:#0e211b;--deep:#0a3b2f;--deep-2:#062a21;--teal:#14604b;--gold:#e9a71b;--gold-hi:#f4bc42;--gold-ink:#1b1405;--bg:#f6f7f3;--line:#dde3db;--muted:#566861;--tint:#e4efe9;background:var(--bg);color:var(--ink);font-family:'Public Sans','DM Sans',system-ui,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+.public-site{--hh:72px;--gutter:clamp(16px,4vw,56px);--ink:#0e2a40;--deep:#0b5d99;--deep-2:#08467a;--teal:#1479c2;--gold:#e9a71b;--gold-hi:#f4bc42;--gold-ink:#1b1405;--bg:#f4f8fb;--line:#d9e4ee;--muted:#52667a;--tint:#e1f0fb;background:var(--bg);color:var(--ink);font-family:'Public Sans','DM Sans',system-ui,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
 .public-site :focus-visible{outline:3px solid var(--gold);outline-offset:3px;border-radius:6px}
 .public-site h1,.public-site h2,.public-site h3{font-family:'Archivo','Bricolage Grotesque',Arial,sans-serif;font-stretch:112%;font-weight:800;letter-spacing:-.02em;line-height:1.05;text-wrap:balance}
 .public-site .btn{border-radius:10px;min-height:44px;padding:0 20px;font-size:14px;font-weight:700;font-family:inherit}
@@ -32,7 +32,7 @@
 /* Hero: the warehouse, full width */
 .hm-hero{position:relative;isolation:isolate;margin-top:calc(var(--hh) * -1);padding-top:var(--hh);background:var(--deep);color:#fff;overflow:hidden}
 .hm-hero-bg{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:66% 55%}
-.hm-hero-shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,var(--deep) 0%,#0a3b2f00 24%),linear-gradient(90deg,#062a21f0 0%,#062a21cc 36%,#062a214d 70%,#062a211f 100%)}
+.hm-hero-shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,var(--deep) 0%,#0f385a00 24%),linear-gradient(90deg,#0a2d49f0 0%,#0a2d49cc 36%,#0a2d494d 70%,#0a2d491f 100%)}
 .hm-hero-copy{max-width:1320px;margin:0 auto;padding:clamp(48px,8vw,112px) clamp(16px,4vw,56px) clamp(40px,6vw,80px)}
 .hm-hero-copy>*{max-width:720px}
 .hm-hero h1{font-size:clamp(2.5rem,1.2rem + 5.4vw,5rem);margin:0}
@@ -65,7 +65,7 @@
 .hm-featured{margin-top:44px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:20px}
 .hm-feature{position:relative;isolation:isolate;overflow:hidden;border-radius:16px;min-height:300px;color:#fff;display:flex;align-items:flex-end;background:var(--deep)}
 .hm-feature img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
-.hm-feature:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,#062a21eb 0%,#062a218c 38%,#062a2100 70%)}
+.hm-feature:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,#0a2d49eb 0%,#0a2d498c 38%,#0a2d4900 70%)}
 .hm-feature:hover img{transform:scale(1.04)}
 .hm-feature-info{padding:26px;width:100%;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px}
 .hm-feature h3{font-size:clamp(1.7rem,1.2rem + 1.6vw,2.4rem);margin:0}
@@ -145,19 +145,19 @@
 
 /* Product cards */
 .hm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:24px}
-.hm-card{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 1px 2px #063d3a0d,0 8px 24px -12px #063d3a26;transition:transform .25s ease,box-shadow .25s ease}
-.hm-card:hover{transform:translateY(-4px);box-shadow:0 2px 4px #063d3a10,0 22px 40px -16px #063d3a40}
+.hm-card{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 1px 2px #09385e0d,0 8px 24px -12px #09385e26;transition:transform .25s ease,box-shadow .25s ease}
+.hm-card:hover{transform:translateY(-4px);box-shadow:0 2px 4px #09385e10,0 22px 40px -16px #09385e40}
 .hm-card .media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--bg)}
-.hm-card .media::after{content:"";position:absolute;inset:auto 0 0 0;height:45%;background:linear-gradient(to top,#063d3a59,transparent);pointer-events:none}
+.hm-card .media::after{content:"";position:absolute;inset:auto 0 0 0;height:45%;background:linear-gradient(to top,#09385e59,transparent);pointer-events:none}
 .hm-card .media img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease}
 .hm-card:hover .media img{transform:scale(1.06)}
 .hm-card .badge{position:absolute;top:14px;left:14px;z-index:1;background:#ffffffeb;color:var(--deep);font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:6px 12px;border-radius:99px;backdrop-filter:blur(6px)}
 .hm-card .body{display:flex;flex-direction:column;gap:14px;padding:20px 20px 22px;flex:1}
 .hm-card h3{margin:0;font-size:22px;font-stretch:100%;line-height:1.2;letter-spacing:-.015em;color:var(--deep)}
 .hm-card .chips{display:flex;flex-wrap:wrap;gap:8px}
-.hm-card .chip{display:inline-flex;align-items:center;gap:6px;background:#eef5f2;color:var(--ocean);font-size:13px;font-weight:700;padding:6px 11px;border-radius:99px}
+.hm-card .chip{display:inline-flex;align-items:center;gap:6px;background:#eef2f5;color:var(--ocean);font-size:13px;font-weight:700;padding:6px 11px;border-radius:99px}
 .hm-card .chip.gold{background:#fdf3d6;color:#7a5600}
-.hm-card .cta{width:100%;min-height:48px;border-radius:13px;font-size:15px;justify-content:center;margin-top:auto;box-shadow:0 8px 18px -8px #063d3a80}
+.hm-card .cta{width:100%;min-height:48px;border-radius:13px;font-size:15px;justify-content:center;margin-top:auto;box-shadow:0 8px 18px -8px #09385e80}
 .hm-card .contact-pills-wrap{margin:0;position:relative;padding-top:16px}
 .hm-card .contact-pills-wrap::before{content:"or chat now";position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:#fff;padding:0 10px;color:var(--muted);font-size:12px;font-weight:600;white-space:nowrap}
 .hm-card .contact-pills-wrap{border-top:1px solid var(--line);margin-top:2px}
@@ -165,8 +165,8 @@
 .hm-card .pill{justify-content:center;min-height:42px;padding:0 8px;border-radius:12px;font-size:13px;font-weight:700;border:1px solid transparent}
 .hm-card .pill-whatsapp{background:#e8f7ee;color:#117a3d;border-color:#c9ecd7}
 .hm-card .pill-telegram{background:#e6f4fb;color:#12709e;border-color:#c6e4f3}
-.hm-card .pill-call{background:#eaf2f0;color:var(--deep);border-color:#d2e3df}
-.hm-card .pill:hover{filter:none;transform:translateY(-1px);box-shadow:0 6px 14px -8px #063d3a66}
+.hm-card .pill-call{background:#eaeef2;color:var(--deep);border-color:#d2dbe3}
+.hm-card .pill:hover{filter:none;transform:translateY(-1px);box-shadow:0 6px 14px -8px #09385e66}
 .hm-card .pill-whatsapp:hover{background:#1faa59;color:#fff}.hm-card .pill-telegram:hover{background:#229ed9;color:#fff}.hm-card .pill-call:hover{background:var(--deep);color:#fff}
 @media(prefers-reduced-motion:reduce){.hm-card,.hm-card .media img{transition:none}.hm-card:hover{transform:none}.hm-card:hover .media img{transform:none}}
 @media(max-width:640px){.hm-card .body{padding:18px}}
@@ -183,11 +183,11 @@
 .hm-industries button{display:inline-flex;align-items:center;gap:7px}
 .hm-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px;margin-bottom:30px}
 .hm-tile{position:relative;isolation:isolate;overflow:hidden;border:2px solid transparent;border-radius:16px;min-height:150px;padding:0;color:#fff;background:var(--deep);display:flex;align-items:flex-end;text-align:left;transition:transform .2s,border-color .2s,box-shadow .2s}
-.hm-tile:hover{transform:translateY(-3px);box-shadow:0 14px 30px -14px #063d3a80}
+.hm-tile:hover{transform:translateY(-3px);box-shadow:0 14px 30px -14px #09385e80}
 .hm-tile.on{border-color:var(--gold);box-shadow:0 0 0 3px #e9a71b40}
 .hm-tile img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;transition:transform .5s}
 .hm-tile:hover img{transform:scale(1.05)}
-.hm-tile:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,#062a21e6 0%,#062a2180 42%,#062a2000 75%)}
+.hm-tile:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,#0a2d49e6 0%,#0a2d4980 42%,#0a2d4900 75%)}
 .tile-ph{position:absolute;inset:0;z-index:-2;display:grid;place-items:start end;padding:16px;color:#ffffff59;background:linear-gradient(135deg,var(--teal),var(--deep-2))}
 .tile-info{padding:14px 16px;display:grid;gap:2px}
 .tile-info b{font:800 1.12rem 'Archivo',Arial,sans-serif}.tile-info small{color:#ffffffcc;font-size:13px}
@@ -196,7 +196,7 @@
 .hm-search input{border:0;outline:0;background:transparent;width:100%;font:inherit;color:var(--ink)}
 .hm-count{color:var(--muted);font-size:14px;font-weight:600;display:flex;align-items:center;gap:12px}
 .hm-count button{border:0;background:none;color:var(--teal);font-weight:700;text-decoration:underline;padding:0}
-.hm-card .ph{width:100%;height:100%;display:grid;place-items:center;color:var(--teal);background:linear-gradient(135deg,#e4efe9,#cfe2d9)}
+.hm-card .ph{width:100%;height:100%;display:grid;place-items:center;color:var(--teal);background:linear-gradient(135deg,#e4efe9,#cfd9e2)}
 .hm-card .price{min-height:44px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
 .hm-card .price b{font:800 1.5rem 'Archivo',Arial,sans-serif;color:var(--deep);letter-spacing:-.02em}
 .hm-card .price small{color:var(--muted);font-size:14px;font-weight:600}
@@ -221,7 +221,7 @@
    Responsive refinements
    ===================================================================== */
 .hm-q-short,.hm-q-xs{display:none}
-.hm-scrim{position:fixed;inset:0;z-index:18;border:0;padding:0;background:#021c1b80;animation:fade-in .18s ease-out}
+.hm-scrim{position:fixed;inset:0;z-index:18;border:0;padding:0;background:#04243d80;animation:fade-in .18s ease-out}
 .hm-mobile{max-height:calc(100vh - var(--hh));max-height:calc(100dvh - var(--hh));overflow-y:auto;overscroll-behavior:contain;padding-bottom:max(18px,env(safe-area-inset-bottom,0px))}
 .hm-mobile a{display:flex;align-items:center;min-height:50px}
 .hm-mobile .hm-mobile-tel{gap:10px;color:var(--gold-hi);font-weight:700}
@@ -235,7 +235,7 @@ body:has(.hm-mobile){overflow:hidden}
 }
 @media(max-width:820px){.public-site{--hh:64px}.hm-header{gap:12px}}
 @media(max-width:700px){
-  .hm-hero-shade{background:linear-gradient(180deg,#062a21d9 0%,#062a21c2 55%,var(--deep) 100%)}
+  .hm-hero-shade{background:linear-gradient(180deg,#0a2d49d9 0%,#0a2d49c2 55%,var(--deep) 100%)}
   .hm-hero-bg{object-position:70% 50%}
   .hm-hero-copy{padding-top:36px}
   .hm-reach{flex-wrap:wrap;row-gap:8px}
@@ -299,27 +299,27 @@ body:has(.hm-mobile){overflow:hidden}
 }
 
 /* Install-as-app entry in the mobile menu */
-.hm-mobile .hm-install{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 16px;border:0;border-radius:12px;background:var(--gold,#f4bc42);color:#063d3a;font:inherit;font-weight:800;cursor:pointer}
+.hm-mobile .hm-install{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 16px;border:0;border-radius:12px;background:var(--gold,#f4bc42);color:#09385e;font:inherit;font-weight:800;cursor:pointer}
 .hm-install-hint{margin:6px 16px;font-size:13px;opacity:.8}
 
 /* Hero redesign: stencilled headline and two kraft consignment tags */
-.public-site .hm-hero h1{font-family:'Big Shoulders Display','Archivo',Impact,sans-serif;font-stretch:100%;font-weight:900;text-transform:uppercase;letter-spacing:.005em;line-height:.92;font-size:clamp(3.1rem,1.4rem + 8.2vw,7rem);max-width:12ch;text-wrap:balance;text-shadow:0 2px 0 #0a3b2f66}
-.hm-hero-shade{background:linear-gradient(0deg,var(--deep) 0%,#0a3b2f00 22%),linear-gradient(90deg,#062a21f2 0%,#062a21d9 40%,#062a2166 72%,#062a2133 100%)}
+.public-site .hm-hero h1{font-family:'Big Shoulders Display','Archivo',Impact,sans-serif;font-stretch:100%;font-weight:900;text-transform:uppercase;letter-spacing:.005em;line-height:.92;font-size:clamp(3.1rem,1.4rem + 8.2vw,7rem);max-width:12ch;text-wrap:balance;text-shadow:0 2px 0 #0f385a66}
+.hm-hero-shade{background:linear-gradient(0deg,var(--deep) 0%,#0f385a00 22%),linear-gradient(90deg,#0a2d49f2 0%,#0a2d49d9 40%,#0a2d4966 72%,#0a2d4933 100%)}
 .hm-hero .lead{max-width:34ch}
 .hm-hero-copy>.hm-audience{max-width:760px}
 .hm-audience{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:34px}
 .hm-audience button{--kraft:#e6d5ad;position:relative;display:grid;gap:3px;text-align:left;padding:34px 52px 18px 20px;border:0;border-radius:4px 14px 4px 14px;background:var(--kraft);color:#1d1608;box-shadow:0 14px 28px #00000040,inset 0 -4px 0 #00000014;transition:transform .15s,box-shadow .15s}
-.hm-audience button::before{content:"";position:absolute;top:12px;left:16px;width:11px;height:11px;border-radius:50%;background:#0a3b2f;box-shadow:inset 0 2px 3px #000000a0,0 0 0 3px #00000014}
+.hm-audience button::before{content:"";position:absolute;top:12px;left:16px;width:11px;height:11px;border-radius:50%;background:#0f385a;box-shadow:inset 0 2px 3px #000000a0,0 0 0 3px #00000014}
 .hm-audience button:hover{transform:translateY(-3px);box-shadow:0 18px 32px #00000052,inset 0 -4px 0 #00000014}
 .hm-audience button.on{background:var(--gold-hi);box-shadow:0 14px 28px #00000040,inset 0 -4px 0 #00000026}
 .hm-audience .tag-for{position:absolute;top:9px;left:36px;font-size:13px;font-weight:700;color:#4a3d1f}
 .hm-audience b{display:block;text-wrap:balance;font-family:'Archivo',Arial,sans-serif;font-stretch:108%;font-weight:800;font-size:clamp(1.05rem,.95rem + .5vw,1.3rem);line-height:1.15;letter-spacing:-.01em}
 .hm-audience small{display:block;color:#3b2f14;font-size:14px;margin:0}
-.hm-audience .tag-go{position:absolute;right:16px;bottom:16px;width:34px;height:34px;padding:7px;border-radius:50%;background:#0a3b2f;color:#fff}
+.hm-audience .tag-go{position:absolute;right:16px;bottom:16px;width:34px;height:34px;padding:7px;border-radius:50%;background:#0f385a;color:#fff}
 @media(max-width:700px){
   .hm-hero-copy>.hm-audience{max-width:none}
   .hm-audience{grid-template-columns:minmax(0,1fr);gap:12px;margin-top:26px}
   .hm-audience button{min-height:92px}
   .public-site .hm-hero h1{font-size:clamp(3rem,15.5vw,4.4rem);max-width:none}
 }
-@media(max-width:560px){.hm-hero-shade{background:linear-gradient(180deg,#062a21e6 0%,#062a21cc 55%,var(--deep) 100%)}}
+@media(max-width:560px){.hm-hero-shade{background:linear-gradient(180deg,#0a2d49e6 0%,#0a2d49cc 55%,var(--deep) 100%)}}
