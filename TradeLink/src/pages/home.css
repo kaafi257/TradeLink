@@ -422,3 +422,74 @@ body:has(.hm-mobile){overflow:hidden}
 }
 @media(min-width:701px){.hm-footer{padding-right:calc(clamp(16px,4vw,56px) + 64px)}}
 .hm-footer-info a{text-decoration:none}
+
+/* ===== Homepage: icons first, less text, more motion ===== */
+/* header + menu: contact as icons only */
+.hm-tel{width:46px;height:46px;justify-content:center;gap:0;border-radius:50%;background:#ffffff1f;border:1px solid #ffffff3d;transition:transform .15s,background .15s}
+.hm-tel:hover{background:#ffffff33;transform:scale(1.08)}
+.hm-mobile-reach{padding:14px 8px 4px}
+.hm-mobile-reach .contact-icons{justify-content:flex-start;margin:0}
+
+/* contact icon buttons: bigger, with a soft pulsing ring */
+.contact-icons{gap:12px}
+.contact-icons .ci{position:relative;width:46px;height:46px;transition:transform .18s}
+.contact-icons .ci::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid currentColor;opacity:0;animation:ring 2.8s ease-out infinite}
+.contact-icons .ci:nth-child(2)::after{animation-delay:.9s}.contact-icons .ci:nth-child(3)::after{animation-delay:1.8s}
+.contact-icons .ci:hover{transform:translateY(-3px) scale(1.1)}
+.hm-reach .contact-icons{justify-content:flex-start;margin-top:4px}
+.hm-reach .ci{width:56px;height:56px}
+.hm-card .contact-icons{margin-top:12px;justify-content:space-between;gap:8px}
+.hm-card .contact-icons .ci{flex:1;width:auto;border-radius:14px;height:44px}
+.hm-card .contact-icons .ci::after{border-radius:14px}
+@keyframes ring{0%{transform:scale(1);opacity:.5}70%,100%{transform:scale(1.5);opacity:0}}
+
+/* hero: drifting icon bubbles + sailing scene */
+.hm-floaters{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.hm-floaters span{position:absolute;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;color:#fff;background:#ffffff1f;border:1px solid #ffffff4d;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 12px 30px #00000033;animation:drift 7s ease-in-out infinite;animation-delay:var(--d)}
+.hm-floaters span:nth-child(1){right:9%;top:16%}.hm-floaters span:nth-child(2){right:20%;top:34%;width:56px;height:56px}
+.hm-floaters span:nth-child(3){right:7%;top:50%;width:72px;height:72px}.hm-floaters span:nth-child(4){right:24%;top:66%;width:52px;height:52px}
+@keyframes drift{0%,100%{transform:translate(0,0) rotate(0)}50%{transform:translate(-10px,-18px) rotate(6deg)}}
+.hm-scene{animation:sail 7s ease-in-out infinite}
+@keyframes sail{50%{transform:translateY(-4px)}}
+@media(max-width:700px){.hm-floaters{display:none}}
+
+/* shop */
+.tile-info{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tile-count{font-style:normal;min-width:30px;height:30px;padding:0 9px;border-radius:99px;display:grid;place-items:center;background:var(--gold);color:var(--gold-ink);font:800 14px 'Archivo',sans-serif}
+.hm-count{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:99px;background:var(--tint);color:var(--deep)}
+.hm-count b{font:800 16px 'Archivo',sans-serif}
+.hm-count button{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--deep);color:#fff;text-decoration:none}
+.hm-card .badge{width:36px;height:36px;padding:0;border-radius:50%;display:grid;place-items:center;font-size:0}
+.hm-card .badge svg{width:18px;height:18px}
+.hm-card .price .ask{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:var(--tint);color:var(--deep)}
+.hm-card .cta{justify-content:center;font-size:16px;font-weight:800}
+.hm-card .cta svg{transition:transform .25s}
+.hm-card .cta:hover svg{transform:rotate(90deg) scale(1.15)}
+@supports (animation-timeline:view()){
+  .hm-card,.hm-tile,.hm-points>div{animation:scroll-rise linear both;animation-timeline:view();animation-range:entry 0% entry 55%}
+  @keyframes scroll-rise{from{opacity:0;transform:translateY(26px) scale(.97)}to{opacity:1;transform:none}}
+}
+
+/* contact: big icon buttons */
+.hm-contact-panel .contact-cards{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.hm-contact-panel .contact-card{position:relative;aspect-ratio:1;min-height:0;padding:0;border-radius:28px;display:grid;place-items:center;transition:transform .2s}
+.hm-contact-panel .contact-card:hover{transform:translateY(-5px) scale(1.04)}
+.hm-contact-panel .contact-card .cc-icon{position:relative;width:68px;height:68px}
+.hm-contact-panel .contact-card .cc-icon::after{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid currentColor;opacity:0;animation:ring 2.6s ease-out infinite}
+.hm-contact-panel .contact-card.cc-whatsapp .cc-icon{color:#1faa59}.hm-contact-panel .contact-card.cc-telegram .cc-icon{color:#229ed9}.hm-contact-panel .contact-card.cc-call .cc-icon{color:#0b5d99}
+.hm-contact-panel .contact-card:nth-child(2) .cc-icon::after{animation-delay:.8s}.hm-contact-panel .contact-card:nth-child(3) .cc-icon::after{animation-delay:1.6s}
+.hm-contact-panel .contact-card .cc-icon svg{color:#fff}
+.hm-contact-panel .contact-card .cc-icon{background:currentColor}
+.hm-big{justify-content:center}
+.hm-big svg{animation:nudge 2.4s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:none}50%{transform:translateY(-3px) rotate(-8deg)}}
+
+/* footer: icon nav */
+.hm-footer nav{gap:10px}
+.hm-footer nav a{width:46px;height:46px;padding:0;justify-content:center;border-radius:50%;background:#ffffff1a;transition:transform .15s,background .15s}
+.hm-footer nav a:hover{background:#ffffff33;transform:translateY(-3px)}
+
+@media(prefers-reduced-motion:reduce){
+  .hm-floaters span,.hm-scene,.contact-icons .ci::after,.hm-contact-panel .contact-card .cc-icon::after,.hm-big svg{animation:none}
+  .hm-card,.hm-tile,.hm-points>div{animation:none!important;opacity:1!important;transform:none!important}
+}
