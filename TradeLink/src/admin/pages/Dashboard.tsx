@@ -1,25 +1,41 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, ArrowRight, ChartNoAxesCombined, Package, Plus, ShoppingCart, UserPlus, Users, Wheat } from "lucide-react";
-import { ActivityList, PanelHead } from "../../components/ui";
-import { GlassStat, StockDonut } from "../DashWidgets";
-import { RANGES, buildSeries, money, shortDate, type Range } from "../../lib/format";
-import type { Product, Quote } from "../../lib/supabase";
+import { AlertTriangle, ArrowRight, Boxes, CheckCircle2, ChartNoAxesCombined, FileText, Inbox, Package, Plus, Receipt, ShoppingCart, Truck, UserPlus, Users } from "lucide-react";
+import { PanelHead } from "../../components/ui";
+import { RANGES, buildSeries, money, type Range } from "../../lib/format";
+import type { Product } from "../../lib/supabase";
 import { ProductModal } from "../modals";
 import { useAdmin } from "../AdminData";
+import { Chip, GlassStat, StockDonut } from "../DashWidgets";
 
 const SalesChart = lazy(() => import("../SalesChart"));
 
 type Level = "out" | "low" | "ok";
 const levelOf = (p: Product): Level =>
   Number(p.stock_quantity) <= 0 ? "out" : Number(p.reorder_level) > 0 && Number(p.stock_quantity) <= Number(p.reorder_level) ? "low" : "ok";
-const LEVEL_LABEL: Record<Level, string> = { out: "Out of stock", low: "Running low", ok: "In stock" };
 const RANK: Record<Level, number> = { out: 0, low: 1, ok: 2 };
-const requestOf = (q: Quote) => q.quotation_items?.map(i => `${i.quantity} ${i.unit} ${i.product_name}`).join(", ") || q.notes || "No details given";
 
 const greeting = () => {
   const h = new Date().getHours();
   return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+};
+
+/** "5m", "3h", "2d": short enough to scan. */
+const ago = (iso: string) => {
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  return m < 60 ? `${m}m` : m < 1440 ? `${Math.floor(m / 60)}h` : `${Math.floor(m / 1440)}d`;
+};
+
+/** Picks an icon for an activity line from what it is about. */
+const activityIcon = (text: string) => {
+  const t = text.toLowerCase();
+  if (/sale|receipt|payment/.test(t)) return <Receipt size={16} />;
+  if (/quot/.test(t)) return <FileText size={16} />;
+  if (/deliver|dispatch/.test(t)) return <Truck size={16} />;
+  if (/stock|inventory/.test(t)) return <Boxes size={16} />;
+  if (/staff|member|user/.test(t)) return <Users size={16} />;
+  if (/order/.test(t)) return <ShoppingCart size={16} />;
+  return <Package size={16} />;
 };
 
 export default function Dashboard() {
@@ -64,84 +80,87 @@ export default function Dashboard() {
   const stockAlerts = products.filter(p => levelOf(p) !== "ok").sort((a, b) => RANK[levelOf(a)] - RANK[levelOf(b)]).slice(0, 3);
   const needsAttention = (canSeeQuotes && newQuoteCount > 0) || stockAlerts.length > 0;
   const showAttention = canSeeQuotes || ["inventory"].includes(role);
+  const alertCount = (canSeeQuotes ? newQuoteCount : 0) + lowCount + outCount;
 
-  const today = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  const today = new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 
   return (
     <div className="dash-glass">
       <section className="dash-head">
         <div>
           <h1>{greeting()}, {firstName}</h1>
-          <p>{today}{canSeeQuotes && newQuoteCount > 0 ? ` · ${newQuoteCount} new ${newQuoteCount === 1 ? "enquiry" : "enquiries"} to review` : ""}</p>
+          <p>{today}</p>
         </div>
         <div className="dash-actions">
           {can("products.edit") && <button className="btn green" onClick={() => setProductModal(true)}><Plus /> Add product</button>}
-          {isLead && <button className="btn outline" onClick={() => navigate("/admin/staff")}><UserPlus /> Invite staff</button>}
-          {canSeeQuotes && <button className="btn outline" onClick={() => navigate("/admin/quotations")}><ShoppingCart /> Quotations</button>}
+          {isLead && <button className="btn outline icon-only" aria-label="Invite staff" title="Invite staff" onClick={() => navigate("/admin/staff")}><UserPlus /></button>}
+          {canSeeQuotes && <button className="btn outline icon-only" aria-label="Quotations" title="Quotations" onClick={() => navigate("/admin/quotations")}><ShoppingCart /></button>}
         </div>
       </section>
 
       <section className="stats-grid" aria-label="Key figures">
-        <GlassStat icon={<ShoppingCart />} tone="mint" value={canSeeQuotes ? String(quoteCount) : "—"} label="Orders & enquiries" note={canSeeQuotes ? `${newQuoteCount} new` : "No access"} onOpen={canSeeQuotes ? () => navigate("/admin/quotations") : undefined} />
-        <GlassStat icon={<ChartNoAxesCombined />} tone="gold" value={canSeeSales && salesDaily.length ? money(monthSales) : "—"} label="Sales this month" note={salesDaily.length ? "vs same days last month" : "No sales recorded yet"} spark={canSeeSales ? monthSeries.slice(0, new Date().getDate()).map(p => p.sales) : undefined} delta={canSeeSales && salesDaily.length ? salesDelta : undefined} onOpen={canSeeSales ? () => navigate("/admin/sales") : undefined} />
-        <GlassStat icon={<Package />} tone="blue" value={String(products.length)} label="Products" note={lowCount + outCount > 0 ? `${lowCount} low, ${outCount} out of stock` : "All in stock"} onOpen={() => navigate("/admin/products")} />
-        <GlassStat icon={<Users />} tone="teal" value={isLead ? String(activeStaff) : "—"} label="Active staff" note={isLead ? `${staff.length - activeStaff} inactive` : "No access"} onOpen={isLead ? () => navigate("/admin/staff") : undefined} />
+        <GlassStat icon={<ShoppingCart />} tone="mint" value={canSeeQuotes ? String(quoteCount) : "—"} label="Orders"
+          chips={canSeeQuotes && newQuoteCount > 0 ? <Chip tone="warn">{newQuoteCount} new</Chip> : undefined}
+          onOpen={canSeeQuotes ? () => navigate("/admin/quotations") : undefined} />
+        <GlassStat icon={<ChartNoAxesCombined />} tone="gold" value={canSeeSales && salesDaily.length ? money(monthSales) : "—"} label="Sales"
+          spark={canSeeSales ? monthSeries.slice(0, new Date().getDate()).map(p => p.sales) : undefined}
+          delta={canSeeSales && salesDaily.length ? salesDelta : undefined}
+          onOpen={canSeeSales ? () => navigate("/admin/sales") : undefined} />
+        <GlassStat icon={<Package />} tone="blue" value={String(products.length)} label="Products"
+          chips={<>{lowCount > 0 && <Chip tone="warn">{lowCount}</Chip>}{outCount > 0 && <Chip tone="bad">{outCount}</Chip>}{lowCount + outCount === 0 && <Chip tone="good">OK</Chip>}</>}
+          onOpen={() => navigate("/admin/products")} />
+        <GlassStat icon={<Users />} tone="teal" value={isLead ? String(activeStaff) : "—"} label="Staff"
+          chips={isLead && staff.length - activeStaff > 0 ? <Chip tone="muted">{staff.length - activeStaff} off</Chip> : undefined}
+          onOpen={isLead ? () => navigate("/admin/staff") : undefined} />
       </section>
 
       <section className="dash-grid">
         <div className="panel glass sales-panel">
-          <PanelHead icon={<ChartNoAxesCombined />} title="Sales overview">
+          <PanelHead icon={<ChartNoAxesCombined />} title="Sales">
             <div className="range-tabs">{RANGES.map(r => <button className={range === r ? "on" : ""} key={r} onClick={() => setRange(r)}>{r}</button>)}</div>
           </PanelHead>
-          {hasSales && <div className="chart-kpis"><div><small>{range} total</small><b>{money(rangeTotal)}</b></div>{best.sales > 0 && <div><small>Best {range === "This Year" ? "month" : "day"}</small><b>{best.day} · {money(best.sales)}</b></div>}</div>}
+          {hasSales && <div className="chart-kpis"><div><b>{money(rangeTotal)}</b></div>{best.sales > 0 && <div className="best"><small>Best</small><b>{best.day} · {money(best.sales)}</b></div>}</div>}
           <div className="chart-wrap">
             {hasSales
-              ? <Suspense fallback={<p className="inline-note">Loading chart…</p>}><SalesChart data={series} /></Suspense>
-              : <div className="empty-state"><ChartNoAxesCombined /><p>No sales recorded for this period. Recorded sales will appear here.</p></div>}
+              ? <Suspense fallback={null}><SalesChart data={series} /></Suspense>
+              : <div className="empty-state"><ChartNoAxesCombined /></div>}
           </div>
-          <div className="chart-foot"><span>Based on recorded sales only.</span>{isLead && <button onClick={() => navigate("/admin/reports")}>Open reports <ArrowRight size={14} /></button>}</div>
+          {isLead && <div className="chart-foot"><button onClick={() => navigate("/admin/reports")} aria-label="Open reports">Reports <ArrowRight size={14} /></button></div>}
         </div>
 
         {showAttention && (
           <div className={`panel glass ${needsAttention ? "attention" : ""}`}>
-            <PanelHead icon={<AlertTriangle />} title="Needs attention" />
-            {canSeeQuotes && (
-              <div className="attn-group">
-                <p className="attn-label">New enquiries</p>
-                {newQuotes.length === 0 && <p className="attn-clear">No new enquiries. Requests from the website appear here.</p>}
-                {newQuotes.map(q => (
-                  <button className="attn-item" key={q.id} onClick={() => navigate("/admin/quotations")}>
-                    <div><b>{q.customer_name}</b><small>{requestOf(q)}</small></div>
-                    <time>{shortDate(q.created_at)}</time>
-                  </button>
-                ))}
-                {newQuoteCount > newQuotes.length && <button className="link-btn" style={{ margin: "4px 20px 10px" }} onClick={() => navigate("/admin/quotations")}>See all {newQuoteCount} new <ArrowRight size={14} /></button>}
+            <PanelHead icon={<AlertTriangle />} title="Alerts">{alertCount > 0 && <span className="count-badge">{alertCount}</span>}</PanelHead>
+            {!needsAttention && <div className="all-clear"><CheckCircle2 size={30} /></div>}
+            {canSeeQuotes && newQuotes.map(q => (
+              <button className="attn-item" key={q.id} onClick={() => navigate("/admin/quotations")}>
+                <span className="avatar-dot"><Inbox size={16} /></span>
+                <div><b>{q.customer_name}</b></div>
+                <time>{ago(q.created_at)}</time>
+              </button>
+            ))}
+            {canSeeQuotes && newQuoteCount > newQuotes.length && <button className="link-btn more" onClick={() => navigate("/admin/quotations")}>+{newQuoteCount - newQuotes.length} <ArrowRight size={14} /></button>}
+            {stockAlerts.map(p => (
+              <div className={`attn-item stock ${levelOf(p)}`} key={p.id}>
+                <span className="avatar-dot"><Boxes size={16} /></span>
+                <div><b>{p.name}</b></div>
+                <strong>{p.stock_quantity} {p.unit}</strong>
               </div>
-            )}
-            <div className="attn-group">
-              <p className="attn-label">Stock alerts</p>
-              {stockAlerts.length === 0 && <p className="attn-clear">Every product is above its reorder level.</p>}
-              {stockAlerts.map(p => (
-                <div className="attn-item" key={p.id}>
-                  <div><b>{p.name}</b><small>{LEVEL_LABEL[levelOf(p)]} · {p.stock_quantity} {p.unit} left</small></div>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         )}
       </section>
 
       <section className="dash-grid even">
         <div className="panel glass">
-          <PanelHead icon={<Wheat />} title="Stock levels"><button className="text-action" onClick={() => navigate("/admin/products")}>All products <ArrowRight size={14} /></button></PanelHead>
+          <PanelHead icon={<Boxes />} title="Stock"><button className="text-action" onClick={() => navigate("/admin/products")} aria-label="All products">All <ArrowRight size={14} /></button></PanelHead>
           {products.length > 0 && <StockDonut split={{ ok: okCount, low: lowCount, out: outCount }} />}
-          {stockRows.length === 0 && <p className="attn-clear">No products yet. Add your first product to start tracking stock.</p>}
           {stockRows.map(p => {
             const lv = levelOf(p);
             return (
               <div className={`stock-row ${lv}`} key={p.id}>
-                <div><b>{p.name}</b><small>{p.package_size || p.category}</small></div>
-                <strong>{p.stock_quantity} {p.unit}<em>{LEVEL_LABEL[lv]}</em></strong>
+                <b>{p.name}</b>
+                <strong>{p.stock_quantity} {p.unit}</strong>
                 <div className="progress"><i style={{ width: `${barWidth(p)}%` }} /></div>
               </div>
             );
@@ -149,10 +168,18 @@ export default function Dashboard() {
         </div>
 
         <div className="panel glass recent-panel">
-          <PanelHead icon={<ChartNoAxesCombined />} title="Recent activity">
-            {isLead && <button className="text-action" onClick={() => navigate("/admin/activity")}>Full log <ArrowRight size={14} /></button>}
+          <PanelHead icon={<ChartNoAxesCombined />} title="Activity">
+            {isLead && <button className="text-action" onClick={() => navigate("/admin/activity")} aria-label="Full activity log">All <ArrowRight size={14} /></button>}
           </PanelHead>
-          <ActivityList items={activities} />
+          <div className="act-list">
+            {activities.slice(0, 6).map(a => (
+              <div className="act-row" key={a.id}>
+                <span className="act-ico">{activityIcon(a.description)}</span>
+                <b>{a.description}</b>
+                <time>{ago(a.created_at)}</time>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

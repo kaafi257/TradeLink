@@ -445,3 +445,51 @@
   .admin-layout .gs-foot{min-height:0;flex-direction:column;align-items:flex-start;gap:4px}
   .admin-layout .spark{width:100%;max-width:none;height:26px}
 }
+
+/* ===== Dashboard: minimal text, icon-led ===== */
+.admin-layout .btn.icon-only{width:46px;min-width:46px;padding:0;justify-content:center}
+.admin-layout .btn.icon-only svg{margin:0}
+.admin-layout .gs .chips{display:flex;flex-wrap:wrap;gap:6px}
+.admin-layout .gs-foot{min-height:30px}
+.admin-layout .gs-label{font-size:14px;font-weight:700;color:var(--ink)}
+.admin-layout .gs-value{font-size:clamp(24px,11cqi,38px)}
+.admin-layout .chip-dot{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;font-size:12.5px;font-weight:800;background:rgba(255,255,255,.7);border:1px solid rgba(11,79,134,.1)}
+.admin-layout .chip-dot i{width:8px;height:8px;border-radius:50%;background:currentColor}
+.admin-layout .chip-dot.good{color:#12703d}.admin-layout .chip-dot.warn{color:#a86a00}.admin-layout .chip-dot.bad{color:#b8312a}.admin-layout .chip-dot.muted{color:#5d726e}
+.admin-layout .chart-kpis .best{display:flex;align-items:baseline;gap:8px}
+.admin-layout .chart-kpis .best small{display:inline;font-size:12px}
+.admin-layout .chart-kpis .best b{font-size:15px}
+.admin-layout .chart-foot{display:flex;justify-content:flex-end;padding:0 20px 14px}
+.admin-layout .chart-foot button{display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.admin-layout .count-badge{min-width:26px;height:26px;padding:0 8px;border-radius:99px;background:#e9a914;color:#2b2200;font:800 13px/26px Manrope,sans-serif;text-align:center}
+.admin-layout .all-clear{display:grid;place-items:center;padding:34px 0;color:#1a9d8a}
+.admin-layout .dash-glass .attn-item{display:flex;align-items:center;gap:12px;width:100%;padding:11px 20px;border:0;background:transparent;text-align:left;font:inherit;color:var(--ink)}
+.admin-layout .dash-glass .attn-item b{font-size:14.5px}
+.admin-layout .dash-glass .attn-item strong{font-size:13px;white-space:nowrap}
+.admin-layout .dash-glass .attn-item.stock.low strong{color:#a86a00}.admin-layout .dash-glass .attn-item.stock.out strong{color:#b8312a}
+.admin-layout .avatar-dot{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(20,121,194,.14);color:#0b5d99}
+.admin-layout .attn-item.stock.low .avatar-dot{background:#fbefcc;color:#a86a00}.admin-layout .attn-item.stock.out .avatar-dot{background:#fde3e0;color:#b8312a}
+.admin-layout .link-btn.more{margin:2px 20px 12px;display:inline-flex;align-items:center;gap:4px;font-weight:700}
+.admin-layout .dash-glass .stock-row{grid-template-columns:minmax(0,1fr) auto;padding:11px 20px;gap:7px 12px}
+.admin-layout .dash-glass .stock-row b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.admin-layout .dash-glass .stock-row strong{font-size:13.5px}
+.admin-layout .dash-glass .stock-row .progress{height:7px;border-radius:99px;background:rgba(11,79,134,.1)}
+.admin-layout .dash-glass .stock-row .progress i{border-radius:99px;background:linear-gradient(90deg,#3aa0e6,#0b5d99)}
+.admin-layout .dash-glass .stock-row.low .progress i{background:linear-gradient(90deg,#f6c453,#e9a914)}.admin-layout .dash-glass .stock-row.out .progress i{background:#d0463a}
+.admin-layout .act-list{padding:6px 12px 12px;display:grid}
+.admin-layout .act-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;padding:8px;border-radius:12px}
+.admin-layout .act-row:hover{background:rgba(255,255,255,.55)}
+.admin-layout .act-ico{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:rgba(11,79,134,.09);color:#0b5d99}
+.admin-layout .act-row b{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.admin-layout .act-row time{font-size:12px;font-weight:700;color:var(--muted)}
+@media(max-width:520px){
+  .admin-layout .gs-label{flex-basis:auto;order:0}
+  .admin-layout .gs-top{flex-wrap:nowrap}
+  .admin-layout .gs-top .delta{margin-left:auto}
+  .admin-layout .dash-glass .dash-head h1{font-size:24px}
+  .admin-layout .dash-glass .dash-actions{width:100%}
+  .admin-layout .dash-glass .dash-actions .btn.green{flex:1}
+}
+.admin-layout .dash-actions{flex-wrap:nowrap}
+.admin-layout .dash-actions .btn.icon-only{flex:0 0 46px;width:46px}
+.admin-layout .dash-actions .btn.green{white-space:nowrap}

@@ -24,14 +24,14 @@ export function Delta({ pct }: { pct: number | null }) {
 }
 
 /** Glass KPI card. Becomes a button when it has somewhere to go. */
-export function GlassStat({ icon, tone, value, label, note, onOpen, spark, delta }: {
-  icon: ReactNode; tone: string; value: string; label: string; note: string; onOpen?: () => void; spark?: number[]; delta?: number | null;
+export function GlassStat({ icon, tone, value, label, chips, onOpen, spark, delta }: {
+  icon: ReactNode; tone: string; value: string; label: string; chips?: ReactNode; onOpen?: () => void; spark?: number[]; delta?: number | null;
 }) {
   const body = (
     <>
       <div className="gs-top"><span className="gs-icon">{icon}</span><span className="gs-label">{label}</span>{delta !== undefined && <Delta pct={delta} />}</div>
       <b className="gs-value">{value}</b>
-      <div className="gs-foot"><span>{note}</span>{spark && <Sparkline values={spark} />}</div>
+      <div className="gs-foot"><span className="chips">{chips}</span>{spark && <Sparkline values={spark} />}</div>
     </>
   );
   return onOpen
@@ -46,7 +46,7 @@ export function StockDonut({ split }: { split: StockSplit }) {
   const [focus, setFocus] = useState<keyof StockSplit | null>(null);
   const total = split.ok + split.low + split.out;
   const r = 38, c = 2 * Math.PI * r;
-  const parts: { k: keyof StockSplit; label: string }[] = [{ k: "ok", label: "In stock" }, { k: "low", label: "Running low" }, { k: "out", label: "Out of stock" }];
+  const parts: { k: keyof StockSplit; label: string }[] = [{ k: "ok", label: "OK" }, { k: "low", label: "Low" }, { k: "out", label: "Out" }];
   let offset = 0;
   return (
     <div className="donut-wrap">
@@ -60,7 +60,7 @@ export function StockDonut({ split }: { split: StockSplit }) {
             return el;
           })}
         </svg>
-        <div className="donut-mid"><b>{focus ? split[focus] : total}</b><small>{focus ? parts.find(p => p.k === focus)!.label : "products"}</small></div>
+        <div className="donut-mid"><b>{focus ? split[focus] : total}</b><small>{focus ? parts.find(p => p.k === focus)!.label : "items"}</small></div>
       </div>
       <ul className="donut-legend">
         {parts.map(({ k, label }) => (
@@ -69,4 +69,9 @@ export function StockDonut({ split }: { split: StockSplit }) {
       </ul>
     </div>
   );
+}
+
+/** A small count with a coloured dot, used instead of explanatory sentences. */
+export function Chip({ tone, children }: { tone: "good" | "warn" | "bad" | "muted"; children: ReactNode }) {
+  return <span className={`chip-dot ${tone}`}><i />{children}</span>;
 }
