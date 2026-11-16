@@ -45,7 +45,7 @@ export default function Quotations() {
           const locked = q.status === "converted";
           return (
             <tr key={q.id}>
-              <td><b>{q.quote_number || q.id.slice(0, 8)}</b></td><td>{q.customer_name}{q.customer_type === "individual" && <> <span className="status muted">retail</span></>}</td><td>{q.phone}</td>
+              <td><b className="docno">{q.quote_number || q.id.slice(0, 8)}</b></td><td>{q.customer_name}{q.customer_type === "individual" && <> <span className="status muted">retail</span></>}</td><td>{q.phone}</td>
               <td>{describe(q)}</td><td>{q.delivery_location}</td><td>{shortDate(q.created_at)}</td>
               <td>{Number(q.estimated_total) > 0 ? money(Number(q.estimated_total)) : "—"}</td>
               <td>

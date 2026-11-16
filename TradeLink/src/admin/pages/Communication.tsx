@@ -85,7 +85,7 @@ export default function Communication() {
           const tel = q.phone.replace(/[^\d+]/g, "");
           return (
             <tr key={q.id}>
-              <td><b>{q.quote_number}</b></td><td>{q.customer_name}</td><td>{q.phone}</td><td>{describe(q)}</td><td>{shortDate(q.created_at)}</td>
+              <td><b className="docno">{q.quote_number}</b></td><td>{q.customer_name}</td><td>{q.phone}</td><td>{describe(q)}</td><td>{shortDate(q.created_at)}</td>
               <td>
                 <a className="pill pill-call" href={`tel:${tel}`}><Phone size={14} />Call</a>{" "}
                 <a className="pill pill-whatsapp" target="_blank" rel="noopener noreferrer" href={`https://wa.me/${waNumber(q.phone)}?text=${msg}`}><MessageCircle size={14} />WhatsApp</a>

@@ -10,9 +10,9 @@ export default function SalesChart({ data }: { data: { day: string; sales: numbe
             <stop offset="0%" stopColor="#15977e" stopOpacity={0.28} /><stop offset="100%" stopColor="#15977e" stopOpacity={0.02} />
           </linearGradient>
         </defs>
-        <CartesianGrid stroke="#e4ebed" vertical />
-        <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#385a61" }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11, fill: "#385a61" }} axisLine={false} tickLine={false} tickFormatter={v => (v >= 1000 ? `${v / 1000}k` : String(v))} />
+        <CartesianGrid stroke="#e4ebed" vertical={false} />
+        <XAxis dataKey="day" tick={{ fontSize: 12, fill: "#385a61" }} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={14} tickMargin={6} />
+        <YAxis width={40} tick={{ fontSize: 12, fill: "#385a61" }} axisLine={false} tickLine={false} tickFormatter={v => (v >= 1000 ? `${v / 1000}k` : String(v))} />
         <Tooltip formatter={v => money(Number(v))} />
         <Area type="monotone" dataKey="sales" stroke="#13977e" strokeWidth={3} fill="url(#salesFill)" />
       </AreaChart>

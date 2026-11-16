@@ -39,11 +39,11 @@ export default function SettingsPage() {
       </div>
       <div className="table-panel" style={{ marginTop: 18 }}>
         <div className="table-toolbar"><b>Permissions by role</b><span>{isOwner ? "The owner always has every permission." : "Only the owner can change these."}</span></div>
-        <div className="table-scroll"><table>
+        <div className="table-scroll"><table className="rt rt-m">
           <thead><tr><th>Action</th>{ROLES.map(r => <th key={r}>{r}</th>)}</tr></thead>
           <tbody>{PERMISSIONS.map(p => (
-            <tr key={p.key}><td>{p.label}</td>{ROLES.map(r => (
-              <td key={r}><input type="checkbox" aria-label={`${r}: ${p.label}`} disabled={!isOwner || granted === null} checked={granted?.has(key(r, p.key)) ?? false} onChange={e => void toggle(r, p.key, e.target.checked)} /></td>
+            <tr key={p.key}><td data-label="Action">{p.label}</td>{ROLES.map(r => (
+              <td key={r} data-label={r}><input type="checkbox" aria-label={`${r}: ${p.label}`} disabled={!isOwner || granted === null} checked={granted?.has(key(r, p.key)) ?? false} onChange={e => void toggle(r, p.key, e.target.checked)} /></td>
             ))}</tr>
           ))}</tbody>
         </table></div>

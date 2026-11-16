@@ -180,6 +180,7 @@ export default function PublicHome() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState("top");
   const [solid, setSolid] = useState(false);
+  const hasCart = cart.length > 0 && !quoteOpen;
 
   const go = useCallback((id: string) => {
     const el = document.getElementById(id);
@@ -210,6 +211,14 @@ export default function PublicHome() {
     window.addEventListener("resize", onScroll);
     return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); };
   }, [products.length]);
+
+  // Escape closes the phone menu.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
 
   useEffect(() => {
     const id = window.location.hash.slice(1);
@@ -277,7 +286,7 @@ export default function PublicHome() {
     : "Our product list is being updated. Please check back soon or contact us.";
 
   return (
-    <div className="public-site">
+    <div className={`public-site${hasCart ? " has-cart" : ""}`}>
       <header className={`hm-header${solid || menuOpen ? " solid" : ""}`}>
         <a href="#top" className="brand-link" onClick={e => { e.preventDefault(); go("top"); }}><Brand light /></a>
         <nav aria-label="Main">
@@ -287,17 +296,21 @@ export default function PublicHome() {
           ))}
         </nav>
         {contact.phone && <a className="hm-tel" href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}><Phone size={16} /> {contact.phone}</a>}
-        <button className="btn gold hm-quote" onClick={() => setQuoteOpen(true)}>Request a price{cart.length > 0 && ` (${cart.length})`}</button>
+        <button className="btn gold hm-quote" aria-label={`Request a price${cart.length > 0 ? `, ${cart.length} in your request` : ""}`} onClick={() => setQuoteOpen(true)}>
+          <span className="hm-q-full">Request a price</span><span className="hm-q-short">Get price</span><span className="hm-q-xs">Quote</span>{cart.length > 0 && <span> ({cart.length})</span>}
+        </button>
         <button className="hm-staff" onClick={() => navigate("/login")}>Staff login</button>
-        <button className="hm-menu" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(o => !o)}>
+        <button className="hm-menu" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} aria-controls="hm-mobile-menu" onClick={() => setMenuOpen(o => !o)}>
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </header>
+      {menuOpen && <button className="hm-scrim" aria-label="Close menu" onClick={() => setMenuOpen(false)} />}
       {menuOpen && (
-        <div className="hm-mobile" role="menu">
+        <div className="hm-mobile" id="hm-mobile-menu" role="menu">
           {NAV.map(n => (
             <a key={n.id} href={`#${n.id}`} role="menuitem" className={active === n.id ? "active" : ""} onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>
           ))}
+          {contact.phone && <a className="hm-mobile-tel" href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`} role="menuitem"><Phone size={18} /> {contact.phone}</a>}
           <a href="/login" role="menuitem" onClick={e => { e.preventDefault(); navigate("/login"); }}>Staff login</a>
         </div>
       )}
