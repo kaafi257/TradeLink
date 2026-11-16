@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { AlertTriangle, Boxes, CheckCircle2, PackageX } from "lucide-react";
-import { DataTable, PageHeading, SummaryStrip } from "../../components/ui";
+import { AlertTriangle, Bell, Boxes, Check, CheckCircle2, Package, PackageX, SlidersHorizontal } from "lucide-react";
+import { PageHeading, SummaryStrip } from "../../components/ui";
+import { IconBtn, RecCard, RecordList, StatusChip, type Tone } from "../Records";
 import type { Product } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
 import { StockModal } from "../modals";
@@ -25,19 +26,21 @@ export default function Inventory() {
         { icon: <PackageX />, tone: "red", value: products.filter(p => levelOf(p) === "out").length, label: "Out" },
         { icon: <Boxes />, tone: "blue", value: products.length, label: "All" },
       ]} />
-      <DataTable headers={["Product", "SKU", "Package", "Available stock", "Reorder level", "Stock status", "Action"]} isEmpty={!rows.length} empty="No products yet">
-        {rows.map(p => {
+      <RecordList isEmpty={!rows.length} empty="No products yet" icon={<Boxes />}>
+        {rows.map((p, i) => {
           const lv = levelOf(p);
+          const qty = Number(p.stock_quantity), reorder = Number(p.reorder_level);
+          const meter = reorder > 0 ? qty / (reorder * 3) : qty > 0 ? 1 : 0;
+          const tone: Tone = lv === "ok" ? "good" : lv === "low" ? "warn" : "bad";
           return (
-            <tr key={p.id}>
-              <td><b>{p.name}</b></td><td>{p.sku || "—"}</td><td>{p.package_size}</td>
-              <td>{p.stock_quantity} {p.unit}</td><td>{Number(p.reorder_level) > 0 ? p.reorder_level : "Not set"}</td>
-              <td><span className={`status ${lv === "ok" ? "good" : "warn"}`}>{LABEL[lv]}</span></td>
-              <td>{can("stock.adjust") ? <button className="btn outline" onClick={() => setAdjusting(p)}>Adjust</button> : "—"}</td>
-            </tr>
+            <RecCard key={p.id} i={i} tone={tone} lead={<Boxes size={22} />} title={p.name} sub={p.sku || undefined}
+              facts={[{ icon: <Package size={14} />, text: p.package_size ?? "" }, { icon: <Bell size={14} />, text: reorder > 0 ? `≤ ${p.reorder_level}` : "" }]}
+              amount={`${p.stock_quantity} ${p.unit}`} meter={meter}
+              status={<StatusChip tone={tone} icon={lv === "ok" ? <Check size={14} /> : <AlertTriangle size={14} />} pulse={lv !== "ok"}>{LABEL[lv]}</StatusChip>}
+              actions={can("stock.adjust") ? <IconBtn primary tone="gold" icon={<SlidersHorizontal size={17} />} label="Adjust" onClick={() => setAdjusting(p)} /> : undefined} />
           );
         })}
-      </DataTable>
+      </RecordList>
       {adjusting && <StockModal product={adjusting} onClose={() => setAdjusting(null)} />}
     </>
   );

@@ -1,5 +1,7 @@
 import { useMemo } from "react";
-import { DataTable, PageHeading } from "../../components/ui";
+import { Clock, MapPin, MessagesSquare, Phone, Users } from "lucide-react";
+import { PageHeading } from "../../components/ui";
+import { IconBtn, RecCard, RecordList, ago, initialsOf } from "../Records";
 import { shortDate } from "../../lib/format";
 import { useAdmin } from "../AdminData";
 
@@ -21,11 +23,14 @@ export default function Customers() {
   return (
     <>
       <PageHeading title="Customers" sub="Customer directory built from wholesale quotation enquiries (latest 200)." />
-      <DataTable headers={["Customer", "Phone", "Email", "Delivery location", "Enquiries", "First enquiry", "Latest enquiry"]} isEmpty={!rows.length} empty="No customers yet">
-        {rows.map(c => (
-          <tr key={c.phone}><td><b>{c.name}</b></td><td>{c.phone}</td><td>{c.email || "—"}</td><td>{c.location}</td><td>{c.count}</td><td>{shortDate(c.first)}</td><td>{shortDate(c.last)}</td></tr>
+      <RecordList isEmpty={!rows.length} empty="No customers yet" icon={<Users />}>
+        {rows.map((c, i) => (
+          <RecCard key={c.phone} i={i} tone="info" initials={initialsOf(c.name)} title={c.name} sub={c.phone}
+            facts={[{ icon: <MapPin size={14} />, text: c.location }, { icon: <MessagesSquare size={14} />, text: String(c.count) }, { icon: <Clock size={14} />, text: ago(c.last) }]}
+            actions={<IconBtn primary tone="green" icon={<Phone size={17} />} label="Call" href={`tel:${c.phone.replace(/[^\d+]/g, "")}`} />}
+            details={[["Email", c.email || "—"], ["First", shortDate(c.first)], ["Latest", shortDate(c.last)]]} />
         ))}
-      </DataTable>
+      </RecordList>
     </>
   );
 }

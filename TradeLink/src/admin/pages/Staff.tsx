@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { ShieldCheck } from "lucide-react";
-import { DataTable, PageHeading } from "../../components/ui";
+import { Check, Power, ShieldCheck, Users } from "lucide-react";
+import { PageHeading } from "../../components/ui";
+import { IconBtn, RecCard, RecordList, StatusChip, initialsOf } from "../Records";
 import { requireSupabase, type Profile, type Role } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
 
@@ -66,20 +67,18 @@ export default function Staff() {
         <label>Role<select name="role" defaultValue="staff">{assignable.map(r => <option key={r}>{r}</option>)}</select></label>
         <button className="btn green" disabled={busy}>{busy ? "Saving…" : "Add staff"}</button>
       </form>
-      <DataTable headers={["Staff member", "Email", "Role", "Account status"]} isEmpty={!rows.length} empty="No staff yet">
-        {rows.map(m => (
-          <tr key={m.id}>
-            <td><b>{m.full_name || "—"}</b></td><td>{m.email}</td>
-            <td>{canEdit(m)
-              ? <select aria-label={`Role of ${m.email}`} value={m.role} onChange={e => void change(m, { role: e.target.value as Role })}>
+      <RecordList isEmpty={!rows.length} empty="No staff yet" icon={<Users />}>
+        {rows.map((m, i) => (
+          <RecCard key={m.id} i={i} tone={m.active ? "good" : "muted"} initials={initialsOf(m.full_name || m.email)} title={m.full_name || "—"} sub={m.email}
+            control={canEdit(m)
+              ? <select className="status-select info" aria-label={`Role of ${m.email}`} value={m.role} onChange={e => void change(m, { role: e.target.value as Role })}>
                   {[...assignable, ...(assignable.includes(m.role) ? [] : [m.role])].map(r => <option key={r}>{r}</option>)}
                 </select>
-              : <span className="role-pill">{m.role}</span>}</td>
-            <td><span className={`status ${m.active ? "good" : "muted"}`}>{m.active ? "Active" : "Inactive"}</span>{" "}
-              {canEdit(m) && <button className="btn outline" onClick={() => void change(m, { active: !m.active })}>{m.active ? "Deactivate" : "Activate"}</button>}</td>
-          </tr>
+              : <span className="role-pill"><ShieldCheck size={14} />{m.role}</span>}
+            status={<StatusChip tone={m.active ? "good" : "muted"} icon={m.active ? <Check size={14} /> : <Power size={14} />}>{m.active ? "Active" : "Off"}</StatusChip>}
+            actions={canEdit(m) ? <IconBtn tone={m.active ? "red" : "green"} icon={<Power size={17} />} label={m.active ? "Deactivate" : "Activate"} onClick={() => void change(m, { active: !m.active })} /> : undefined} />
         ))}
-      </DataTable>
+      </RecordList>
     </>
   );
 }

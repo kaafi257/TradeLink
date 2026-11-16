@@ -1,12 +1,20 @@
 import { useState } from "react";
-import { CheckCircle2, ClipboardCheck, PackageCheck, Truck } from "lucide-react";
-import { DataTable, PageHeading, SummaryStrip } from "../../components/ui";
+import { Ban, CheckCircle2, ClipboardCheck, Clock, MapPin, Package, PackageCheck, Receipt, ShoppingCart, Truck, X } from "lucide-react";
+import type { ReactNode } from "react";
+import { PageHeading, SummaryStrip } from "../../components/ui";
+import { IconBtn, RecCard, RecordList, StatusChip, type Tone } from "../Records";
 import { money, shortDate } from "../../lib/format";
 import { errorText, requireSupabase, type OrderRow } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
 import { AssignModal, SaleModal } from "../workflowModals";
 
-const tone = (s: string) => (s === "completed" ? "good" : s === "cancelled" ? "muted" : "warn");
+const STATUS: Record<string, { label: string; icon: ReactNode; tone: Tone }> = {
+  confirmed: { label: "To sell", icon: <ClipboardCheck size={14} />, tone: "warn" },
+  ready: { label: "Ready", icon: <PackageCheck size={14} />, tone: "info" },
+  dispatched: { label: "On the way", icon: <Truck size={14} />, tone: "info" },
+  completed: { label: "Done", icon: <CheckCircle2 size={14} />, tone: "good" },
+  cancelled: { label: "Cancelled", icon: <Ban size={14} />, tone: "muted" },
+};
 
 export default function Orders() {
   const { orders, deliveries, search, can, notify, reload } = useAdmin();
@@ -34,24 +42,26 @@ export default function Orders() {
         { icon: <Truck />, tone: "mint", value: orders.filter(o => o.status === "dispatched").length, label: "On the way" },
         { icon: <CheckCircle2 />, tone: "mint", value: orders.filter(o => o.status === "completed").length, label: "Done" },
       ]} />
-      <DataTable headers={["Order", "Customer", "Items", "Delivery location", "Total", "Paid", "Date", "Status", "Actions"]} isEmpty={!rows.length} empty="No orders yet">
-        {rows.map(o => {
+      <RecordList isEmpty={!rows.length} empty="No orders yet" icon={<ShoppingCart />}>
+        {rows.map((o, i) => {
           const hasDelivery = deliveries.some(d => d.order_id === o.id && d.status !== "failed");
+          const items = o.order_items ?? [];
+          const total = Number(o.total_amount), paid = Number(o.amount_paid);
+          const st = STATUS[o.status] ?? { label: o.status, icon: <Clock size={14} />, tone: "warn" as Tone };
           return (
-            <tr key={o.id}>
-              <td><b className="docno">{o.order_number}</b></td><td>{o.customer_name}<br /><small>{o.phone}</small></td>
-              <td>{o.order_items?.map(i => `${i.quantity} ${i.unit} ${i.product_name}`).join(", ") || "—"}</td>
-              <td>{o.delivery_location}</td><td>{money(Number(o.total_amount))}</td><td>{money(Number(o.amount_paid))}</td><td>{shortDate(o.created_at)}</td>
-              <td><span className={`status ${tone(o.status)}`}>{o.status}</span></td>
-              <td>
-                {o.status === "confirmed" && can("sales.record") && <button className="btn green" onClick={() => setSale(o)}>Record sale</button>}{" "}
-                {o.status === "confirmed" && can("orders.cancel") && <button className="btn outline" onClick={() => void cancel(o)}>Cancel</button>}
-                {o.status === "ready" && !hasDelivery && can("deliveries.assign") && <button className="btn gold" onClick={() => setAssign(o)}>Assign delivery</button>}
-              </td>
-            </tr>
+            <RecCard key={o.id} i={i} tone={st.tone} lead={<ShoppingCart size={22} />} title={<span className="docno">{o.order_number}</span>} sub={o.customer_name}
+              facts={[{ icon: <Package size={14} />, text: items.length ? `${items.length} ${items.length === 1 ? "item" : "items"}` : "" }, { icon: <MapPin size={14} />, text: o.delivery_location }]}
+              amount={money(total)} meter={total > 0 ? paid / total : 0}
+              status={<StatusChip tone={st.tone} icon={st.icon} pulse={o.status === "confirmed" || o.status === "ready"}>{st.label}</StatusChip>}
+              actions={<>
+                {o.status === "confirmed" && can("sales.record") && <IconBtn primary tone="green" icon={<Receipt size={18} />} label="Sell" onClick={() => setSale(o)} />}
+                {o.status === "confirmed" && can("orders.cancel") && <IconBtn tone="red" icon={<X size={18} />} label="Cancel order" onClick={() => void cancel(o)} />}
+                {o.status === "ready" && !hasDelivery && can("deliveries.assign") && <IconBtn primary tone="gold" icon={<Truck size={18} />} label="Deliver" onClick={() => setAssign(o)} />}
+              </>}
+              details={[["Phone", o.phone], ["Items", items.map(it => `${it.quantity} ${it.unit} ${it.product_name}`).join(", ") || "—"], ["Paid", money(paid)], ["Date", shortDate(o.created_at)], ["Address", o.delivery_location]]} />
           );
         })}
-      </DataTable>
+      </RecordList>
       {sale && <SaleModal order={sale} onClose={() => setSale(null)} />}
       {assign && <AssignModal order={assign} onClose={() => setAssign(null)} />}
     </>

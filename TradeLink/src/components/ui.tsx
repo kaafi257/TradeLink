@@ -1,6 +1,7 @@
 import { Children, cloneElement, isValidElement, type ReactNode } from "react";
 import { Activity, Boxes, ChartNoAxesCombined, FileText, Layers, MessageCircle, Package, Plus, Receipt, Settings, ShoppingCart, Truck, Users } from "lucide-react";
 import { shortDate } from "../lib/format";
+import { CountUp } from "../admin/Records";
 import type { Activity as ActivityRow } from "../lib/supabase";
 
 export function Stat({ icon, color, value, label, note }: { icon: ReactNode; color: string; value: string; label: string; note: string }) {
@@ -38,7 +39,7 @@ export type Metric = { icon: ReactNode; tone: "blue" | "gold" | "mint" | "red"; 
 export function SummaryStrip({ items }: { items: Metric[] }) {
   return (
     <div className="summary-strip">
-      {items.map(m => <div key={m.label} className={`metric ${m.tone}`}><span className="metric-ico">{m.icon}</span><b>{m.value}</b><small>{m.label}</small></div>)}
+      {items.map(m => <div key={m.label} className={`metric ${m.tone}`}><span className="metric-ico">{m.icon}</span><b>{typeof m.value === "number" ? <CountUp value={m.value} /> : m.value}</b><small>{m.label}</small></div>)}
     </div>
   );
 }

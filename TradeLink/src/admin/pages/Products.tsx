@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Edit3, Plus, Search } from "lucide-react";
-import { PageHeading, tableTier } from "../../components/ui";
+import { Banknote, Check, Edit3, EyeOff, Package, Plus, Search, Tag } from "lucide-react";
+import { PageHeading } from "../../components/ui";
+import { IconBtn, RecCard, RecordList, StatusChip } from "../Records";
 import { riceImg } from "../../lib/assets";
 import { money } from "../../lib/format";
 import type { Product } from "../../lib/supabase";
@@ -18,25 +19,18 @@ export default function Products() {
     <>
       <PageHeading title="Product Management" sub="Add, update and manage your wholesale food catalogue."
         action={canEdit ? <button className="btn gold" onClick={() => setModal({ editing: null })}><Plus /> Add Product</button> : undefined} />
-      <div className="table-panel">
+      <div className="table-panel list-toolbar">
         <div className="table-toolbar"><b>{rows.length} Products</b><span><Search size={16} /><input aria-label="Search products" placeholder="Search products…" value={search} onChange={e => setSearch(e.target.value)} /></span></div>
-        <div className="table-scroll"><table className={`rt ${tableTier(canEdit ? 8 : 7)}`}>
-          <thead><tr><th>Product</th><th>Category</th><th>Package</th><th>Wholesale</th><th>Retail</th><th>Stock</th><th>Status</th>{canEdit && <th>Action</th>}</tr></thead>
-          <tbody>{rows.map(p => (
-            <tr key={p.id}>
-              <td data-label="Product"><div className="table-product"><img src={p.image_url || riceImg} alt="" /><b>{p.name}</b></div></td>
-              <td data-label="Category">{p.category}</td><td data-label="Package">{p.package_size}</td>
-              <td data-label="Wholesale">{p.wholesale_price ? money(p.wholesale_price) : "Set price"}</td>
-              <td data-label="Retail">{Number(p.retail_price) > 0 ? money(Number(p.retail_price)) : "—"}</td>
-              <td data-label="Stock">{p.stock_quantity} {p.unit}</td>
-              <td data-label="Status"><span className={`status ${p.active ? "good" : "muted"}`}>{p.active ? "Active" : "Inactive"}</span></td>
-              {canEdit && <td data-label="Action" data-actions><button className="icon-action" aria-label={`Edit ${p.name}`} onClick={() => setModal({ editing: p })}><Edit3 size={16} /></button></td>}
-            </tr>
-          ))}</tbody>
-        </table>
-        {!rows.length && <div className="empty-state"><p>{products.length ? "No match" : "No products yet"}</p></div>}
-        </div>
       </div>
+      <RecordList isEmpty={!rows.length} empty={products.length ? "No match" : "No products yet"} icon={<Package />}>
+        {rows.map((p, i) => (
+          <RecCard key={p.id} i={i} tone={p.active ? "good" : "muted"} img={p.image_url || riceImg} title={p.name} sub={p.category}
+            facts={[{ icon: <Package size={14} />, text: p.package_size ?? "" }, { icon: <Tag size={14} />, text: p.wholesale_price ? money(p.wholesale_price) : "Set price" }, ...(Number(p.retail_price) > 0 ? [{ icon: <Banknote size={14} />, text: money(Number(p.retail_price)) }] : [])]}
+            amount={`${p.stock_quantity} ${p.unit}`}
+            status={<StatusChip tone={p.active ? "good" : "muted"} icon={p.active ? <Check size={14} /> : <EyeOff size={14} />}>{p.active ? "Active" : "Off"}</StatusChip>}
+            actions={canEdit ? <IconBtn icon={<Edit3 size={17} />} label={`Edit ${p.name}`} onClick={() => setModal({ editing: p })} /> : undefined} />
+        ))}
+      </RecordList>
       {modal && <ProductModal editing={modal.editing} onClose={() => setModal(null)} />}
     </>
   );

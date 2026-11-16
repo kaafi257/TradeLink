@@ -7,6 +7,7 @@ import type { Product } from "../../lib/supabase";
 import { ProductModal } from "../modals";
 import { useAdmin } from "../AdminData";
 import { Chip, GlassStat, StockDonut } from "../DashWidgets";
+import { activityIcon, ago } from "../Records";
 
 const SalesChart = lazy(() => import("../SalesChart"));
 
@@ -18,24 +19,6 @@ const RANK: Record<Level, number> = { out: 0, low: 1, ok: 2 };
 const greeting = () => {
   const h = new Date().getHours();
   return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-};
-
-/** "5m", "3h", "2d": short enough to scan. */
-const ago = (iso: string) => {
-  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
-  return m < 60 ? `${m}m` : m < 1440 ? `${Math.floor(m / 60)}h` : `${Math.floor(m / 1440)}d`;
-};
-
-/** Picks an icon for an activity line from what it is about. */
-const activityIcon = (text: string) => {
-  const t = text.toLowerCase();
-  if (/sale|receipt|payment/.test(t)) return <Receipt size={16} />;
-  if (/quot/.test(t)) return <FileText size={16} />;
-  if (/deliver|dispatch/.test(t)) return <Truck size={16} />;
-  if (/stock|inventory/.test(t)) return <Boxes size={16} />;
-  if (/staff|member|user/.test(t)) return <Users size={16} />;
-  if (/order/.test(t)) return <ShoppingCart size={16} />;
-  return <Package size={16} />;
 };
 
 export default function Dashboard() {

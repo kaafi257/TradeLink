@@ -1,4 +1,6 @@
-import { DataTable, PageHeading } from "../../components/ui";
+import { Check, Clock, CreditCard, Receipt } from "lucide-react";
+import { PageHeading } from "../../components/ui";
+import { RecCard, RecordList, StatusChip, ago } from "../Records";
 import { money, shortDate } from "../../lib/format";
 import { useAdmin } from "../AdminData";
 
@@ -9,11 +11,19 @@ export default function SalesPage() {
   return (
     <>
       <PageHeading title="Sales & Deliveries" sub="The 200 most recent sales. Record a sale from the Orders page: it deducts stock and cannot be edited afterwards." />
-      <DataTable headers={["Receipt", "Customer", "Total", "Paid", "Method", "Date"]} isEmpty={!rows.length} empty="No sales yet">
-        {rows.map(x => (
-          <tr key={x.id}><td><b className="docno">{x.receipt_number}</b></td><td>{x.customer_name}</td><td>{money(Number(x.total_amount))}</td><td>{money(Number(x.amount_paid))}</td><td>{x.payment_method || "—"}</td><td>{shortDate(x.sold_at)}</td></tr>
-        ))}
-      </DataTable>
+      <RecordList isEmpty={!rows.length} empty="No sales yet" icon={<Receipt />}>
+        {rows.map((x, i) => {
+          const total = Number(x.total_amount), paid = Number(x.amount_paid);
+          const full = paid >= total;
+          return (
+            <RecCard key={x.id} i={i} tone={full ? "good" : "warn"} lead={<Receipt size={22} />} title={<span className="docno">{x.receipt_number}</span>} sub={x.customer_name}
+              facts={[{ icon: <CreditCard size={14} />, text: x.payment_method || "" }, { icon: <Clock size={14} />, text: ago(x.sold_at) }]}
+              amount={money(total)} meter={total > 0 ? paid / total : 0}
+              status={<StatusChip tone={full ? "good" : "warn"} icon={full ? <Check size={14} /> : <Clock size={14} />}>{full ? "Paid" : "Part"}</StatusChip>}
+              details={[["Paid", money(paid)], ["Date", shortDate(x.sold_at)]]} />
+          );
+        })}
+      </RecordList>
     </>
   );
 }

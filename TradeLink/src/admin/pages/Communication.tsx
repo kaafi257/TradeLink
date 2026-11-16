@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Lock, Mail, MessageCircle, Phone } from "lucide-react";
-import { DataTable, PageHeading } from "../../components/ui";
+import { Clock, Lock, Mail, MessageCircle, Phone } from "lucide-react";
+import { PageHeading } from "../../components/ui";
+import { IconBtn, RecCard, RecordList, ago, initialsOf } from "../Records";
 import { buildChannels, loadContact, waNumber, type Contact } from "../../lib/contact";
 import { shortDate } from "../../lib/format";
 import { errorText, requireSupabase, type Quote } from "../../lib/supabase";
@@ -78,22 +79,22 @@ export default function Communication() {
       <div className="inline-form" style={{ marginBottom: 12 }}>
         <label>Message to send<select value={tpl} onChange={e => setTpl(e.target.value)}>{TEMPLATES.map(x => <option key={x.key} value={x.key}>{x.label}</option>)}</select></label>
       </div>
-      <DataTable headers={["Reference", "Customer", "Phone", "Request", "Received", "Contact"]} isEmpty={!rows.length} empty="No enquiries yet">
-        {rows.map(q => {
+      <RecordList isEmpty={!rows.length} empty="No enquiries yet" icon={<MessageCircle />}>
+        {rows.map((q, i) => {
           const msg = encodeURIComponent(template.text(q.customer_name, q.quote_number));
           const tel = q.phone.replace(/[^\d+]/g, "");
           return (
-            <tr key={q.id}>
-              <td><b className="docno">{q.quote_number}</b></td><td>{q.customer_name}</td><td>{q.phone}</td><td>{describe(q)}</td><td>{shortDate(q.created_at)}</td>
-              <td>
-                <a className="pill pill-call" href={`tel:${tel}`}><Phone size={14} />Call</a>{" "}
-                <a className="pill pill-whatsapp" target="_blank" rel="noopener noreferrer" href={`https://wa.me/${waNumber(q.phone)}?text=${msg}`}><MessageCircle size={14} />WhatsApp</a>
-                {q.email && <>{" "}<a className="pill pill-telegram" href={`mailto:${q.email}?subject=${encodeURIComponent(`TradeLink quotation ${q.quote_number}`)}&body=${msg}`}><Mail size={14} />Email</a></>}
-              </td>
-            </tr>
+            <RecCard key={q.id} i={i} tone="info" initials={initialsOf(q.customer_name)} title={q.customer_name} sub={<span className="docno">{q.quote_number}</span>}
+              facts={[{ icon: <Phone size={14} />, text: q.phone }, { icon: <Clock size={14} />, text: ago(q.created_at) }]}
+              actions={<>
+                <IconBtn tone="neutral" icon={<Phone size={17} />} label="Call" href={`tel:${tel}`} />
+                <IconBtn tone="wa" icon={<MessageCircle size={17} />} label="WhatsApp" external href={`https://wa.me/${waNumber(q.phone)}?text=${msg}`} />
+                {q.email && <IconBtn tone="tg" icon={<Mail size={17} />} label="Email" href={`mailto:${q.email}?subject=${encodeURIComponent(`TradeLink quotation ${q.quote_number}`)}&body=${msg}`} />}
+              </>}
+              details={[["Request", describe(q)], ["Received", shortDate(q.created_at)]]} />
           );
         })}
-      </DataTable>
+      </RecordList>
     </>
   );
 }
