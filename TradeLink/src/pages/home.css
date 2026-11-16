@@ -329,3 +329,64 @@ body:has(.hm-mobile){overflow:hidden}
 .hm-hero-shade{background:linear-gradient(0deg,var(--deep) 0%,#0b5d9900 22%),linear-gradient(90deg,#062a4af7 0%,#062a4ae6 45%,#062a4a8c 75%,#062a4a40 100%)}
 .hm-hero .lead{color:#fff;font-weight:500;text-shadow:0 1px 10px #04243dcc;line-height:1.5}
 @media(max-width:560px){.hm-hero-shade{background:linear-gradient(180deg,#062a4af2 0%,#062a4ae6 60%,var(--deep) 100%)}}
+
+/* Less text, more icons */
+.hm-audience button{grid-template-columns:auto 1fr;align-items:center;column-gap:14px;padding:30px 60px 18px 20px;min-height:96px}
+.hm-audience .tag-ico{grid-row:1;width:48px;height:48px;border-radius:12px;background:#0b5d99;color:#fff;display:grid;place-items:center}
+.hm-audience b{font-size:clamp(1.3rem,1.1rem + .8vw,1.7rem)}
+.hm-audience button::before{display:none}
+.hm-reach{margin-top:22px}
+
+.hm-route-body{padding-top:28px;padding-bottom:clamp(40px,6vw,72px)}
+.hm-route-steps{position:relative;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0;max-width:760px;margin-inline:auto}
+.hm-route-steps::before{content:"";position:absolute;top:32px;left:12.5%;right:12.5%;height:3px;border-radius:2px;background:repeating-linear-gradient(90deg,#ffffff59 0 8px,transparent 8px 16px);transform:scaleX(0);transform-origin:left;transition:transform 1.1s cubic-bezier(.3,.7,.2,1)}
+.hm-route-steps.in::before{transform:scaleX(1)}
+.hm-route-steps li{border:0;padding:0;display:grid;justify-items:center;gap:10px;text-align:center}
+.hm-route-steps li:before{display:none}
+.hm-route-steps .stop{position:relative;z-index:1;width:64px;height:64px;border-radius:50%;background:var(--gold);color:var(--gold-ink);display:grid;place-items:center;box-shadow:0 0 0 6px var(--deep-2);transform:scale(.4);opacity:0}
+.hm-route-steps.in .stop{animation:stop-pop .5s cubic-bezier(.3,1.5,.5,1) forwards;animation-delay:calc(var(--i) * .22s)}
+.hm-route-steps b{font-size:15px;font-weight:700;opacity:0}
+.hm-route-steps.in b{animation:fade-in .4s ease forwards;animation-delay:calc(var(--i) * .22s + .15s)}
+@keyframes stop-pop{to{transform:scale(1);opacity:1}}
+@keyframes fade-in{to{opacity:1}}
+
+.hm-shop-head h2{margin:0}
+.hm-card .price .ask{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--muted)}
+.hm-card .contact-pills-wrap::before{content:none}
+
+.hm-about{grid-template-columns:minmax(0,4fr) minmax(0,8fr);align-items:center}
+.hm-points{gap:18px}
+.hm-points>div{border:1px solid var(--line);border-radius:18px;background:#fff;padding:22px;display:flex;align-items:center;gap:16px}
+.hm-points h3{margin:0;font-size:1.1rem}
+.hm-ico{flex:none;width:52px;height:52px;border-radius:14px;background:var(--deep);color:var(--gold-hi)}
+.hm-points>div{opacity:0;transform:translateY(14px)}
+.hm-points.in>div{animation:rise .5s ease forwards;animation-delay:calc(var(--i) * .1s)}
+.hm-points.in .hm-ico svg{animation:wiggle .7s ease .4s 1}
+@keyframes rise{to{opacity:1;transform:none}}
+@keyframes wiggle{0%,100%{transform:rotate(0)}30%{transform:rotate(-12deg) scale(1.15)}60%{transform:rotate(8deg)}}
+
+.hm-steps{display:flex;gap:10px;margin:28px 0 0;counter-reset:none;position:relative}
+.hm-steps li{counter-increment:none;flex:1;padding:0;min-height:0;display:grid;justify-items:center;gap:8px;text-align:center}
+.hm-steps li:before{display:none}
+.hm-steps .stop{width:56px;height:56px;border-radius:50%;background:var(--gold);color:var(--gold-ink);display:grid;place-items:center;transform:scale(.4);opacity:0}
+.hm-steps.in .stop{animation:stop-pop .5s cubic-bezier(.3,1.5,.5,1) forwards;animation-delay:calc(var(--i) * .2s)}
+.hm-steps b{font-size:15px;opacity:0}
+.hm-steps.in b{animation:fade-in .4s ease forwards;animation-delay:calc(var(--i) * .2s + .15s)}
+
+.hm-cartbar>span{display:inline-flex;align-items:center;gap:8px;font-size:16px}
+.hm-cartbar>span b{font-size:18px}
+
+.hm-audience button{animation:rise .55s ease both}
+.hm-audience button:nth-child(2){animation-delay:.1s}
+
+.hm-footer{padding-top:32px}
+@media(max-width:700px){
+  .hm-about{grid-template-columns:minmax(0,1fr)}
+  .hm-points{grid-template-columns:minmax(0,1fr)}
+  .hm-route-steps .stop{width:56px;height:56px}
+  .hm-route-steps::before{top:28px}
+}
+@media(prefers-reduced-motion:reduce){
+  .hm-route-steps::before{transition:none;transform:scaleX(1)}
+  .hm-route-steps .stop,.hm-route-steps b,.hm-steps .stop,.hm-steps b,.hm-points>div,.hm-audience button{animation:none!important;opacity:1!important;transform:none!important}
+}
