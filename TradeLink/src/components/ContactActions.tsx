@@ -44,7 +44,7 @@ export function ContactCards({ message }: { message?: string }) {
       {list.map(c => (
         <a key={c.key} className={`contact-card cc-${c.key}`} href={c.href} {...ext(c)}>
           <span className="cc-icon"><Icon k={c.key} size={24} /></span>
-          <span><b>{c.key === "call" ? "Call us" : `Chat on ${c.label}`}</b><small>{c.detail}</small></span>
+          <span className="cc-text"><b>{c.label}</b><small>{c.detail}</small></span>
         </a>
       ))}
     </div>
