@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Building2, Globe, Lock, ShieldCheck, Warehouse } from "lucide-react";
 import { PageHeading } from "../../components/ui";
 import { PERMISSIONS, errorText, requireSupabase, type Role } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
@@ -32,13 +33,13 @@ export default function SettingsPage() {
     <>
       <PageHeading title="Settings" sub="Business configuration and platform preferences." />
       <div className="settings-grid">
-        <div className="setting-card"><h3>Business profile</h3><p>TradeLink Food Wholesale</p><small>Contact channels are set on the Communication page.</small></div>
-        <div className="setting-card"><h3>Regional preferences</h3><p>Currency: ETB</p><small>Interface language: English</small></div>
-        <div className="setting-card"><h3>Warehouse</h3><p>One central warehouse</p><small>Warehouse details are not configurable in the app yet.</small></div>
-        <div className="setting-card"><h3>Security</h3><p>Supabase authentication + row-level security</p><small>Access is governed by database policies, staff roles and the permissions below.</small></div>
+        <div className="setting-card"><span className="sc-ico"><Building2 /></span><div><h3>Business</h3><p>TradeLink Food Wholesale</p></div></div>
+        <div className="setting-card"><span className="sc-ico"><Globe /></span><div><h3>Region</h3><p>ETB · English</p></div></div>
+        <div className="setting-card"><span className="sc-ico"><Warehouse /></span><div><h3>Warehouse</h3><p>Central</p></div></div>
+        <div className="setting-card"><span className="sc-ico"><ShieldCheck /></span><div><h3>Security</h3><p>Role-based access</p></div></div>
       </div>
       <div className="table-panel" style={{ marginTop: 18 }}>
-        <div className="table-toolbar"><b>Permissions by role</b><span>{isOwner ? "The owner always has every permission." : "Only the owner can change these."}</span></div>
+        <div className="table-toolbar"><b>Permissions</b><span className="lock-note">{isOwner ? <ShieldCheck size={16} /> : <Lock size={16} />}</span></div>
         <div className="table-scroll"><table className="rt rt-m">
           <thead><tr><th>Action</th>{ROLES.map(r => <th key={r}>{r}</th>)}</tr></thead>
           <tbody>{PERMISSIONS.map(p => (

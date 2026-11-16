@@ -100,7 +100,7 @@ function Shell() {
           </div>
         </header>
 
-        <main className="admin-content">
+        <main className="admin-content dash-glass">
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="products" element={g(["owner", "manager", "sales", "inventory", "delivery"], <Products />)} />

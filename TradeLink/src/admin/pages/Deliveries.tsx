@@ -25,7 +25,7 @@ export default function Deliveries() {
   return (
     <>
       <PageHeading title="Deliveries" sub={profile.role === "delivery" ? "Deliveries assigned to you." : "Track every assigned delivery. Assign new ones from the Orders page."} />
-      <DataTable headers={["Order", "Customer", "Destination", "Assigned to", "Scheduled", "Status", "Actions"]} isEmpty={!rows.length} empty="No deliveries yet.">
+      <DataTable headers={["Order", "Customer", "Destination", "Assigned to", "Scheduled", "Status", "Actions"]} isEmpty={!rows.length} empty="No deliveries yet">
         {rows.map(d => (
           <tr key={d.id}>
             <td><b>{d.orders?.order_number ?? d.order_id.slice(0, 8)}</b></td>

@@ -85,7 +85,7 @@ export default function Dashboard() {
   const today = new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 
   return (
-    <div className="dash-glass">
+    <div className="dash-page">
       <section className="dash-head">
         <div>
           <h1>{greeting()}, {firstName}</h1>

@@ -21,7 +21,7 @@ export default function Customers() {
   return (
     <>
       <PageHeading title="Customers" sub="Customer directory built from wholesale quotation enquiries (latest 200)." />
-      <DataTable headers={["Customer", "Phone", "Email", "Delivery location", "Enquiries", "First enquiry", "Latest enquiry"]} isEmpty={!rows.length} empty="Customers will appear when they submit wholesale enquiries.">
+      <DataTable headers={["Customer", "Phone", "Email", "Delivery location", "Enquiries", "First enquiry", "Latest enquiry"]} isEmpty={!rows.length} empty="No customers yet">
         {rows.map(c => (
           <tr key={c.phone}><td><b>{c.name}</b></td><td>{c.phone}</td><td>{c.email || "—"}</td><td>{c.location}</td><td>{c.count}</td><td>{shortDate(c.first)}</td><td>{shortDate(c.last)}</td></tr>
         ))}
