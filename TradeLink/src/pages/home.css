@@ -573,3 +573,26 @@ body:has(.hm-mobile){overflow:hidden}
   .hm-shop-env::before,.hm-shop-env::after{transition:none}
 }
 @media(max-width:560px){.hm-banner{padding:14px 16px;gap:14px;border-radius:20px}.bn-ico{width:52px;height:52px}.bn-float{display:none}}
+
+/* ===== Compact icon sizing ===== */
+.hm-floaters span,.hm-floaters span:nth-child(n){width:44px;height:44px}
+.hm-route-steps .stop,.hm-steps .stop,.hm-steps li:before{width:44px;height:44px}
+.hm-route-steps .stop{box-shadow:0 0 0 4px var(--deep-2)}
+.hm-ico{width:42px;height:42px;border-radius:12px}
+.hm-audience .tag-ico{width:40px;height:40px;border-radius:11px}
+.tile-ico{width:32px;height:32px;top:10px;left:10px}
+.bn-ico{width:48px;height:48px}
+.bn-float{gap:12px}
+.hm-banner{min-height:72px;padding:12px 20px}
+.contact-icons .ci{width:40px;height:40px}
+.hm-reach .ci{width:44px;height:44px}
+.hm-tel{width:40px;height:40px}
+.hm-contact-panel .contact-card{min-height:92px}
+.hm-contact-panel .contact-card .cc-icon{width:36px;height:36px}
+.hm-card .badge{width:28px;height:28px}
+@media(max-width:560px){.bn-ico{width:42px;height:42px}.hm-steps .stop,.hm-route-steps .stop{width:40px;height:40px}.fab{width:44px;height:44px}}
+.hm-contact-panel .contact-cards{max-width:420px}
+.hm-contact-panel .contact-card{aspect-ratio:auto;min-height:64px;border-radius:18px}
+.hm-contact-panel .contact-card .cc-icon{width:44px;height:44px}
+.fab{width:46px;height:46px}
+@media(max-width:560px){.fab{width:42px;height:42px}.hm-contact-panel .contact-card{min-height:58px}}

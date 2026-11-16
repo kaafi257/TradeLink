@@ -13,7 +13,7 @@ export function ContactIcons({ message }: { message?: string }) {
   return (
     <div className="contact-icons">
       {list.map(c => (
-        <a key={c.key} className={`ci ci-${c.key}`} href={c.href} title={c.label} aria-label={c.label} {...ext(c)}><Icon k={c.key} size={19} /></a>
+        <a key={c.key} className={`ci ci-${c.key}`} href={c.href} title={c.label} aria-label={c.label} {...ext(c)}><Icon k={c.key} size={17} /></a>
       ))}
     </div>
   );
@@ -43,7 +43,7 @@ export function ContactCards({ message }: { message?: string }) {
     <div className="contact-cards">
       {list.map(c => (
         <a key={c.key} className={`contact-card cc-${c.key}`} href={c.href} title={c.label} aria-label={c.label} {...ext(c)}>
-          <span className="cc-icon"><Icon k={c.key} size={30} /></span>
+          <span className="cc-icon"><Icon k={c.key} size={22} /></span>
         </a>
       ))}
     </div>
@@ -57,7 +57,7 @@ export function FloatingContact() {
   return (
     <div className="fab-stack" aria-label="Contact us">
       {list.map(c => (
-        <a key={c.key} className={`fab fab-${c.key}`} href={c.href} title={c.label} aria-label={c.label} {...ext(c)}><Icon k={c.key} size={24} /></a>
+        <a key={c.key} className={`fab fab-${c.key}`} href={c.href} title={c.label} aria-label={c.label} {...ext(c)}><Icon k={c.key} size={20} /></a>
       ))}
     </div>
   );
