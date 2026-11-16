@@ -8,6 +8,7 @@ import { useChannels, useContact } from "../lib/contact";
 import { money } from "../lib/format";
 import { IconFor } from "../lib/icons";
 import { useInstall } from "../lib/install";
+import { MODE_LOOK, lookFor, type Look } from "../lib/theme";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct } from "../lib/supabase";
 import "./home.css";
 
@@ -289,8 +290,12 @@ export default function PublicHome() {
   const indTabs = inds.filter(i => cats.some(c => c.industry_id === i.id && (counts.get(c.id) ?? 0) > 0));
   const effIndustry = indTabs.some(i => i.id === industryId) ? industryId : "all";
   const tiles = cats.filter(c => (effIndustry === "all" || c.industry_id === effIndustry) && (counts.get(c.id) ?? 0) > 0);
+  const looks = useMemo(() => new Map(cats.map(c => [c.id, lookFor(c.name, indById.get(c.industry_id)?.name)])), [cats, indById]);
+  const lookVars = (l: Look) => ({ "--ca": l.a, "--cb": l.b, "--ct": l.tint, "--ci": l.ink, "--cp": l.pat }) as React.CSSProperties;
   const effCategory = categoryId !== "all" && tiles.some(c => c.id === categoryId) ? categoryId : "all";
   const q = search.trim().toLowerCase();
+  const activeLook = effCategory !== "all" ? looks.get(effCategory) : undefined;
+  const envLook = activeLook ?? MODE_LOOK[mode];
   const shown = visible.filter(p =>
     (effCategory === "all" || catKey(p) === effCategory) &&
     (effIndustry === "all" || catById.get(catKey(p))?.industry_id === effIndustry) &&
@@ -385,6 +390,8 @@ export default function PublicHome() {
         </div>
       </section>
 
+      <div className="hm-shop-env" data-mode={mode} style={lookVars(envLook)}>
+      <div className="env-pat" key={envLook.key} aria-hidden="true" />
       <section className="hm-section" id="public-products">
         <div className="hm-head hm-shop-head">
           <div><h2>Shop</h2></div>
@@ -404,11 +411,20 @@ export default function PublicHome() {
         {tiles.length > 0 && (
           <div className="hm-tiles">
             {tiles.map(c => (
-              <button key={c.id} className={`hm-tile${effCategory === c.id ? " on" : ""}`} aria-pressed={effCategory === c.id} onClick={() => setCategoryId(effCategory === c.id ? "all" : c.id)}>
+              <button key={c.id} style={lookVars(looks.get(c.id)!)} className={`hm-tile${effCategory === c.id ? " on" : ""}`} aria-pressed={effCategory === c.id} onClick={() => setCategoryId(effCategory === c.id ? "all" : c.id)}>
                 {c.image_url ? <img src={c.image_url} alt="" loading="lazy" /> : <span className="tile-ph"><IconFor name={indById.get(c.industry_id)?.icon} size={34} /></span>}
+                <span className="tile-ico">{(() => { const I = looks.get(c.id)!.Icon; return <I size={22} />; })()}</span>
                 <span className="tile-info"><b>{c.name}</b><em className="tile-count">{counts.get(c.id)}</em></span>
               </button>
             ))}
+          </div>
+        )}
+
+        {activeLook && (
+          <div className="hm-banner" key={effCategory} style={lookVars(activeLook)}>
+            <span className="bn-ico"><activeLook.Icon size={34} /></span>
+            <b>{catById.get(effCategory)?.name}</b>
+            <span className="bn-float" aria-hidden="true"><activeLook.Icon size={28} /><activeLook.Icon size={20} /><activeLook.Icon size={36} /></span>
           </div>
         )}
 
@@ -425,10 +441,10 @@ export default function PublicHome() {
               const ind = indById.get(catById.get(catKey(p))?.industry_id ?? "");
               const added = inCart(p.id);
               return (
-                <article className="hm-card" key={p.id}>
+                <article className="hm-card" key={p.id} style={lookVars(looks.get(catKey(p)) ?? envLook)}>
                   <div className="media">
                     {img ? <img src={img} alt={p.name} loading="lazy" /> : <div className="ph" role="img" aria-label={p.name}><IconFor name={ind?.icon} size={44} /></div>}
-                    <span className="badge" title={p.category}><IconFor name={ind?.icon} size={16} /></span>
+                    <span className="badge" title={p.category}>{(() => { const I = (looks.get(catKey(p)) ?? envLook).Icon; return <I size={18} />; })()}</span>
                   </div>
                   <div className="body">
                     <h3>{p.name}</h3>
@@ -452,6 +468,7 @@ export default function PublicHome() {
           </div>
         )}
       </section>
+      </div>
 
       <section className="hm-why" id="why">
         <div className="hm-section hm-about">
