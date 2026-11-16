@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Briefcase, Check, ClipboardList, Headphones, Menu, Package, Phone, Plus, Search, ShieldCheck, Tag, Trash2, Truck, User, X, Layers, Download, Ship, Warehouse, Mail, MapPin, Clock } from "lucide-react";
+import { ArrowRight, Briefcase, Check, ClipboardList, Headphones, Menu, Package, Phone, Plus, Search, ShieldCheck, Tag, Trash2, Truck, User, X, Layers, Download, Ship, Warehouse, Home, Store, Info, MessageCircle, Wheat, Droplets } from "lucide-react";
 import { Brand } from "../components/Brand";
-import { ContactCards, ContactPills, FloatingContact } from "../components/ContactActions";
+import { ContactCards, ContactIcons, ContactPills, FloatingContact } from "../components/ContactActions";
 import { TURNSTILE_SITE_KEY, Turnstile } from "../components/Turnstile";
 import { useChannels, useContact } from "../lib/contact";
 import { money } from "../lib/format";
@@ -17,6 +17,9 @@ const NAV = [
   { id: "why", label: "About Us" },
   { id: "contact", label: "Contact" },
 ];
+const NAV_ICON: Record<string, JSX.Element> = {
+  top: <Home size={20} />, "public-products": <Store size={20} />, why: <Info size={20} />, contact: <MessageCircle size={20} />,
+};
 const ROUTE = [
   { Icon: Package, label: "Bulk" },
   { Icon: Ship, label: "Port" },
@@ -324,7 +327,7 @@ export default function PublicHome() {
                onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>
           ))}
         </nav>
-        {contact.phone && <a className="hm-tel" href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}><Phone size={16} /> {contact.phone}</a>}
+        {contact.phone && <a className="hm-tel" aria-label="Call" title="Call" href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}><Phone size={18} /></a>}
         <button className="btn gold hm-quote" aria-label={`Request a price${cart.length > 0 ? `, ${cart.length} in your request` : ""}`} onClick={() => setQuoteOpen(true)}>
           <span className="hm-q-full">Request a price</span><span className="hm-q-short">Get price</span><span className="hm-q-xs">Quote</span>{cart.length > 0 && <span> ({cart.length})</span>}
         </button>
@@ -339,7 +342,7 @@ export default function PublicHome() {
           {NAV.map(n => (
             <a key={n.id} href={`#${n.id}`} role="menuitem" className={active === n.id ? "active" : ""} onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>
           ))}
-          {contact.phone && <a className="hm-mobile-tel" href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`} role="menuitem"><Phone size={18} /> {contact.phone}</a>}
+          {reach.length > 0 && <div className="hm-mobile-reach"><ContactIcons /></div>}
           {app.canInstall && <button className="hm-install" role="menuitem" onClick={() => { setMenuOpen(false); void app.install(); }}><Download size={18} /> Install TradeLink app</button>}
           {app.isIos && <p className="hm-install-hint">To install: tap Share, then “Add to Home Screen”.</p>}
           <a href="/login" role="menuitem" onClick={e => { e.preventDefault(); navigate("/login"); }}>Staff login</a>
@@ -349,6 +352,12 @@ export default function PublicHome() {
       <section className="hm-hero" id="top">
         <img className="hm-hero-bg" src="/img/warehouse.jpg" alt="Racks and pallets stacked with goods inside the TradeLink warehouse" />
         <div className="hm-hero-shade" />
+        <div className="hm-floaters" aria-hidden="true">
+          <span style={{ "--d": "0s" } as React.CSSProperties}><Wheat size={26} /></span>
+          <span style={{ "--d": "-1.4s" } as React.CSSProperties}><Droplets size={26} /></span>
+          <span style={{ "--d": "-2.6s" } as React.CSSProperties}><Package size={26} /></span>
+          <span style={{ "--d": "-3.8s" } as React.CSSProperties}><Truck size={26} /></span>
+        </div>
         <div className="hm-hero-copy">
           <h1>Rice, sugar and oil, straight from the port</h1>
           <div className="hm-audience" role="group" aria-label="Who are you buying for?">
@@ -363,7 +372,7 @@ export default function PublicHome() {
               <ArrowRight className="tag-go" size={20} />
             </button>
           </div>
-          {reach.length > 0 && <div className="hm-reach"><ContactPills /></div>}
+          {reach.length > 0 && <div className="hm-reach"><ContactIcons /></div>}
         </div>
       </section>
 
@@ -397,7 +406,7 @@ export default function PublicHome() {
             {tiles.map(c => (
               <button key={c.id} className={`hm-tile${effCategory === c.id ? " on" : ""}`} aria-pressed={effCategory === c.id} onClick={() => setCategoryId(effCategory === c.id ? "all" : c.id)}>
                 {c.image_url ? <img src={c.image_url} alt="" loading="lazy" /> : <span className="tile-ph"><IconFor name={indById.get(c.industry_id)?.icon} size={34} /></span>}
-                <span className="tile-info"><b>{c.name}</b><small>{counts.get(c.id)} {counts.get(c.id) === 1 ? "product" : "products"}</small></span>
+                <span className="tile-info"><b>{c.name}</b><em className="tile-count">{counts.get(c.id)}</em></span>
               </button>
             ))}
           </div>
@@ -405,7 +414,7 @@ export default function PublicHome() {
 
         <div className="hm-toolbar">
           <label className="hm-search"><Search size={17} /><input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products" aria-label="Search products" /></label>
-          <span className="hm-count">{shown.length} {shown.length === 1 ? "product" : "products"}{effCategory !== "all" && <button onClick={() => setCategoryId("all")}>Clear category</button>}</span>
+          <span className="hm-count"><Package size={16} /><b>{shown.length}</b>{effCategory !== "all" && <button onClick={() => setCategoryId("all")} aria-label="Clear category" title="Clear category"><X size={15} /></button>}</span>
         </div>
 
         {shown.length === 0 ? <p className="hm-empty">{emptyMessage}</p> : (
@@ -419,23 +428,23 @@ export default function PublicHome() {
                 <article className="hm-card" key={p.id}>
                   <div className="media">
                     {img ? <img src={img} alt={p.name} loading="lazy" /> : <div className="ph" role="img" aria-label={p.name}><IconFor name={ind?.icon} size={44} /></div>}
-                    <span className="badge">{p.category}</span>
+                    <span className="badge" title={p.category}><IconFor name={ind?.icon} size={16} /></span>
                   </div>
                   <div className="body">
                     <h3>{p.name}</h3>
                     <div className="chips">
                       <span className="chip"><Package size={14} />{p.package_size || p.unit}</span>
-                      {mode === "business" && <span className="chip gold"><Tag size={14} />Min. {Number(p.min_order_quantity)} {p.unit}</span>}
+                      {mode === "business" && <span className="chip gold" title={`Minimum order ${Number(p.min_order_quantity)} ${p.unit}`}><Layers size={14} />{Number(p.min_order_quantity)}</span>}
                     </div>
                     <div className="price">
                       {mode === "individual" && Number(p.retail_price) > 0
                         ? <><b>{money(Number(p.retail_price))}</b><small>per {p.unit}</small></>
-                        : <small className="ask"><Tag size={14} /> Ask for price</small>}
+                        : <small className="ask" title="Ask for price"><Tag size={16} /></small>}
                     </div>
                     <button className={`btn cta ${added ? "gold" : "green"}`} onClick={() => addToRequest(p)}>
-                      {added ? <><Check size={16} /> In your request</> : <><Plus size={16} /> Add to request</>}
+                      {added ? <><Check size={18} /> Added</> : <><Plus size={18} /> Add</>}
                     </button>
-                    <ContactPills message={`Hello TradeLink, I would like ${mode === "individual" ? "a price" : "a wholesale price"} for ${productLabel(p)}.`} />
+                    <ContactIcons message={`Hello TradeLink, I would like ${mode === "individual" ? "a price" : "a wholesale price"} for ${productLabel(p)}.`} />
                   </div>
                 </article>
               );
@@ -467,7 +476,7 @@ export default function PublicHome() {
             {reach.length > 0
               ? <ContactCards />
               : <p className="hm-note">Contact details coming soon.</p>}
-            <button className="btn gold hm-big" onClick={() => setQuoteOpen(true)}><ClipboardList size={18} /> Send a request</button>
+            <button className="btn gold hm-big" onClick={() => setQuoteOpen(true)}><ClipboardList size={20} /> Request</button>
           </div>
         </div>
       </section>
@@ -475,15 +484,8 @@ export default function PublicHome() {
       <footer className="hm-footer">
         <div className="hm-footer-top">
           <Brand light />
-          <nav aria-label="Footer">{NAV.map(n => <a key={n.id} href={`#${n.id}`} onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>)}</nav>
+          <nav aria-label="Footer">{NAV.map(n => <a key={n.id} href={`#${n.id}`} title={n.label} aria-label={n.label} onClick={e => { e.preventDefault(); go(n.id); }}>{NAV_ICON[n.id] ?? <Home size={20} />}</a>)}</nav>
         </div>
-        {(contact.email || contact.address || contact.hours) && (
-          <ul className="hm-footer-info">
-            {contact.email && <li><Mail size={17} /><a href={`mailto:${contact.email}`}>{contact.email}</a></li>}
-            {contact.address && <li><MapPin size={17} /><span>{contact.address}</span></li>}
-            {contact.hours && <li><Clock size={17} /><span>{contact.hours}</span></li>}
-          </ul>
-        )}
         <small className="hm-copy">© {new Date().getFullYear()} TradeLink</small>
       </footer>
 
