@@ -323,14 +323,20 @@ export default function PublicHome() {
         <img className="hm-hero-bg" src="/img/warehouse.jpg" alt="Racks and pallets stacked with goods inside the TradeLink warehouse" />
         <div className="hm-hero-shade" />
         <div className="hm-hero-copy">
-          <h1>One marketplace for businesses and everyday buyers</h1>
-          <p className="lead">Browse our industries, add what you need and send one request. A real person replies with a price.</p>
+          <h1>Rice, sugar and oil, straight from the port</h1>
+          <p className="lead">Pick what you need, send one request, and a real person replies with today's price.</p>
           <div className="hm-audience" role="group" aria-label="Who are you buying for?">
-            <button className={mode === "business" ? "on" : ""} onClick={() => chooseAudience("business")}>
-              <span className="ico"><Briefcase size={22} /></span><span><b>I buy for a business</b><small>Wholesale prices and bulk orders</small></span><ArrowRight size={18} />
+            <button className={mode === "business" ? "on" : ""} aria-pressed={mode === "business"} onClick={() => chooseAudience("business")}>
+              <span className="tag-for">For businesses</span>
+              <b>Wholesale by the bag or ton</b>
+              <small>Ask for today's bulk price</small>
+              <ArrowRight className="tag-go" size={20} />
             </button>
-            <button className={mode === "individual" ? "on" : ""} onClick={() => chooseAudience("individual")}>
-              <span className="ico"><User size={22} /></span><span><b>I buy for myself</b><small>Retail prices, any quantity</small></span><ArrowRight size={18} />
+            <button className={mode === "individual" ? "on" : ""} aria-pressed={mode === "individual"} onClick={() => chooseAudience("individual")}>
+              <span className="tag-for">For yourself</span>
+              <b>Retail in any quantity</b>
+              <small>See clear prices and order</small>
+              <ArrowRight className="tag-go" size={20} />
             </button>
           </div>
           {reach.length > 0 && <div className="hm-reach"><span>Talk to us now:</span><ContactPills /></div>}
