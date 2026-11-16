@@ -1,4 +1,6 @@
-import { DataTable, PageHeading } from "../../components/ui";
+import { CheckCheck, Clock, MapPin, Play, Truck, User, X } from "lucide-react";
+import { PageHeading } from "../../components/ui";
+import { IconBtn, RecCard, RecordList, StatusChip, type Tone } from "../Records";
 import { shortDate } from "../../lib/format";
 import { errorText, requireSupabase, type DeliveryRow } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
@@ -25,21 +27,21 @@ export default function Deliveries() {
   return (
     <>
       <PageHeading title="Deliveries" sub={profile.role === "delivery" ? "Deliveries assigned to you." : "Track every assigned delivery. Assign new ones from the Orders page."} />
-      <DataTable headers={["Order", "Customer", "Destination", "Assigned to", "Scheduled", "Status", "Actions"]} isEmpty={!rows.length} empty="No deliveries yet">
-        {rows.map(d => (
-          <tr key={d.id}>
-            <td><b>{d.orders?.order_number ?? d.order_id.slice(0, 8)}</b></td>
-            <td>{d.orders?.customer_name}<br /><small>{d.orders?.phone}</small></td>
-            <td>{d.orders?.delivery_location}</td><td>{who(d.assigned_to)}</td>
-            <td>{d.scheduled_at ? shortDate(d.scheduled_at) : "—"}</td>
-            <td><span className={`status ${tone(d.status)}`}>{label(d.status)}</span></td>
-            <td>
-              {mayAct(d) && d.status === "assigned" && <button className="btn outline" onClick={() => void move(d, "in_transit")}>Start delivery</button>}
-              {mayAct(d) && d.status === "in_transit" && <><button className="btn green" onClick={() => void move(d, "delivered")}>Mark delivered</button>{" "}<button className="btn outline" onClick={() => void move(d, "failed")}>Failed</button></>}
-            </td>
-          </tr>
-        ))}
-      </DataTable>
+      <RecordList isEmpty={!rows.length} empty="No deliveries yet" icon={<Truck />}>
+        {rows.map((d, i) => {
+          const tn: Tone = d.status === "delivered" ? "good" : d.status === "failed" ? "bad" : "info";
+          return (
+            <RecCard key={d.id} i={i} tone={tn} lead={<Truck size={22} />} title={<span className="docno">{d.orders?.order_number ?? d.order_id.slice(0, 8)}</span>} sub={d.orders?.customer_name}
+              facts={[{ icon: <MapPin size={14} />, text: d.orders?.delivery_location ?? "" }, { icon: <User size={14} />, text: who(d.assigned_to) }, { icon: <Clock size={14} />, text: d.scheduled_at ? shortDate(d.scheduled_at) : "" }]}
+              status={<StatusChip tone={tn} pulse={d.status === "in_transit"} icon={d.status === "delivered" ? <CheckCheck size={14} /> : d.status === "failed" ? <X size={14} /> : <Truck size={14} />}>{label(d.status)}</StatusChip>}
+              actions={<>
+                {mayAct(d) && d.status === "assigned" && <IconBtn primary tone="gold" icon={<Play size={16} />} label="Start" onClick={() => void move(d, "in_transit")} />}
+                {mayAct(d) && d.status === "in_transit" && <><IconBtn primary tone="green" icon={<CheckCheck size={17} />} label="Delivered" onClick={() => void move(d, "delivered")} /><IconBtn tone="red" icon={<X size={17} />} label="Failed" onClick={() => void move(d, "failed")} /></>}
+              </>}
+              details={d.orders?.phone ? [["Phone", d.orders.phone]] : undefined} />
+          );
+        })}
+      </RecordList>
     </>
   );
 }
