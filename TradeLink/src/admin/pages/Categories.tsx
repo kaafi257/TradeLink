@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
-import { Edit3, ImagePlus, Plus, Trash2, X } from "lucide-react";
+import { Edit3, EyeOff, ImagePlus, Plus, Trash2, X } from "lucide-react";
 import { PageHeading } from "../../components/ui";
 import { INDUSTRY_ICONS, IconFor } from "../../lib/icons";
 import { errorText, requireSupabase, type Category, type Industry } from "../../lib/supabase";
@@ -156,8 +156,7 @@ export default function CategoriesPage() {
     <>
       <PageHeading title="Industries & Categories" sub="Add a new industry or category here and it appears on the website and in the product form. No code changes needed."
         action={canEdit ? <button className="btn gold" onClick={() => setModal({ kind: "industry", editing: null })}><Plus /> Add industry</button> : undefined} />
-      {!canEdit && <p className="inline-note">You can view the catalogue structure. Only the owner (or a manager with permission) can change it.</p>}
-      {!industries.length && <div className="table-panel"><div className="empty-state"><p>No industries yet. Run migration 0005 in Supabase, or add your first industry.</p></div></div>}
+      {!industries.length && <div className="table-panel"><div className="empty-state"><p>No industries yet</p></div></div>}
       <div className="industry-list">
         {industries.map(ind => {
           const cats = categories.filter(c => c.industry_id === ind.id && (!s || `${c.name} ${ind.name}`.toLowerCase().includes(s)));
@@ -166,7 +165,7 @@ export default function CategoriesPage() {
             <section className="table-panel industry-panel" key={ind.id}>
               <header className="industry-head">
                 <span className="industry-icon"><IconFor name={ind.icon} size={22} /></span>
-                <div><h3>{ind.name} {!ind.active && <span className="status muted">hidden</span>}</h3><small>{ind.description || "No description"}</small></div>
+                <div><h3>{ind.name} {!ind.active && <span className="status muted"><EyeOff size={13} /></span>}</h3>{ind.description && <small>{ind.description}</small>}</div>
                 {canEdit && (
                   <div className="industry-actions">
                     <button className="btn outline" onClick={() => setModal({ kind: "category", editing: null, industryId: ind.id })}><Plus size={15} /> Add category</button>
@@ -191,7 +190,7 @@ export default function CategoriesPage() {
                   ))}
                 </tbody>
               </table>
-              {!cats.length && <div className="empty-state"><p>No categories in this industry yet.</p></div>}
+              {!cats.length && <div className="empty-state"><p>No categories yet</p></div>}
               </div>
             </section>
           );

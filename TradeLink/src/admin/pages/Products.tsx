@@ -34,7 +34,7 @@ export default function Products() {
             </tr>
           ))}</tbody>
         </table>
-        {!rows.length && <div className="empty-state"><p>{products.length ? "No products match your search." : "No products yet. Add your first wholesale product."}</p></div>}
+        {!rows.length && <div className="empty-state"><p>{products.length ? "No match" : "No products yet"}</p></div>}
         </div>
       </div>
       {modal && <ProductModal editing={modal.editing} onClose={() => setModal(null)} />}

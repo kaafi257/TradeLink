@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { DataTable, PageHeading } from "../../components/ui";
+import { FileText, Inbox, ShoppingCart, Sparkles } from "lucide-react";
+import { DataTable, PageHeading, SummaryStrip } from "../../components/ui";
 import { money, shortDate } from "../../lib/format";
 import { errorText, requireSupabase, type Quote } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
@@ -33,12 +34,12 @@ export default function Quotations() {
   return (
     <>
       <PageHeading title="Quotations" sub="Review customer enquiries, price them, then turn accepted quotes into orders." />
-      <div className="summary-strip">
-        <div><b>{quoteCount}</b><small>Total enquiries</small></div>
-        <div><b>{newQuoteCount}</b><small>New enquiries</small></div>
-        <div><b>{quotes.filter(q => q.status === "quoted").length}</b><small>Quoted (latest 200)</small></div>
-        <div><b>{quotes.filter(q => q.status === "converted").length}</b><small>Converted to orders (latest 200)</small></div>
-      </div>
+      <SummaryStrip items={[
+        { icon: <Inbox />, tone: "blue", value: quoteCount, label: "All" },
+        { icon: <Sparkles />, tone: "gold", value: newQuoteCount, label: "New" },
+        { icon: <FileText />, tone: "mint", value: quotes.filter(q => q.status === "quoted").length, label: "Quoted" },
+        { icon: <ShoppingCart />, tone: "mint", value: quotes.filter(q => q.status === "converted").length, label: "Orders" },
+      ]} />
       <DataTable headers={["Reference", "Customer", "Phone", "Request", "Delivery location", "Received", "Total", "Status", "Actions"]} isEmpty={!rows.length} empty="No customer quotations match.">
         {rows.map(q => {
           const open = ["new", "reviewing", "quoted"].includes(q.status);

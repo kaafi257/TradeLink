@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { DataTable, PageHeading } from "../../components/ui";
+import { CheckCircle2, ClipboardCheck, PackageCheck, Truck } from "lucide-react";
+import { DataTable, PageHeading, SummaryStrip } from "../../components/ui";
 import { money, shortDate } from "../../lib/format";
 import { errorText, requireSupabase, type OrderRow } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
@@ -27,13 +28,13 @@ export default function Orders() {
   return (
     <>
       <PageHeading title="Orders" sub="Confirmed orders move through: record sale (stock is deducted) → assign delivery → delivered." />
-      <div className="summary-strip">
-        <div><b>{orders.filter(o => o.status === "confirmed").length}</b><small>Awaiting sale</small></div>
-        <div><b>{orders.filter(o => o.status === "ready").length}</b><small>Ready for delivery</small></div>
-        <div><b>{orders.filter(o => o.status === "dispatched").length}</b><small>Out for delivery</small></div>
-        <div><b>{orders.filter(o => o.status === "completed").length}</b><small>Completed</small></div>
-      </div>
-      <DataTable headers={["Order", "Customer", "Items", "Delivery location", "Total", "Paid", "Date", "Status", "Actions"]} isEmpty={!rows.length} empty="No orders yet. Create one from a priced quotation.">
+      <SummaryStrip items={[
+        { icon: <ClipboardCheck />, tone: "gold", value: orders.filter(o => o.status === "confirmed").length, label: "To sell" },
+        { icon: <PackageCheck />, tone: "blue", value: orders.filter(o => o.status === "ready").length, label: "Ready" },
+        { icon: <Truck />, tone: "mint", value: orders.filter(o => o.status === "dispatched").length, label: "On the way" },
+        { icon: <CheckCircle2 />, tone: "mint", value: orders.filter(o => o.status === "completed").length, label: "Done" },
+      ]} />
+      <DataTable headers={["Order", "Customer", "Items", "Delivery location", "Total", "Paid", "Date", "Status", "Actions"]} isEmpty={!rows.length} empty="No orders yet">
         {rows.map(o => {
           const hasDelivery = deliveries.some(d => d.order_id === o.id && d.status !== "failed");
           return (

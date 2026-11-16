@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Mail, MessageCircle, Phone } from "lucide-react";
+import { Lock, Mail, MessageCircle, Phone } from "lucide-react";
 import { DataTable, PageHeading } from "../../components/ui";
 import { buildChannels, loadContact, waNumber, type Contact } from "../../lib/contact";
 import { shortDate } from "../../lib/format";
@@ -57,7 +57,7 @@ export default function Communication() {
     <>
       <PageHeading title="Communication" sub="Set the contact channels customers see on the website, and reply to customers in one tap." />
       <div className="table-panel" style={{ padding: 20 }}>
-        <h3 style={{ marginTop: 0 }}>Business contact channels</h3>
+        <h3 style={{ marginTop: 0 }}>Contact</h3>
         <form className="form-grid" onSubmit={save}>
           <label>Phone (calls)<input value={form.phone} onChange={set("phone")} disabled={!canEdit || !loaded} placeholder="+251 911 000 000" maxLength={40} /></label>
           <label>WhatsApp number<input value={form.whatsapp} onChange={set("whatsapp")} disabled={!canEdit || !loaded} placeholder="+251 911 000 000 (with country code)" maxLength={40} /></label>
@@ -66,20 +66,19 @@ export default function Communication() {
           <label>Address<input value={form.address} onChange={set("address")} disabled={!canEdit || !loaded} placeholder="Warehouse address" maxLength={200} /></label>
           <label>Working hours<input value={form.hours} onChange={set("hours")} disabled={!canEdit || !loaded} placeholder="Mon–Sat, 8:00–18:00" maxLength={120} /></label>
           {canEdit
-            ? <button className="btn green full" type="submit" disabled={busy || !loaded}>{busy ? "Saving…" : "Save contact details"}</button>
-            : <p className="full inline-note">Only the owner or a manager can change these details.</p>}
+            ? <button className="btn green full" type="submit" disabled={busy || !loaded}>{busy ? "Saving…" : "Save"}</button>
+            : <p className="full inline-note"><Lock size={14} /> View only</p>}
         </form>
-        <p className="inline-note">Channels left empty are hidden from the website. Customers see these as WhatsApp, Telegram and Call buttons on every product, in the header, and as floating buttons.</p>
-        <div className="contact-pills-wrap"><small>Preview of what customers see</small>
-          <div className="contact-pills">{preview.length ? preview.map(c => <a key={c.key} className={`pill pill-${c.key}`} href={c.href} target="_blank" rel="noopener noreferrer">{c.label}</a>) : <small>Nothing to show yet. Fill in at least one channel and save.</small>}</div>
+        <div className="contact-pills-wrap"><small>Preview</small>
+          <div className="contact-pills">{preview.length ? preview.map(c => <a key={c.key} className={`pill pill-${c.key}`} href={c.href} target="_blank" rel="noopener noreferrer">{c.label}</a>) : <small>—</small>}</div>
         </div>
       </div>
 
-      <h3 style={{ margin: "26px 0 10px" }}>Reply to customers</h3>
+      <h3 style={{ margin: "26px 0 10px" }}>Reply</h3>
       <div className="inline-form" style={{ marginBottom: 12 }}>
         <label>Message to send<select value={tpl} onChange={e => setTpl(e.target.value)}>{TEMPLATES.map(x => <option key={x.key} value={x.key}>{x.label}</option>)}</select></label>
       </div>
-      <DataTable headers={["Reference", "Customer", "Phone", "Request", "Received", "Contact"]} isEmpty={!rows.length} empty="No customer enquiries yet.">
+      <DataTable headers={["Reference", "Customer", "Phone", "Request", "Received", "Contact"]} isEmpty={!rows.length} empty="No enquiries yet">
         {rows.map(q => {
           const msg = encodeURIComponent(template.text(q.customer_name, q.quote_number));
           const tel = q.phone.replace(/[^\d+]/g, "");

@@ -1,7 +1,7 @@
 import { Children, cloneElement, isValidElement, type ReactNode } from "react";
-import { Package, ShoppingCart, Truck, Users, Plus } from "lucide-react";
+import { Activity, Boxes, ChartNoAxesCombined, FileText, Layers, MessageCircle, Package, Plus, Receipt, Settings, ShoppingCart, Truck, Users } from "lucide-react";
 import { shortDate } from "../lib/format";
-import type { Activity } from "../lib/supabase";
+import type { Activity as ActivityRow } from "../lib/supabase";
 
 export function Stat({ icon, color, value, label, note }: { icon: ReactNode; color: string; value: string; label: string; note: string }) {
   return (
@@ -17,12 +17,34 @@ export function PanelHead({ icon, title, children }: { icon: ReactNode; title: s
   return <div className="panel-head"><div>{icon}<b>{title}</b></div>{children}</div>;
 }
 
+const HEADING_ICON: Record<string, ReactNode> = {
+  "Product Management": <Package />, "Industries & Categories": <Layers />, Quotations: <FileText />, Orders: <ShoppingCart />,
+  "Sales & Deliveries": <Receipt />, Deliveries: <Truck />, "Staff Management": <Users />, "Inventory Management": <Boxes />,
+  "Reports & Analytics": <ChartNoAxesCombined />, Communication: <MessageCircle />, Customers: <Users />, "Activity Log": <Activity />, Settings: <Settings />,
+};
+
+/** Page title with an icon. The longer description stays available to screen readers only. */
 export function PageHeading({ title, sub, action }: { title: string; sub: string; action?: ReactNode }) {
-  return <div className="page-heading"><div><h1>{title}</h1><p>{sub}</p></div>{action}</div>;
+  return (
+    <div className="page-heading">
+      <div className="ph-title"><span className="ph-ico">{HEADING_ICON[title] ?? <Package />}</span><h1>{title}</h1><p className="sr-only">{sub}</p></div>
+      {action}
+    </div>
+  );
+}
+
+export type Metric = { icon: ReactNode; tone: "blue" | "gold" | "mint" | "red"; value: number | string; label: string };
+/** Row of glass count tiles: icon, big number, one-word label. */
+export function SummaryStrip({ items }: { items: Metric[] }) {
+  return (
+    <div className="summary-strip">
+      {items.map(m => <div key={m.label} className={`metric ${m.tone}`}><span className="metric-ico">{m.icon}</span><b>{m.value}</b><small>{m.label}</small></div>)}
+    </div>
+  );
 }
 
 export function Empty({ message }: { message: string }) {
-  return <div className="empty-state"><Package /><p>{message}</p></div>;
+  return <div className="empty-state"><Package size={34} /><p>{message}</p></div>;
 }
 
 const ACTION_HEADER = /^(actions?|contact)$/i;
@@ -60,7 +82,7 @@ export function DataTable({ headers, children, empty, isEmpty }: { headers: stri
 }
 
 const dotIcons = [<ShoppingCart key="a" />, <Users key="b" />, <Truck key="c" />, <Plus key="d" />];
-export function ActivityList({ items, limit = 7 }: { items: Activity[]; limit?: number }) {
+export function ActivityList({ items, limit = 7 }: { items: ActivityRow[]; limit?: number }) {
   if (!items.length) return <Empty message="No activity recorded yet." />;
   return (
     <div className="activity-list">

@@ -58,7 +58,7 @@ export default function Staff() {
   return (
     <>
       <PageHeading title="Staff Management" sub="Invite employees and manage their access roles." />
-      <div className="info-banner"><ShieldCheck /> Add staff by email invitation (they choose their own password) or type a password yourself and give it to them. Only the owner can grant the manager role.</div>
+      <div className="info-banner"><ShieldCheck /> Invite by email, or set a password.</div>
       <form className="inline-form" onSubmit={invite}>
         <label>Full name<input name="full_name" required placeholder="Staff member name" /></label>
         <label>Email<input name="email" type="email" required placeholder="name@company.com" /></label>
@@ -66,7 +66,7 @@ export default function Staff() {
         <label>Role<select name="role" defaultValue="staff">{assignable.map(r => <option key={r}>{r}</option>)}</select></label>
         <button className="btn green" disabled={busy}>{busy ? "Saving…" : "Add staff"}</button>
       </form>
-      <DataTable headers={["Staff member", "Email", "Role", "Account status"]} isEmpty={!rows.length} empty="No staff profiles found.">
+      <DataTable headers={["Staff member", "Email", "Role", "Account status"]} isEmpty={!rows.length} empty="No staff yet">
         {rows.map(m => (
           <tr key={m.id}>
             <td><b>{m.full_name || "—"}</b></td><td>{m.email}</td>

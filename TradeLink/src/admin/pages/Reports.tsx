@@ -15,17 +15,17 @@ export default function Reports() {
     <>
       <PageHeading title="Reports & Analytics" sub="Business performance and operational reporting." />
       <div className="report-cards">
-        <div><ChartNoAxesCombined /><b>Sales reports</b><p>{total ? `${money(total)} · ${range.toLowerCase()}` : "No recorded sales for this period."}</p></div>
-        <div><Package /><b>Product reports</b><p>Product movement and demand (coming soon).</p></div>
-        <div><Users /><b>Staff reports</b><p>Staff activity and workload (coming soon).</p></div>
+        <div><ChartNoAxesCombined /><b>Sales</b><p>{total ? money(total) : "—"}</p></div>
+        <div className="soon"><Package /><b>Products</b><span className="soon-tag">Soon</span></div>
+        <div className="soon"><Users /><b>Staff</b><span className="soon-tag">Soon</span></div>
       </div>
       <div className="panel report-chart">
-        <PanelHead icon={<ChartNoAxesCombined />} title="Sales trend">
+        <PanelHead icon={<ChartNoAxesCombined />} title="Sales">
           <div className="range-tabs">{RANGES.map(r => <button className={range === r ? "on" : ""} key={r} onClick={() => setRange(r)}>{r}</button>)}</div>
         </PanelHead>
         <div className="chart-wrap">
-          {total ? <Suspense fallback={<p className="inline-note">Loading chart…</p>}><SalesChart data={series} /></Suspense>
-                 : <div className="empty-state"><ChartNoAxesCombined /><p>No sales recorded for this period.</p></div>}
+          {total ? <Suspense fallback={null}><SalesChart data={series} /></Suspense>
+                 : <div className="empty-state"><ChartNoAxesCombined /></div>}
         </div>
       </div>
     </>
