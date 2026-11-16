@@ -175,15 +175,15 @@ export default function CategoriesPage() {
                   </div>
                 )}
               </header>
-              <div className="table-scroll"><table>
+              <div className="table-scroll"><table className="rt rt-s">
                 <thead><tr><th>Category</th><th>Products</th><th>Order</th><th>Status</th>{canEdit && <th>Action</th>}</tr></thead>
                 <tbody>
                   {cats.map(c => (
                     <tr key={c.id}>
-                      <td><div className="table-product">{c.image_url ? <img src={c.image_url} alt="" /> : <span className="thumb-icon"><IconFor name={ind.icon} size={18} /></span>}<b>{c.name}</b></div></td>
-                      <td>{countFor(c.id)}</td><td>{c.sort_order}</td>
-                      <td><span className={`status ${c.active ? "good" : "muted"}`}>{c.active ? "Visible" : "Hidden"}</span></td>
-                      {canEdit && <td>
+                      <td data-label="Category"><div className="table-product">{c.image_url ? <img src={c.image_url} alt="" /> : <span className="thumb-icon"><IconFor name={ind.icon} size={18} /></span>}<b>{c.name}</b></div></td>
+                      <td data-label="Products">{countFor(c.id)}</td><td data-label="Order">{c.sort_order}</td>
+                      <td data-label="Status"><span className={`status ${c.active ? "good" : "muted"}`}>{c.active ? "Visible" : "Hidden"}</span></td>
+                      {canEdit && <td data-label="Action" data-actions>
                         <button className="icon-action" aria-label={`Edit ${c.name}`} onClick={() => setModal({ kind: "category", editing: c, industryId: ind.id })}><Edit3 size={16} /></button>{" "}
                         <button className="icon-action" aria-label={`Delete ${c.name}`} onClick={() => void remove("categories", c.id, c.name, c.image_url)}><Trash2 size={16} /></button>
                       </td>}

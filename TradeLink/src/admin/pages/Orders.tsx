@@ -38,7 +38,7 @@ export default function Orders() {
           const hasDelivery = deliveries.some(d => d.order_id === o.id && d.status !== "failed");
           return (
             <tr key={o.id}>
-              <td><b>{o.order_number}</b></td><td>{o.customer_name}<br /><small>{o.phone}</small></td>
+              <td><b className="docno">{o.order_number}</b></td><td>{o.customer_name}<br /><small>{o.phone}</small></td>
               <td>{o.order_items?.map(i => `${i.quantity} ${i.unit} ${i.product_name}`).join(", ") || "—"}</td>
               <td>{o.delivery_location}</td><td>{money(Number(o.total_amount))}</td><td>{money(Number(o.amount_paid))}</td><td>{shortDate(o.created_at)}</td>
               <td><span className={`status ${tone(o.status)}`}>{o.status}</span></td>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Edit3, Plus, Search } from "lucide-react";
-import { PageHeading } from "../../components/ui";
+import { PageHeading, tableTier } from "../../components/ui";
 import { riceImg } from "../../lib/assets";
 import { money } from "../../lib/format";
 import type { Product } from "../../lib/supabase";
@@ -20,17 +20,17 @@ export default function Products() {
         action={canEdit ? <button className="btn gold" onClick={() => setModal({ editing: null })}><Plus /> Add Product</button> : undefined} />
       <div className="table-panel">
         <div className="table-toolbar"><b>{rows.length} Products</b><span><Search size={16} /><input aria-label="Search products" placeholder="Search products…" value={search} onChange={e => setSearch(e.target.value)} /></span></div>
-        <div className="table-scroll"><table>
+        <div className="table-scroll"><table className={`rt ${tableTier(canEdit ? 8 : 7)}`}>
           <thead><tr><th>Product</th><th>Category</th><th>Package</th><th>Wholesale</th><th>Retail</th><th>Stock</th><th>Status</th>{canEdit && <th>Action</th>}</tr></thead>
           <tbody>{rows.map(p => (
             <tr key={p.id}>
-              <td><div className="table-product"><img src={p.image_url || riceImg} alt="" /><b>{p.name}</b></div></td>
-              <td>{p.category}</td><td>{p.package_size}</td>
-              <td>{p.wholesale_price ? money(p.wholesale_price) : "Set price"}</td>
-              <td>{Number(p.retail_price) > 0 ? money(Number(p.retail_price)) : "—"}</td>
-              <td>{p.stock_quantity} {p.unit}</td>
-              <td><span className={`status ${p.active ? "good" : "muted"}`}>{p.active ? "Active" : "Inactive"}</span></td>
-              {canEdit && <td><button className="icon-action" aria-label={`Edit ${p.name}`} onClick={() => setModal({ editing: p })}><Edit3 size={16} /></button></td>}
+              <td data-label="Product"><div className="table-product"><img src={p.image_url || riceImg} alt="" /><b>{p.name}</b></div></td>
+              <td data-label="Category">{p.category}</td><td data-label="Package">{p.package_size}</td>
+              <td data-label="Wholesale">{p.wholesale_price ? money(p.wholesale_price) : "Set price"}</td>
+              <td data-label="Retail">{Number(p.retail_price) > 0 ? money(Number(p.retail_price)) : "—"}</td>
+              <td data-label="Stock">{p.stock_quantity} {p.unit}</td>
+              <td data-label="Status"><span className={`status ${p.active ? "good" : "muted"}`}>{p.active ? "Active" : "Inactive"}</span></td>
+              {canEdit && <td data-label="Action" data-actions><button className="icon-action" aria-label={`Edit ${p.name}`} onClick={() => setModal({ editing: p })}><Edit3 size={16} /></button></td>}
             </tr>
           ))}</tbody>
         </table>
