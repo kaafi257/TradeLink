@@ -358,21 +358,21 @@ export default function PublicHome() {
         <img className="hm-hero-bg" src="/img/warehouse.jpg" alt="Racks and pallets stacked with goods inside the TradeLink warehouse" />
         <div className="hm-hero-shade" />
         <div className="hm-floaters" aria-hidden="true">
-          <span style={{ "--d": "0s" } as React.CSSProperties}><Wheat size={26} /></span>
-          <span style={{ "--d": "-1.4s" } as React.CSSProperties}><Droplets size={26} /></span>
-          <span style={{ "--d": "-2.6s" } as React.CSSProperties}><Package size={26} /></span>
-          <span style={{ "--d": "-3.8s" } as React.CSSProperties}><Truck size={26} /></span>
+          <span style={{ "--d": "0s" } as React.CSSProperties}><Wheat size={20} /></span>
+          <span style={{ "--d": "-1.4s" } as React.CSSProperties}><Droplets size={20} /></span>
+          <span style={{ "--d": "-2.6s" } as React.CSSProperties}><Package size={20} /></span>
+          <span style={{ "--d": "-3.8s" } as React.CSSProperties}><Truck size={20} /></span>
         </div>
         <div className="hm-hero-copy">
           <h1 className="sr-only">TradeLink: rice, sugar and oil, straight from the port</h1>
           <div className="hm-audience" role="group" aria-label="Who are you buying for?">
             <button className={mode === "business" ? "on" : ""} aria-pressed={mode === "business"} onClick={() => chooseAudience("business")}>
-              <span className="tag-ico"><Briefcase size={26} /></span>
+              <span className="tag-ico"><Briefcase size={20} /></span>
               <b>Business</b>
               <ArrowRight className="tag-go" size={20} />
             </button>
             <button className={mode === "individual" ? "on" : ""} aria-pressed={mode === "individual"} onClick={() => chooseAudience("individual")}>
-              <span className="tag-ico"><User size={26} /></span>
+              <span className="tag-ico"><User size={20} /></span>
               <b>Personal</b>
               <ArrowRight className="tag-go" size={20} />
             </button>
@@ -385,7 +385,7 @@ export default function PublicHome() {
         <img className="hm-scene" src="/img/port-scene.svg" alt="Illustration of a container ship unloading at a port crane, with a truck loaded with goods driving past the warehouse" />
         <div className="hm-route-body">
           <ol className={`hm-route-steps${routeSeen ? " in" : ""}`} ref={routeRef}>
-            {ROUTE.map(({ Icon, label }, i) => <li key={label} style={{ "--i": i } as React.CSSProperties}><span className="stop"><Icon size={26} /></span><b>{label}</b></li>)}
+            {ROUTE.map(({ Icon, label }, i) => <li key={label} style={{ "--i": i } as React.CSSProperties}><span className="stop"><Icon size={20} /></span><b>{label}</b></li>)}
           </ol>
         </div>
       </section>
@@ -412,8 +412,8 @@ export default function PublicHome() {
           <div className="hm-tiles">
             {tiles.map(c => (
               <button key={c.id} style={lookVars(looks.get(c.id)!)} className={`hm-tile${effCategory === c.id ? " on" : ""}`} aria-pressed={effCategory === c.id} onClick={() => setCategoryId(effCategory === c.id ? "all" : c.id)}>
-                {c.image_url ? <img src={c.image_url} alt="" loading="lazy" /> : <span className="tile-ph"><IconFor name={indById.get(c.industry_id)?.icon} size={34} /></span>}
-                <span className="tile-ico">{(() => { const I = looks.get(c.id)!.Icon; return <I size={22} />; })()}</span>
+                {c.image_url ? <img src={c.image_url} alt="" loading="lazy" /> : <span className="tile-ph"><IconFor name={indById.get(c.industry_id)?.icon} size={26} /></span>}
+                <span className="tile-ico">{(() => { const I = looks.get(c.id)!.Icon; return <I size={17} />; })()}</span>
                 <span className="tile-info"><b>{c.name}</b><em className="tile-count">{counts.get(c.id)}</em></span>
               </button>
             ))}
@@ -422,9 +422,9 @@ export default function PublicHome() {
 
         {activeLook && (
           <div className="hm-banner" key={effCategory} style={lookVars(activeLook)}>
-            <span className="bn-ico"><activeLook.Icon size={34} /></span>
+            <span className="bn-ico"><activeLook.Icon size={24} /></span>
             <b>{catById.get(effCategory)?.name}</b>
-            <span className="bn-float" aria-hidden="true"><activeLook.Icon size={28} /><activeLook.Icon size={20} /><activeLook.Icon size={36} /></span>
+            <span className="bn-float" aria-hidden="true"><activeLook.Icon size={28} /><activeLook.Icon size={20} /><activeLook.Icon size={22} /></span>
           </div>
         )}
 
@@ -443,7 +443,7 @@ export default function PublicHome() {
               return (
                 <article className="hm-card" key={p.id} style={lookVars(looks.get(catKey(p)) ?? envLook)}>
                   <div className="media">
-                    {img ? <img src={img} alt={p.name} loading="lazy" /> : <div className="ph" role="img" aria-label={p.name}><IconFor name={ind?.icon} size={44} /></div>}
+                    {img ? <img src={img} alt={p.name} loading="lazy" /> : <div className="ph" role="img" aria-label={p.name}><IconFor name={ind?.icon} size={30} /></div>}
                     <span className="badge" title={p.category}>{(() => { const I = (looks.get(catKey(p)) ?? envLook).Icon; return <I size={18} />; })()}</span>
                   </div>
                   <div className="body">
@@ -475,7 +475,7 @@ export default function PublicHome() {
           <h2>Why TradeLink</h2>
           <div className={`hm-points${whySeen ? " in" : ""}`} ref={whyRef}>
             {POINTS.map(({ Icon, title }, i) => (
-              <div key={title} style={{ "--i": i } as React.CSSProperties}><span className="hm-ico"><Icon size={26} /></span><h3>{title}</h3></div>
+              <div key={title} style={{ "--i": i } as React.CSSProperties}><span className="hm-ico"><Icon size={20} /></span><h3>{title}</h3></div>
             ))}
           </div>
         </div>
@@ -486,7 +486,7 @@ export default function PublicHome() {
           <div>
             <h2>Order now</h2>
             <ol className={`hm-steps${stepsSeen ? " in" : ""}`} ref={stepsRef}>
-              {STEPS.map(({ Icon, label }, i) => <li key={label} style={{ "--i": i } as React.CSSProperties}><span className="stop"><Icon size={24} /></span><b>{label}</b></li>)}
+              {STEPS.map(({ Icon, label }, i) => <li key={label} style={{ "--i": i } as React.CSSProperties}><span className="stop"><Icon size={18} /></span><b>{label}</b></li>)}
             </ol>
           </div>
           <div className="hm-contact-panel">
