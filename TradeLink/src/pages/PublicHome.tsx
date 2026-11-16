@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Briefcase, Check, ClipboardList, Headphones, Menu, Package, Phone, Plus, Search, ShieldCheck, Tag, Trash2, Truck, User, X, Layers } from "lucide-react";
+import { ArrowRight, Briefcase, Check, ClipboardList, Headphones, Menu, Package, Phone, Plus, Search, ShieldCheck, Tag, Trash2, Truck, User, X, Layers, Download } from "lucide-react";
 import { Brand } from "../components/Brand";
 import { ContactCards, ContactPills, FloatingContact } from "../components/ContactActions";
 import { TURNSTILE_SITE_KEY, Turnstile } from "../components/Turnstile";
 import { useChannels, useContact } from "../lib/contact";
 import { money } from "../lib/format";
 import { IconFor } from "../lib/icons";
+import { useInstall } from "../lib/install";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct } from "../lib/supabase";
 import "./home.css";
 
@@ -165,6 +166,7 @@ function RequestModal({ products, mode, onMode, initial, onLines, onClose, onSen
 
 export default function PublicHome() {
   const navigate = useNavigate();
+  const app = useInstall();
   const contact = useContact();
   const reach = useChannels();
   const [products, setProducts] = useState<PublicProduct[]>([]);
@@ -311,6 +313,8 @@ export default function PublicHome() {
             <a key={n.id} href={`#${n.id}`} role="menuitem" className={active === n.id ? "active" : ""} onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>
           ))}
           {contact.phone && <a className="hm-mobile-tel" href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`} role="menuitem"><Phone size={18} /> {contact.phone}</a>}
+          {app.canInstall && <button className="hm-install" role="menuitem" onClick={() => { setMenuOpen(false); void app.install(); }}><Download size={18} /> Install TradeLink app</button>}
+          {app.isIos && <p className="hm-install-hint">To install: tap Share, then “Add to Home Screen”.</p>}
           <a href="/login" role="menuitem" onClick={e => { e.preventDefault(); navigate("/login"); }}>Staff login</a>
         </div>
       )}
