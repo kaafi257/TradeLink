@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Briefcase, Check, ClipboardList, Headphones, Menu, Package, Phone, Plus, Search, ShieldCheck, Tag, Trash2, Truck, User, X, Layers, Download, Ship, Warehouse } from "lucide-react";
+import { ArrowRight, Briefcase, Check, ClipboardList, Headphones, Menu, Package, Phone, Plus, Search, ShieldCheck, Tag, Trash2, Truck, User, X, Layers, Download, Ship, Warehouse, Mail, MapPin, Clock } from "lucide-react";
 import { Brand } from "../components/Brand";
 import { ContactCards, ContactPills, FloatingContact } from "../components/ContactActions";
 import { TURNSTILE_SITE_KEY, Turnstile } from "../components/Turnstile";
@@ -473,15 +473,18 @@ export default function PublicHome() {
       </section>
 
       <footer className="hm-footer">
-        <div><Brand light /></div>
-        <nav aria-label="Footer">{NAV.map(n => <a key={n.id} href={`#${n.id}`} onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>)}</nav>
-        <div className="hm-footer-contact">
-          {reach.map(c => <a key={c.key} href={c.href} {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{c.label}: {c.detail}</a>)}
-          {contact.email && <a href={`mailto:${contact.email}`}>{contact.email}</a>}
-          {contact.address && <span>{contact.address}</span>}
-          {contact.hours && <span>{contact.hours}</span>}
-          <small>© {new Date().getFullYear()} TradeLink. All rights reserved.</small>
+        <div className="hm-footer-top">
+          <Brand light />
+          <nav aria-label="Footer">{NAV.map(n => <a key={n.id} href={`#${n.id}`} onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>)}</nav>
         </div>
+        {(contact.email || contact.address || contact.hours) && (
+          <ul className="hm-footer-info">
+            {contact.email && <li><Mail size={17} /><a href={`mailto:${contact.email}`}>{contact.email}</a></li>}
+            {contact.address && <li><MapPin size={17} /><span>{contact.address}</span></li>}
+            {contact.hours && <li><Clock size={17} /><span>{contact.hours}</span></li>}
+          </ul>
+        )}
+        <small className="hm-copy">© {new Date().getFullYear()} TradeLink</small>
       </footer>
 
       {cart.length > 0 && !quoteOpen && (
