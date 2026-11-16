@@ -323,3 +323,9 @@ body:has(.hm-mobile){overflow:hidden}
   .public-site .hm-hero h1{font-size:clamp(3rem,15.5vw,4.4rem);max-width:none}
 }
 @media(max-width:560px){.hm-hero-shade{background:linear-gradient(180deg,#0a2d49e6 0%,#0a2d49cc 55%,var(--deep) 100%)}}
+
+/* Hero legibility: more line gap, darker backing behind the copy, crisper subtext */
+.public-site .hm-hero h1{line-height:1.04;letter-spacing:.008em;text-shadow:0 2px 14px #04243dcc,0 1px 2px #04243d99}
+.hm-hero-shade{background:linear-gradient(0deg,var(--deep) 0%,#0b5d9900 22%),linear-gradient(90deg,#062a4af7 0%,#062a4ae6 45%,#062a4a8c 75%,#062a4a40 100%)}
+.hm-hero .lead{color:#fff;font-weight:500;text-shadow:0 1px 10px #04243dcc;line-height:1.5}
+@media(max-width:560px){.hm-hero-shade{background:linear-gradient(180deg,#062a4af2 0%,#062a4ae6 60%,var(--deep) 100%)}}
