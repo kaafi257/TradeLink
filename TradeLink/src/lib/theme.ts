@@ -50,3 +50,13 @@ export const MODE_LOOK: Record<"business" | "individual", Look> = {
   business: mk("m-business", "grid", "#1479c2", "#3aa0e6", "#eaf3fb", "#0a3b64", Package),
   individual: mk("m-individual", "dots", "#e9a914", "#f6c453", "#fff7e0", "#5a4000", Package),
 };
+
+/** Shop design family. Food keeps the category-colour look; the others restyle the whole shop. */
+export type ShopStyle = "food" | "fashion" | "build" | "fresh";
+export function styleFor(industry?: string): ShopStyle {
+  const t = industry ?? "";
+  if (/cloth|fashion|apparel|wear|shoe|textile|garment|dress|abaya|fabric|accessor|jewel|bag/i.test(t)) return "fashion";
+  if (/construct|build|hardware|cement|steel|paint|tool|spare|auto|machine|electric|plumb/i.test(t)) return "build";
+  if (/household|clean|hygiene|soap|detergent|beauty|cosmetic|home|kitchen|baby/i.test(t)) return "fresh";
+  return "food";
+}
