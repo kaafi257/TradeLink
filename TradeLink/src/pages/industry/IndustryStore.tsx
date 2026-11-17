@@ -14,8 +14,9 @@ import { Reveal, flyToBag, priceOf } from "../market/Market";
 import "./food.css";
 import "./fresh.css";
 import "./build.css";
+import "./tech.css";
 
-const FONTS = "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Public+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap";
+const FONTS = "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Public+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&family=Space+Grotesk:wght@500;700&display=swap";
 const MODE_KEY = "tradelink-mode";
 const readMode = (): Mode => { try { return localStorage.getItem(MODE_KEY) === "individual" ? "individual" : "business"; } catch { return "business"; } };
 const audienceOf = (p: PublicProduct) => p.audience ?? "both";
@@ -136,6 +137,7 @@ function FoodStore({ status, industry, categories, products, variant }: { varian
 
       <section className="fd-hero">
         <i className="fd-blob a" aria-hidden="true" /><i className="fd-blob b" aria-hidden="true" /><i className="fd-blob c" aria-hidden="true" />
+        {variant === "tech" && <span className="fd-scan" aria-hidden="true" />}
         {variant === "build" && <span className="fd-stripe" aria-hidden="true" />}
         {variant === "fresh" && <span className="fd-bubbles" aria-hidden="true">{Array.from({ length: 12 }, (_, k) => <i key={k} style={{ "--k": k } as CSSProperties} />)}</span>}
         <div className="fd-wrap fd-hero-grid">
@@ -242,7 +244,7 @@ function FoodCard({ p, look, mode, line, saved, onSave, onAdd }: {
   const inBag = !!line;
   const same = inBag && Number(line!.qty) === qty;
   return (
-    <article className={`fd-card${inBag ? " in" : ""}`} style={style}>
+    <article className={`fd-card${inBag ? " in" : ""}`} style={style} onPointerMove={e => { const r = e.currentTarget.getBoundingClientRect(); e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`); e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`); }}>
       <div className="fd-photo">
         {p.image_url ? <img src={p.image_url} alt={p.name} loading="lazy" /> : <span className="ph"><I size={42} /></span>}
         <span className="fd-seal" title={p.package_size || p.unit}>{sealText(p)}</span>
