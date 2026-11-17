@@ -15,8 +15,9 @@ import "./food.css";
 import "./fresh.css";
 import "./build.css";
 import "./tech.css";
+import "./farm.css";
 
-const FONTS = "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Public+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&family=Space+Grotesk:wght@500;700&display=swap";
+const FONTS = "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Public+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&family=Space+Grotesk:wght@500;700&family=Bitter:wght@600;800&display=swap";
 const MODE_KEY = "tradelink-mode";
 const readMode = (): Mode => { try { return localStorage.getItem(MODE_KEY) === "individual" ? "individual" : "business"; } catch { return "business"; } };
 const audienceOf = (p: PublicProduct) => p.audience ?? "both";
@@ -137,6 +138,7 @@ function FoodStore({ status, industry, categories, products, variant }: { varian
 
       <section className="fd-hero">
         <i className="fd-blob a" aria-hidden="true" /><i className="fd-blob b" aria-hidden="true" /><i className="fd-blob c" aria-hidden="true" />
+        {variant === "farm" && <span className="fd-field" aria-hidden="true">{Array.from({ length: 9 }, (_, k) => <i key={k} style={{ "--k": k } as CSSProperties} />)}</span>}
         {variant === "tech" && <span className="fd-scan" aria-hidden="true" />}
         {variant === "build" && <span className="fd-stripe" aria-hidden="true" />}
         {variant === "fresh" && <span className="fd-bubbles" aria-hidden="true">{Array.from({ length: 12 }, (_, k) => <i key={k} style={{ "--k": k } as CSSProperties} />)}</span>}
