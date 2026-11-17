@@ -9,9 +9,9 @@ import { IconFor } from "../lib/icons";
 import { useInstall } from "../lib/install";
 import { useAuth } from "../lib/auth";
 import { useWishlist } from "../lib/wishlist";
-import { Featured, IndustryGrid, MarketFooter, MarketHeader, MarketHero, Popular, ProductDialog, WishlistDrawer, type Shelf } from "./market/Market";
+import { Featured, IndustryGrid, MarketFooter, MarketHeader, MarketHero, Popular, ProductDialog, SupplierDialog, Suppliers, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
-import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct } from "../lib/supabase";
+import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
 import "./home.css";
 
 export type Mode = "business" | "individual";
@@ -174,6 +174,9 @@ export default function PublicHome() {
   const { session } = useAuth();
   const wish = useWishlist();
   const [bestIds, setBestIds] = useState<string[]>([]);
+  const [suppliers, setSuppliers] = useState<PublicSupplier[]>([]);
+  const [supCats, setSupCats] = useState<{ supplier_id: string; category_id: string }[]>([]);
+  const [supplier, setSupplier] = useState<PublicSupplier | null>(null);
   const [quick, setQuick] = useState<PublicProduct | null>(null);
   const [wishOpen, setWishOpen] = useState(false);
   const [heroQuery, setHeroQuery] = useState("");
@@ -217,6 +220,9 @@ export default function PublicHome() {
       setCategories(c.error ? [] : ((c.data ?? []) as PublicCategory[]));
       setStatus("ready");
       // Real sales ranking (migration 0006). Without it the page simply shows the newest products.
+      // Suppliers directory (migration 0007). If it is not set up, the section is simply hidden.
+      void supabase!.from("public_suppliers").select("*").order("name").then(r => { if (!r.error) setSuppliers((r.data ?? []) as PublicSupplier[]); });
+      void supabase!.from("public_supplier_categories").select("*").then(r => { if (!r.error) setSupCats((r.data ?? []) as { supplier_id: string; category_id: string }[]); });
       void supabase!.from("public_best_sellers").select("*").order("rank").then(r => {
         if (!r.error) setBestIds(((r.data ?? []) as { product_id: string }[]).map(b => b.product_id));
       });
@@ -235,6 +241,7 @@ export default function PublicHome() {
 
   const catById = useMemo(() => new Map(cats.map(c => [c.id, c])), [cats]);
   const indById = useMemo(() => new Map(inds.map(i => [i.id, i])), [inds]);
+  const supCatNames = (id: string) => supCats.filter(x => x.supplier_id === id).map(x => cats.find(c => c.id === x.category_id)?.name).filter((n): n is string => !!n);
   const visible = useMemo(() => products.filter(p => allows(p, mode)), [products, mode]);
   const counts = useMemo(() => { const m = new Map<string, number>(); for (const p of visible) m.set(catKey(p), (m.get(catKey(p)) ?? 0) + 1); return m; }, [visible]);
   const indTabs = inds.filter(i => cats.some(c => c.industry_id === i.id && (counts.get(c.id) ?? 0) > 0));
@@ -318,6 +325,7 @@ export default function PublicHome() {
       <IndustryGrid items={gridInds} onPick={i => (i.storefront === "fashion" ? navigate("/clothing") : document.getElementById(`ind-${i.id}`) ? go(`ind-${i.id}`) : openIndustry(i))} />
       <Featured shelf={shelf} status={status} emptyText={emptyMessage} onViewAll={openIndustry} />
       <Popular shelf={shelf} />
+      <Suppliers items={suppliers} industries={inds} catNames={supCatNames} onOpen={setSupplier} />
 
       <div className="hm-shop-env" data-mode={mode} data-style={shopStyle} style={lookVars(envLook)}>
       <div className="env-pat" key={envLook.key} aria-hidden="true" />
@@ -409,6 +417,7 @@ export default function PublicHome() {
         </div>
       )}
       <FloatingContact />
+      {supplier && <SupplierDialog s={supplier} industries={inds} cats={supCatNames(supplier.id)} onClose={() => setSupplier(null)} />}
       {quick && <ProductDialog p={quick} shelf={shelf} onClose={() => setQuick(null)} onStore={p => navigate(`/clothing/${p.id}`)} />}
       {wishOpen && <WishlistDrawer items={wishItems} shelf={shelf} onClose={() => setWishOpen(false)} />}
       {quoteOpen && <RequestModal products={products} mode={mode} onMode={changeMode} initial={cart} onLines={setCart} onClose={() => setQuoteOpen(false)} onSent={() => setCart([])} />}
