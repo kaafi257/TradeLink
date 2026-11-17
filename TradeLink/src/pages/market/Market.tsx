@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ArrowRight, Building2, Check, MapPin, ChevronRight, ClipboardList, Clock, Download, Eye, Flame, Headphones, Heart, LogIn, Menu, Package, Plus, Search, ShoppingBag, Store, Sparkles, Tag, Trash2, User, Briefcase, X, Layers, MessageCircle } from "lucide-react";
+import { ArrowRight, Building2, Check, MapPin, ChevronRight, ClipboardList, Clock, Download, Eye, Flame, Headphones, Heart, LogIn, Menu, Package, Plus, Search, ShoppingBag, Store, Sparkles, Tag, Trash2, User, Briefcase, X, Layers, MessageCircle, ArrowUpDown, ChevronDown, SlidersHorizontal } from "lucide-react";
 import { Brand, LogoMark } from "../../components/Brand";
 import { ContactIcons } from "../../components/ContactActions";
 import { money } from "../../lib/format";
@@ -326,6 +326,97 @@ export function MiniCard({ p, shelf }: { p: PublicProduct; shelf: Shelf }) {
         </div>
       </div>
     </article>
+  );
+}
+
+
+/* ------------------------------------------------------ the big shop: departments + one grid */
+
+type SortKey = "new" | "az" | "low" | "high";
+const PAGE = 20;
+
+export function MarketShop({ shelf, onMode, industries, categories, counts, industry, category, setIndustry, setCategory, search, setSearch, items, emptyText }: {
+  shelf: Shelf; onMode: (m: Mode) => void; industries: PublicIndustry[]; categories: PublicCategory[]; counts: Map<string, number>;
+  industry: string; category: string; setIndustry: (id: string) => void; setCategory: (id: string) => void;
+  search: string; setSearch: (s: string) => void; items: PublicProduct[]; emptyText: string;
+}) {
+  const [sort, setSort] = useState<SortKey>("new");
+  const [limit, setLimit] = useState(PAGE);
+  const [deptOpen, setDeptOpen] = useState(false);
+  useEffect(() => setLimit(PAGE), [industry, category, search, sort, shelf.mode]);
+  const indCount = (id: string) => categories.filter(c => c.industry_id === id).reduce((n, c) => n + (counts.get(c.id) ?? 0), 0);
+  const total = industries.reduce((n, i) => n + indCount(i.id), 0);
+  const sorted = useMemo(() => {
+    const a = [...items];
+    if (sort === "az") a.sort((x, y) => x.name.localeCompare(y.name));
+    else if (sort === "low" || sort === "high") {
+      a.sort((x, y) => ((priceOf(x).now ?? Infinity) - (priceOf(y).now ?? Infinity)) * (sort === "low" ? 1 : -1));
+    }
+    return a;
+  }, [items, sort]);
+  const activeInd = industries.find(i => i.id === industry);
+  const activeCat = categories.find(c => c.id === category);
+  const choose = (i: string, c = "all") => { setIndustry(i); setCategory(c); setDeptOpen(false); };
+  return (
+    <section className="mk-shop" id="public-products" aria-label="Shop">
+      <div className="mk-wrap mk-shop-in">
+        <aside className={`mk-dept${deptOpen ? " open" : ""}`} aria-label="Departments">
+          <button className="mk-dept-head" aria-expanded={deptOpen} onClick={() => setDeptOpen(o => !o)}>
+            <span><SlidersHorizontal size={18} /></span><b>{activeCat?.name ?? activeInd?.name ?? "All"}</b><ChevronDown size={18} />
+          </button>
+          <div className="mk-dept-list">
+            <button className={`mk-dept-row${industry === "all" ? " on" : ""}`} aria-pressed={industry === "all"} onClick={() => choose("all")}>
+              <span className="ic"><Store size={18} /></span><b>All</b><em>{total}</em>
+            </button>
+            {industries.map(i => {
+              const on = industry === i.id;
+              const cs = categories.filter(c => c.industry_id === i.id && (counts.get(c.id) ?? 0) > 0);
+              return (
+                <div key={i.id} className={`mk-dept-grp${on ? " open" : ""}`} style={tone(i.name)}>
+                  <button className={`mk-dept-row${on && category === "all" ? " on" : ""}`} aria-pressed={on && category === "all"} onClick={() => choose(i.id)}>
+                    <span className="ic"><IconFor name={i.icon} size={18} /></span><b>{i.name}</b><em>{indCount(i.id)}</em>
+                  </button>
+                  {on && cs.length > 1 && (
+                    <div className="mk-dept-sub">
+                      {cs.map(c => <button key={c.id} className={category === c.id ? "on" : ""} aria-pressed={category === c.id} onClick={() => choose(i.id, category === c.id ? "all" : c.id)}>{c.name}<em>{counts.get(c.id)}</em></button>)}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </aside>
+
+        <div className="mk-shop-main">
+          <div className="mk-shop-bar">
+            <label className="mk-shop-search"><Search size={18} /><input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search" aria-label="Search products" />{search && <button aria-label="Clear search" onClick={() => setSearch("")}><X size={15} /></button>}</label>
+            <label className="mk-sort" title="Sort"><ArrowUpDown size={17} />
+              <select value={sort} onChange={e => setSort(e.target.value as SortKey)} aria-label="Sort products">
+                <option value="new">Newest</option><option value="az">A – Z</option>
+                {shelf.mode === "individual" && <><option value="low">Price: low to high</option><option value="high">Price: high to low</option></>}
+              </select>
+            </label>
+            <div className={`mk-switch mk-shop-mode ${shelf.mode}`} role="group" aria-label="I am buying as">
+              <i className="thumb" aria-hidden="true" />
+              <button aria-pressed={shelf.mode === "individual"} aria-label="Individual" title="Individual" onClick={() => onMode("individual")}><User size={17} /></button>
+              <button aria-pressed={shelf.mode === "business"} aria-label="Business" title="Business" onClick={() => onMode("business")}><Briefcase size={17} /></button>
+            </div>
+          </div>
+          <div className="mk-shop-now" aria-live="polite">
+            <span className="n"><Package size={16} />{items.length}</span>
+            {activeInd && <button className="chip" onClick={() => choose("all")}><IconFor name={activeInd.icon} size={14} />{activeInd.name}<X size={13} /></button>}
+            {activeCat && <button className="chip" onClick={() => choose(industry)}>{activeCat.name}<X size={13} /></button>}
+            {search && <button className="chip" onClick={() => setSearch("")}><Search size={13} />{search}<X size={13} /></button>}
+          </div>
+          {sorted.length === 0 ? <p className="mk-empty">{emptyText}</p> : (
+            <>
+              <div className="mk-grid mk-shop-grid">{sorted.slice(0, limit).map(p => <MiniCard key={p.id} p={p} shelf={shelf} />)}</div>
+              {sorted.length > limit && <button className="mk-more" onClick={() => setLimit(l => l + PAGE)}><Plus size={18} /><b>{sorted.length - limit}</b></button>}
+            </>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
