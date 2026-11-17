@@ -41,7 +41,27 @@ export function Reveal({ children, className = "", as: Tag = "div" }: { children
   return <Tag ref={ref as never} className={`mk-reveal${seen ? " in" : ""} ${className}`}>{children}</Tag>;
 }
 
-const tone = (name: string) => { const l = lookFor(name); return { "--ta": l.a, "--tt": l.tint, "--ti": l.ink } as CSSProperties; };
+const tone = (name: string) => { const l = lookFor(name); return { "--ta": l.a, "--tt": l.tint, "--ti": l.ink, "--tp": l.pat } as CSSProperties; };
+
+/** A small dot arcs from the pressed button to the request bag in the header. */
+function flyToBag(from: HTMLElement) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const to = document.querySelector<HTMLElement>('.mk-actions [aria-label^="Price request"]');
+  if (!to || !from.animate) return;
+  const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+  const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
+  const dot = document.createElement("i");
+  dot.setAttribute("aria-hidden", "true");
+  Object.assign(dot.style, { position: "fixed", left: `${a.left + a.width / 2 - 9}px`, top: `${a.top + a.height / 2 - 9}px`, width: "18px", height: "18px", borderRadius: "50%", background: "linear-gradient(135deg,#3aa0e6,#0b5a96)", boxShadow: "0 6px 16px #0b5a9680", zIndex: "90", pointerEvents: "none" });
+  document.body.appendChild(dot);
+  const anim = dot.animate([
+    { transform: "translate(0,0) scale(1)", opacity: 1 },
+    { transform: `translate(${dx * 0.5}px,${dy * 0.5 - 70}px) scale(1.15)`, opacity: 1, offset: 0.45 },
+    { transform: `translate(${dx}px,${dy}px) scale(.25)`, opacity: 0.4 },
+  ], { duration: 720, easing: "cubic-bezier(.4,.1,.6,1)" });
+  anim.onfinish = () => dot.remove();
+  anim.oncancel = () => dot.remove();
+}
 
 export function priceOf(p: PublicProduct) {
   const retail = p.retail_price && Number(p.retail_price) > 0 ? Number(p.retail_price) : null;
@@ -271,20 +291,38 @@ export function MiniCard({ p, shelf }: { p: PublicProduct; shelf: Shelf }) {
   const added = shelf.inRequest(p.id);
   const wished = shelf.wished(p.id);
   const fashion = shelf.isFashion(p);
+  const { now, was } = priceOf(p);
+  const off = now !== null && was !== null ? Math.round((1 - now / was) * 100) : 0;
+  const style = tone(ind?.name ?? shelf.catName(p));
+  const glow = (e: React.PointerEvent<HTMLElement>) => {
+    if (e.pointerType !== "mouse") return;
+    const r = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--mx", `${e.clientX - r.left}px`);
+    e.currentTarget.style.setProperty("--my", `${e.clientY - r.top}px`);
+  };
   return (
-    <article className="mk-card">
-      <button className="mk-media" onClick={() => shelf.open(p)} aria-label={`Details: ${p.name}`}>
-        {p.image_url ? <img src={p.image_url} alt="" loading="lazy" /> : <span className="ph"><IconFor name={ind?.icon} size={30} /></span>}
-      </button>
-      <button className={`mk-heart${wished ? " on" : ""}`} aria-pressed={wished} aria-label={wished ? "Remove from wishlist" : "Save to wishlist"} onClick={() => shelf.toggleWish(p.id)}><Heart size={16} /></button>
+    <article className={`mk-card${added ? " in-bag" : ""}`} style={style} onPointerMove={glow}>
+      <i className="mk-glow" aria-hidden="true" />
+      <div className="mk-mwrap">
+        <button className="mk-media" onClick={() => shelf.open(p)} aria-label={`Details: ${p.name}`}>
+          {p.image_url ? <img src={p.image_url} alt="" loading="lazy" /> : <span className="ph"><IconFor name={ind?.icon} size={34} /></span>}
+        </button>
+        <div className="mk-tags">
+          <Stock p={p} />
+          {off > 0 && <span className="mk-off" title={`${off}% off`}>-{off}%</span>}
+        </div>
+        <button className={`mk-heart${wished ? " on" : ""}`} aria-pressed={wished} aria-label={wished ? "Remove from wishlist" : "Save to wishlist"} onClick={() => shelf.toggleWish(p.id)}><Heart size={16} /></button>
+        <button className="mk-peek" aria-label={`Quick look: ${p.name}`} title="Quick look" onClick={() => shelf.open(p)}><Eye size={17} /></button>
+      </div>
       <div className="mk-info">
-        <small className="mk-cat">{shelf.catName(p)}</small>
+        <small className="mk-cat"><IconFor name={ind?.icon} size={12} />{shelf.catName(p)}</small>
         <h3><button onClick={() => shelf.open(p)}>{p.name}</button></h3>
         <div className="mk-row">
-          <div className="mk-pv"><Price p={p} mode={shelf.mode} /><Stock p={p} /></div>
+          <Price p={p} mode={shelf.mode} />
           {fashion
-            ? <button className="mk-add" aria-label={`View ${p.name}`} title="View" onClick={() => shelf.open(p)}><Eye size={17} /></button>
-            : <button className={`mk-add${added ? " done" : ""}`} aria-label={added ? "Added to request" : `Add ${p.name} to request`} title={added ? "Added" : "Add to request"} onClick={() => shelf.addToRequest(p)}>{added ? <Check size={17} /> : <Plus size={17} />}</button>}
+            ? <button className="mk-add" aria-label={`View ${p.name}`} title="View" onClick={() => shelf.open(p)}><ArrowRight size={18} /></button>
+            : <button className={`mk-add${added ? " done" : ""}`} aria-label={added ? "Added to request" : `Add ${p.name} to request`} title={added ? "Added" : "Add to request"}
+                onClick={e => { if (!added) flyToBag(e.currentTarget); shelf.addToRequest(p); }}>{added ? <Check size={18} /> : <Plus size={18} />}</button>}
         </div>
       </div>
     </article>
