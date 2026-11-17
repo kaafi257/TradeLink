@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { ArrowRight, Building2, Check, MapPin, ChevronRight, ClipboardList, Clock, Download, Eye, Flame, Headphones, Heart, LogIn, Menu, Package, Plus, Search, ShoppingBag, Store, Sparkles, Tag, Trash2, User, Briefcase, X, Layers, MessageCircle } from "lucide-react";
-import { Brand } from "../../components/Brand";
+import { Brand, LogoMark } from "../../components/Brand";
 import { ContactIcons } from "../../components/ContactActions";
 import { money } from "../../lib/format";
 import { IconFor } from "../../lib/icons";
@@ -69,13 +69,22 @@ export function MarketHeader({ industries, wishCount, requestCount, signedIn, ca
   menuOpen: boolean; setMenuOpen: (v: boolean) => void;
 }) {
   const [solid, setSolid] = useState(false);
+  const bar = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const f = () => setSolid(window.scrollY > 4);
-    f(); window.addEventListener("scroll", f, { passive: true });
-    return () => window.removeEventListener("scroll", f);
+    let raf = 0;
+    const f = () => {
+      raf = 0;
+      setSolid(window.scrollY > 6);
+      const h = document.documentElement.scrollHeight - innerHeight;
+      bar.current?.style.setProperty("--p", String(h > 0 ? Math.min(1, window.scrollY / h) : 0));
+    };
+    const on = () => { if (!raf) raf = requestAnimationFrame(f); };
+    f(); window.addEventListener("scroll", on, { passive: true });
+    return () => { window.removeEventListener("scroll", on); if (raf) cancelAnimationFrame(raf); };
   }, []);
   return (
     <header className={`mk-header${solid ? " solid" : ""}`}>
+      <div className="mk-progress" ref={bar} aria-hidden="true" />
       <div className="mk-bar">
         <a href="#top" className="mk-logo" aria-label="TradeLink home" onClick={e => { e.preventDefault(); onNav("top"); }}><Brand /></a>
         <nav className="mk-nav" aria-label="Main">
@@ -91,14 +100,6 @@ export function MarketHeader({ industries, wishCount, requestCount, signedIn, ca
           <button className="mk-icon mk-burger" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
         </div>
       </div>
-      {industries.length > 0 && (
-        <div className="mk-cats" role="navigation" aria-label="Industries">
-          <div className="mk-cats-in">
-            <button onClick={() => onIndustry(null)}><Layers size={15} />All</button>
-            {industries.map(i => <button key={i.id} onClick={() => onIndustry(i)}><IconFor name={i.icon} size={15} />{i.name}</button>)}
-          </div>
-        </div>
-      )}
       {menuOpen && (
         <div className="mk-menu" role="menu">
           <a href="#industries" role="menuitem" onClick={e => { e.preventDefault(); onNav("industries"); }}><Layers size={18} />Industries</a>
@@ -118,6 +119,63 @@ type Hit =
   | { kind: "product"; p: PublicProduct; label: string; sub: string }
   | { kind: "industry"; i: PublicIndustry; label: string; sub: string }
   | { kind: "category"; c: PublicCategory; label: string; sub: string };
+
+/** Cycles through real industry names so the headline speaks to whoever is reading it. */
+function Rotator({ items }: { items: PublicIndustry[] }) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (items.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const t = window.setInterval(() => setI(n => n + 1), 2300);
+    return () => window.clearInterval(t);
+  }, [items.length]);
+  if (items.length === 0) return null;
+  const cur = items[i % items.length];
+  return (
+    <div className="mk-rot" style={tone(cur.name)} aria-hidden="true">
+      <span className="lead"><ShoppingBag size={15} /></span>
+      <span className="word" key={cur.id}><span className="ic"><IconFor name={cur.icon} size={16} /></span>{cur.name}</span>
+    </div>
+  );
+}
+
+/** Slow-turning ring of industry icons around the TradeLink mark. */
+function Orbit({ items }: { items: PublicIndustry[] }) {
+  const ring = items.slice(0, 8);
+  if (ring.length === 0) return null;
+  return (
+    <div className="mk-orbit" aria-hidden="true">
+      <i className="pulse" /><i className="pulse two" />
+      <div className="core"><LogoMark size={64} /></div>
+      <div className="ring">
+        {ring.map((ind, k) => (
+          <span key={ind.id} className="sat" style={{ ...tone(ind.name), "--a": `${(360 / ring.length) * k}deg`, "--d": `${k * -1.3}s` } as CSSProperties}>
+            <span className="bub"><IconFor name={ind.icon} size={22} /></span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Endless strip of every industry; pauses on hover so it is easy to tap. */
+function Marquee({ items, onPick }: { items: PublicIndustry[]; onPick: (i: PublicIndustry) => void }) {
+  if (items.length === 0) return null;
+  const loop = items.length < 6 ? [...items, ...items, ...items, ...items] : [...items, ...items];
+  return (
+    <div className="mk-marq" role="navigation" aria-label="Industries">
+      <div className="track">
+        {loop.concat(loop).map((ind, k) => {
+          const dupe = k >= items.length;
+          return (
+            <button key={k} style={tone(ind.name)} onClick={() => onPick(ind)} tabIndex={dupe ? -1 : 0} aria-hidden={dupe || undefined}>
+              <span className="ic"><IconFor name={ind.icon} size={16} /></span>{ind.name}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function MarketHero({ shelf, onMode, query, setQuery, onSubmit, onPickIndustry, onPickCategory, searchRef }: {
   shelf: Shelf; onMode: (m: Mode) => void; query: string; setQuery: (q: string) => void; onSubmit: () => void;
@@ -142,37 +200,40 @@ export function MarketHero({ shelf, onMode, query, setQuery, onSubmit, onPickInd
   };
   return (
     <section className="mk-hero" id="top">
-      <div className="mk-wrap">
-        <h1>Discover Everything. <span>Trade Everywhere.</span></h1>
-        <div className="mk-searchbox">
-          <form role="search" onSubmit={e => { e.preventDefault(); setFocus(false); onSubmit(); }}>
-            <Search size={19} />
-            <input ref={searchRef} type="search" value={query} onChange={e => { setQuery(e.target.value); setFocus(true); }} onFocus={() => setFocus(true)} onBlur={() => window.setTimeout(() => setFocus(false), 150)}
-              placeholder="Search products or brands" aria-label="Search products, categories or brands" autoComplete="off" />
-            {query && <button type="button" className="mk-clear" aria-label="Clear search" onClick={() => { setQuery(""); searchRef.current?.focus(); }}><X size={16} /></button>}
-            <button className="mk-go" aria-label="Search"><ArrowRight size={18} /></button>
-          </form>
-          {focus && q.length >= 2 && (
-            <ul className="mk-suggest" role="listbox">
-              {hits.length === 0 && <li className="none">Nothing matches “{query.trim()}”.</li>}
-              {hits.map((h, k) => (
-                <li key={k}><button type="button" onMouseDown={e => e.preventDefault()} onClick={() => pick(h)}>
-                  <span className="ic">{h.kind === "industry" ? <IconFor name={h.i.icon} size={16} /> : h.kind === "category" ? <Layers size={16} /> : <Package size={16} />}</span>
-                  <span className="tx"><b>{h.label}</b><small>{h.sub}</small></span><ChevronRight size={15} />
-                </button></li>
-              ))}
-            </ul>
-          )}
+      <div className="mk-aurora" aria-hidden="true"><i /><i /><i /></div>
+      <div className="mk-wrap mk-hero-grid">
+        <div className="mk-copy">
+          <h1>Discover Everything. <span>Trade Everywhere.</span></h1>
+          <Rotator items={shelf.industries} />
+          <div className="mk-searchbox">
+            <form role="search" onSubmit={e => { e.preventDefault(); setFocus(false); onSubmit(); }}>
+              <Search size={20} />
+              <input ref={searchRef} type="search" value={query} onChange={e => { setQuery(e.target.value); setFocus(true); }} onFocus={() => setFocus(true)} onBlur={() => window.setTimeout(() => setFocus(false), 150)}
+                placeholder="What are you looking for?" aria-label="Search products, categories or brands" autoComplete="off" />
+              {query && <button type="button" className="mk-clear" aria-label="Clear search" onClick={() => { setQuery(""); searchRef.current?.focus(); }}><X size={16} /></button>}
+              <button className="mk-go" aria-label="Search"><ArrowRight size={19} /></button>
+            </form>
+            {focus && q.length >= 2 && (
+              <ul className="mk-suggest" role="listbox">
+                {hits.length === 0 && <li className="none">Nothing matches “{query.trim()}”.</li>}
+                {hits.map((h, k) => (
+                  <li key={k}><button type="button" onMouseDown={e => e.preventDefault()} onClick={() => pick(h)}>
+                    <span className="ic">{h.kind === "industry" ? <IconFor name={h.i.icon} size={16} /> : h.kind === "category" ? <Layers size={16} /> : <Package size={16} />}</span>
+                    <span className="tx"><b>{h.label}</b><small>{h.sub}</small></span><ChevronRight size={15} />
+                  </button></li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className={`mk-switch ${shelf.mode}`} role="group" aria-label="I am shopping as">
+            <i className="thumb" aria-hidden="true" />
+            <button aria-pressed={shelf.mode === "individual"} onClick={() => onMode("individual")}><User size={18} />Individual</button>
+            <button aria-pressed={shelf.mode === "business"} onClick={() => onMode("business")}><Briefcase size={18} />Business</button>
+          </div>
         </div>
-        <div className="mk-modes" role="group" aria-label="I am shopping as">
-          <button className={shelf.mode === "individual" ? "on" : ""} aria-pressed={shelf.mode === "individual"} onClick={() => onMode("individual")}>
-            <span className="ic"><User size={17} /></span><span><b>Individual</b></span><Check className="ck" size={16} />
-          </button>
-          <button className={shelf.mode === "business" ? "on" : ""} aria-pressed={shelf.mode === "business"} onClick={() => onMode("business")}>
-            <span className="ic"><Briefcase size={17} /></span><span><b>Business</b></span><Check className="ck" size={16} />
-          </button>
-        </div>
+        <Orbit items={shelf.industries} />
       </div>
+      <Marquee items={shelf.industries} onPick={onPickIndustry} />
     </section>
   );
 }
@@ -187,7 +248,8 @@ export function IndustryGrid({ items, onPick }: { items: { ind: PublicIndustry; 
         <div className="mk-inds">
           {items.map(({ ind, count, note }, k) => (
             <button key={ind.id} className="mk-ind" style={{ ...tone(ind.name), "--k": k } as CSSProperties} onClick={() => onPick(ind)} title={ind.description ?? ind.name}>
-              <span className="ic"><IconFor name={ind.icon} size={20} /></span>
+              <span className="wm" aria-hidden="true"><IconFor name={ind.icon} size={84} /></span>
+              <span className="ic"><IconFor name={ind.icon} size={22} /></span>
               <b>{ind.name}</b>
               {count > 0
                 ? <small className="n" title={`${count} ${count === 1 ? "product" : "products"}`}><Package size={12} />{count}</small>
@@ -231,9 +293,28 @@ export function MiniCard({ p, shelf }: { p: PublicProduct; shelf: Shelf }) {
 
 /* ------------------------------------------------------ featured by industry */
 
+/** Swipeable row of cards; arrows appear on wide screens. */
+function Rail({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ l: true, r: false });
+  const upd = () => {
+    const el = ref.current; if (!el) return;
+    setEdge({ l: el.scrollLeft < 4, r: el.scrollLeft + el.clientWidth >= el.scrollWidth - 4 });
+  };
+  useEffect(() => { upd(); const el = ref.current; if (!el) return; const ro = new ResizeObserver(upd); ro.observe(el); return () => ro.disconnect(); }, []);
+  const go = (d: number) => ref.current?.scrollBy({ left: d * (ref.current.clientWidth * 0.8), behavior: "smooth" });
+  return (
+    <div className="mk-railwrap">
+      <div className="mk-rail" ref={ref} onScroll={upd}>{children}</div>
+      {!edge.l && <button className="mk-rarrow l" aria-label="Previous" onClick={() => go(-1)}><ChevronRight size={20} style={{ transform: "scaleX(-1)" }} /></button>}
+      {!edge.r && <button className="mk-rarrow r" aria-label="Next" onClick={() => go(1)}><ChevronRight size={20} /></button>}
+    </div>
+  );
+}
+
 export function Featured({ shelf, onViewAll, status, emptyText }: { shelf: Shelf; onViewAll: (i: PublicIndustry) => void; status: string; emptyText: string }) {
   const sections = useMemo(() => shelf.industries
-    .map(ind => ({ ind, items: shelf.products.filter(p => shelf.indOf(p)?.id === ind.id).slice(0, 4), total: shelf.products.filter(p => shelf.indOf(p)?.id === ind.id).length }))
+    .map(ind => ({ ind, items: shelf.products.filter(p => shelf.indOf(p)?.id === ind.id).slice(0, 10), total: shelf.products.filter(p => shelf.indOf(p)?.id === ind.id).length }))
     .filter(s => s.items.length > 0), [shelf]);
   if (sections.length === 0) {
     return (
@@ -249,7 +330,7 @@ export function Featured({ shelf, onViewAll, status, emptyText }: { shelf: Shelf
               <h2><span className="ic"><IconFor name={ind.icon} size={17} /></span>{ind.name}</h2>
               <button className="mk-all" aria-label={`View all ${ind.name}`} title="View all" onClick={() => onViewAll(ind)}>{total > items.length && <b>{total}</b>}<ArrowRight size={16} /></button>
             </div>
-            <div className="mk-grid">{items.map(p => <MiniCard key={p.id} p={p} shelf={shelf} />)}</div>
+            <Rail>{items.map(p => <MiniCard key={p.id} p={p} shelf={shelf} />)}</Rail>
           </div>
         </Reveal>
       ))}
@@ -407,6 +488,30 @@ export function WishlistDrawer({ items, shelf, onClose }: { items: PublicProduct
               </li>))}</ul>}
       </aside>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------- how it works */
+
+export function Steps() {
+  const items = [
+    { Icon: Search, t: "Find" },
+    { Icon: ClipboardList, t: "Request" },
+    { Icon: MessageCircle, t: "Order" },
+  ];
+  return (
+    <Reveal className="mk-block" as="section">
+      <div className="mk-wrap">
+        <ol className="mk-steps" aria-label="How it works: find a product, request a price, order by chat">
+          {items.map(({ Icon, t }, k) => (
+            <li key={t} style={{ "--k": k } as CSSProperties}>
+              <span className="bub"><Icon size={22} /></span><b>{t}</b>
+              {k < items.length - 1 && <i className="line" aria-hidden="true" />}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </Reveal>
   );
 }
 
