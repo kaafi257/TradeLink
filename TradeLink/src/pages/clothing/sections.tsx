@@ -36,8 +36,8 @@ export function Hero() {
       )}
       <div className="fx-hero-copy">
         <small className="fx-rise" style={delay(0)}>TradeLink Fashion</small>
-        <h1 className="fx-rise" style={delay(1)}>Style that<br />speaks for itself</h1>
-        <p className="fx-rise" style={delay(2)}>Fresh pieces for every day.</p>
+        <h1 className="fx-rise" style={delay(1)}>{f.industry?.name ?? "Clothing"}</h1>
+        {f.industry?.description && <p className="fx-rise" style={delay(2)}>{f.industry.description}</p>}
         <div className="fx-hero-cta fx-rise" style={delay(3)}>
           <Link className="fx-btn light" to="/clothing#catalogue">Shop Collection <ArrowRight size={18} /></Link>
           <Link className="fx-btn ghost" to="/clothing#new">New Arrivals</Link>
@@ -95,19 +95,19 @@ export function BestSellers() {
   );
 }
 
-/* ------------------------------------------------------------------ campaign banner */
+/* ------------------------------------------------------------------ sale banner */
+/** Shown only while real products carry a sale price; there is no made-up campaign. */
 export function Promo() {
   const f = useFashion();
   const onSale = f.products.filter(p => priceOf(p).onSale);
-  const pool = onSale.length ? onSale : f.products;
-  const imgs = pool.map(p => f.photos(p)[0]).filter(Boolean).slice(0, 2);
-  if (!pool.length) return null;
+  if (!onSale.length) return null;
+  const imgs = onSale.map(p => f.photos(p)[0]).filter(Boolean).slice(0, 2);
   return (
     <section className="fx-promo" data-rv="">
       <div className="fx-promo-copy">
-        <small>{onSale.length ? "Now on sale" : "The season edit"}</small>
-        <h2>{onSale.length ? "Selected styles, new prices" : "Pieces made for the season"}</h2>
-        <Link className="fx-btn dark" to={onSale.length ? "/clothing?sale=1#catalogue" : "/clothing#catalogue"}>{onSale.length ? "Shop the sale" : "Explore"} <ArrowRight size={18} /></Link>
+        <small>Now on sale</small>
+        <h2>{onSale.length} {onSale.length === 1 ? "style" : "styles"}, new prices</h2>
+        <Link className="fx-btn dark" to="/clothing?sale=1#catalogue">Shop the sale <ArrowRight size={18} /></Link>
       </div>
       <div className="fx-promo-art" aria-hidden="true">
         {imgs.map((u, i) => <img key={u} src={u} alt="" loading="lazy" decoding="async" style={delay(i)} />)}

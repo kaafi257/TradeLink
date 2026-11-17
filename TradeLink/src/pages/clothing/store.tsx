@@ -8,6 +8,8 @@ export type Fashion = {
   status: Status;
   products: PublicProduct[];
   categories: PublicCategory[];
+  /** The industry set to the fashion storefront; its name and description (edited in Admin) head the page. */
+  industry: PublicIndustry | null;
   byId: Map<string, PublicProduct>;
   /** Product ids ranked by real sales (empty until something has sold). */
   bestIds: string[];
@@ -52,6 +54,7 @@ export function FashionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>(supabase ? "loading" : "offline");
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [categories, setCategories] = useState<PublicCategory[]>([]);
+  const [industry, setIndustry] = useState<PublicIndustry | null>(null);
   const [images, setImages] = useState<ProductImage[]>([]);
   const [options, setOptions] = useState<ProductOption[]>([]);
   const [bestIds, setBestIds] = useState<string[]>([]);
@@ -72,7 +75,9 @@ export function FashionProvider({ children }: { children: ReactNode }) {
       ]);
       if (!live) return;
       if (prod.error || cat.error || ind.error) { setStatus("error"); return; }
-      const fashionIds = new Set(((ind.data ?? []) as PublicIndustry[]).filter(i => i.storefront === "fashion").map(i => i.id));
+      const fashion = ((ind.data ?? []) as PublicIndustry[]).filter(i => i.storefront === "fashion");
+      const fashionIds = new Set(fashion.map(i => i.id));
+      setIndustry(fashion[0] ?? null);
       const cats = ((cat.data ?? []) as PublicCategory[]).filter(c => fashionIds.has(c.industry_id));
       const catIds = new Set(cats.map(c => c.id));
       const prods = ((prod.data ?? []) as PublicProduct[]).filter(p => p.category_id && catIds.has(p.category_id) && forIndividuals(p));
@@ -109,7 +114,7 @@ export function FashionProvider({ children }: { children: ReactNode }) {
   useEffect(() => { write(CART_KEY, cart); }, [cart]);
 
   const value = useMemo<Fashion>(() => ({
-    status, products, categories, byId, bestIds,
+    status, products, categories, industry, byId, bestIds,
     catName: p => (p.category_id && catById.get(p.category_id)?.name) || p.category,
     photos: p => Array.from(new Set([p.image_url, ...(imgMap.get(p.id) ?? [])].filter((u): u is string => !!u))),
     sizes: id => (optMap.get(id) ?? []).filter(o => o.kind === "size").map(o => o.label),
@@ -123,7 +128,7 @@ export function FashionProvider({ children }: { children: ReactNode }) {
     clearCart: () => setCart([]),
     syncCart: lines => setCart(c => lines.map(l => { const old = c.find(x => x.productId === l.productId); return { productId: l.productId, qty: l.qty, size: old?.size, color: old?.color }; })),
     panel, openPanel: setPanel, quick, setQuick, requestOpen, setRequestOpen,
-  }), [status, products, categories, byId, bestIds, catById, imgMap, optMap, wishIds, cart, panel, quick, requestOpen]);
+  }), [status, products, categories, industry, byId, bestIds, catById, imgMap, optMap, wishIds, cart, panel, quick, requestOpen]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
