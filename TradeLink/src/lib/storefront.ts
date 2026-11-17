@@ -5,8 +5,9 @@ export const isFoodIndustry = (name: string) => /food|grocer|grain|beverage|drin
 export const isHouseholdIndustry = (name: string) => /household|cleaning|clean|detergent|soap|hygiene|laundry|home care|homecare/i.test(name);
 export const isBuildIndustry = (name: string) => /construct|building|cement|steel|iron|hardware|tile|paint|plumb|electrical material|material/i.test(name);
 export const isTechIndustry = (name: string) => /electronic|phone|mobile|computer|laptop|tech|appliance|gadget|device|solar|camera/i.test(name);
-export type StoreVariant = "food" | "fresh" | "build" | "tech";
-export const variantFor = (name: string): StoreVariant | null => (isFoodIndustry(name) ? "food" : isHouseholdIndustry(name) ? "fresh" : isBuildIndustry(name) ? "build" : isTechIndustry(name) ? "tech" : null);
+export const isFarmIndustry = (name: string) => /agri|farm|seed|fertili|crop|livestock|tractor|irrigation|pesticid|animal feed|poultry/i.test(name);
+export type StoreVariant = "food" | "fresh" | "build" | "tech" | "farm";
+export const variantFor = (name: string): StoreVariant | null => (isFoodIndustry(name) ? "food" : isHouseholdIndustry(name) ? "fresh" : isBuildIndustry(name) ? "build" : isTechIndustry(name) ? "tech" : isFarmIndustry(name) ? "farm" : null);
 export function storefrontPath(i: { id: string; name: string; storefront?: string }): string | null {
   if (i.storefront === "fashion") return "/clothing";
   if (variantFor(i.name)) return `/industry/${i.id}`;
