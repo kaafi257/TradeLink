@@ -19,18 +19,26 @@ export type Product = {
   image_url: string | null; unit: string; package_size: string | null; wholesale_price: number;
   min_order_quantity: number; stock_quantity: number; reorder_level: number; active: boolean; created_at: string;
   category_id: string | null; retail_price: number; audience: Audience;
+  /** Fashion fields (migration 0006); missing until that migration has been run. */
+  brand?: string | null; sale_price?: number | null;
 };
 export type Audience = "b2b" | "b2c" | "both";
-export type Industry = { id: string; name: string; description: string | null; icon: string; sort_order: number; active: boolean };
+export type Storefront = "standard" | "fashion";
+export type Industry = { id: string; name: string; description: string | null; icon: string; sort_order: number; active: boolean; storefront?: Storefront };
 export type Category = { id: string; industry_id: string; name: string; description: string | null; image_url: string | null; sort_order: number; active: boolean };
-export type PublicIndustry = Pick<Industry, "id" | "name" | "description" | "icon" | "sort_order">;
+export type PublicIndustry = Pick<Industry, "id" | "name" | "description" | "icon" | "sort_order" | "storefront">;
 export type PublicCategory = Pick<Category, "id" | "industry_id" | "name" | "description" | "image_url" | "sort_order">;
 /** What the public website may see (the public_products view): no price, stock or SKU. */
 export type PublicProduct = {
   id: string; name: string; category: string; description: string | null; image_url: string | null;
   unit: string; package_size: string | null; min_order_quantity: number;
   category_id: string | null; audience: Audience; retail_price: number | null;
+  /** Added by migration 0006 (fashion storefront). */
+  brand?: string | null; sale_price?: number | null; created_at?: string;
+  stock_status?: "in" | "low" | "out"; stock_left?: number | null;
 };
+export type ProductImage = { id: string; product_id: string; url: string; sort_order: number };
+export type ProductOption = { id: string; product_id: string; kind: "size" | "color"; label: string; color_hex: string | null; sort_order: number };
 export type QuoteItem = { id: string; product_name: string; quantity: number; unit: string; unit_price: number };
 export type Quote = {
   id: string; quote_number: string; customer_name: string; phone: string; email: string | null;

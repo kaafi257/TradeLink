@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Briefcase, Check, ClipboardList, Headphones, Menu, Package, Phone, Plus, Search, ShieldCheck, Tag, Trash2, Truck, User, X, Layers, Download, Ship, Warehouse, Mail, MapPin, Clock } from "lucide-react";
+import {
+  ArrowRight, Briefcase, Candy, Check, ChevronsDown, ClipboardList, Download, Droplets, Headphones, Home, Layers, LayoutGrid, LogIn, Menu, MessageCircle,
+  Package, PackageOpen, Phone, Plus, Search, ShieldCheck, Ship, ShoppingBag, Sparkles, Tag, Trash2, Truck, User, Warehouse, Wheat, X,
+} from "lucide-react";
 import { Brand } from "../components/Brand";
-import { ContactCards, ContactPills, FloatingContact } from "../components/ContactActions";
+import { ContactCards, ContactPills, ContactRow, FloatingContact } from "../components/ContactActions";
 import { TURNSTILE_SITE_KEY, Turnstile } from "../components/Turnstile";
 import { useChannels, useContact } from "../lib/contact";
 import { money } from "../lib/format";
@@ -12,10 +15,15 @@ import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct 
 import "./home.css";
 
 const NAV = [
-  { id: "top", label: "Home" },
-  { id: "public-products", label: "Shop" },
-  { id: "why", label: "About Us" },
-  { id: "contact", label: "Contact" },
+  { id: "top", label: "Home", Icon: Home },
+  { id: "public-products", label: "Shop", Icon: ShoppingBag },
+  { id: "why", label: "About Us", Icon: Sparkles },
+  { id: "contact", label: "Contact", Icon: MessageCircle },
+];
+const HERO_ITEMS = [
+  { Icon: Wheat, word: "Rice" },
+  { Icon: Candy, word: "Sugar" },
+  { Icon: Droplets, word: "Oil" },
 ];
 const ROUTE = [
   { Icon: Package, label: "Bulk" },
@@ -24,10 +32,10 @@ const ROUTE = [
   { Icon: Truck, label: "Delivered" },
 ];
 const POINTS = [
-  { Icon: ShieldCheck, title: "Quality checked" },
-  { Icon: Tag, title: "Wholesale and retail" },
-  { Icon: Layers, title: "Many industries" },
-  { Icon: Headphones, title: "Real person" },
+  { Icon: ShieldCheck, title: "Quality" },
+  { Icon: Tag, title: "Best prices" },
+  { Icon: Layers, title: "Many products" },
+  { Icon: Headphones, title: "Real support" },
 ];
 const STEPS = [
   { Icon: Package, label: "Choose" },
@@ -49,8 +57,22 @@ function useInView<T extends HTMLElement>() {
   return [ref, seen] as const;
 }
 
-type Mode = "business" | "individual";
-type Line = { key: string; productId: string; qty: string };
+/** Fades and lifts elements marked `data-rv` as they scroll into view (a data attribute, so React re-renders never undo it). */
+function useReveal(deps: unknown[]) {
+  useEffect(() => {
+    const els = Array.from(document.querySelectorAll<HTMLElement>("[data-rv]:not([data-in])"));
+    if (!els.length) return;
+    if (!("IntersectionObserver" in window)) { els.forEach(e => e.setAttribute("data-in", "")); return; }
+    const io = new IntersectionObserver(entries => entries.forEach(e => {
+      if (e.isIntersecting) { e.target.setAttribute("data-in", ""); io.unobserve(e.target); }
+    }), { threshold: 0.12 });
+    els.forEach(e => io.observe(e));
+    return () => io.disconnect();
+  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+}
+
+export type Mode = "business" | "individual";
+export type Line = { key: string; productId: string; qty: string };
 type Status = "loading" | "ready" | "error" | "offline";
 
 const MODE_KEY = "tradelink-mode";
@@ -60,10 +82,12 @@ const allows = (p: PublicProduct, m: Mode) => audienceOf(p) === "both" || audien
 const defaultQty = (p: PublicProduct | undefined, m: Mode) => (m === "individual" ? "1" : String(Number(p?.min_order_quantity ?? 1)));
 const catKey = (p: PublicProduct) => p.category_id ?? `name:${p.category}`;
 const productLabel = (p: PublicProduct) => (p.package_size ? `${p.name} — ${p.package_size}` : p.name);
-const newKey = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Math.random()));
+export const newKey = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Math.random()));
 
-function RequestModal({ products, mode, onMode, initial, onLines, onClose, onSent }: {
+/** Also used by the fashion storefront. `extraNotes` adds a line per product (e.g. size and colour); `lockType` hides the wholesale switch. */
+export function RequestModal({ products, mode, onMode, initial, onLines, onClose, onSent, extraNotes, lockType }: {
   products: PublicProduct[]; mode: Mode; onMode: (m: Mode) => void; initial: Line[]; onLines: (l: Line[]) => void; onClose: () => void; onSent: () => void;
+  extraNotes?: Record<string, string>; lockType?: boolean;
 }) {
   const [type, setType] = useState<Mode>(mode);
   const [lines, setLines] = useState<Line[]>(initial.length ? initial : [{ key: newKey(), productId: "", qty: defaultQty(undefined, mode) }]);
@@ -105,6 +129,8 @@ function RequestModal({ products, mode, onMode, initial, onLines, onClose, onSen
       name: String(f.get("name") ?? ""), phone: String(f.get("phone") ?? ""), email: String(f.get("email") ?? ""),
       location: String(f.get("location") ?? ""), notes: String(f.get("notes") ?? ""), website: String(f.get("website") ?? ""),
     };
+    const extra = chosen.filter(l => extraNotes?.[l.productId]).map(l => `${byId.get(l.productId)?.name}: ${extraNotes![l.productId]}`).join("\n");
+    if (extra) fields.notes = [fields.notes.trim(), extra].filter(Boolean).join("\n");
     if (TURNSTILE_SITE_KEY && !token) { setError("Please complete the security check."); return; }
     setBusy(true); setError("");
     let data: unknown; let failure = "";
@@ -137,17 +163,17 @@ function RequestModal({ products, mode, onMode, initial, onLines, onClose, onSen
           <div className="success-state">
             <Check size={48} /><h2>Request received</h2>
             <p>Thank you. Your reference is <b>{quoteNumber}</b>. The TradeLink team will contact you shortly.</p>
-            <ContactPills title="Want a faster reply? Message us with your reference" message={`Hello TradeLink, my request reference is ${quoteNumber}.`} />
+            <ContactPills message={`Hello TradeLink, my request reference is ${quoteNumber}.`} />
             <button className="btn green" onClick={onClose}>Close</button>
           </div>
         ) : (
           <>
             <small className="kicker">Price request</small>
             <h2>Tell us what you need</h2>
-            <div className="seg" role="group" aria-label="I am buying as">
+            {!lockType && <div className="seg" role="group" aria-label="I am buying as">
               <button type="button" className={type === "business" ? "on" : ""} onClick={() => switchType("business")}><Briefcase size={15} /> Business (wholesale)</button>
               <button type="button" className={type === "individual" ? "on" : ""} onClick={() => switchType("individual")}><User size={15} /> Individual (retail)</button>
-            </div>
+            </div>}
             <form className="form-grid" onSubmit={submit}>
               <div className="full req-lines">
                 {lines.map(l => {
@@ -281,7 +307,10 @@ export default function PublicHome() {
 
   const catById = useMemo(() => new Map(cats.map(c => [c.id, c])), [cats]);
   const indById = useMemo(() => new Map(inds.map(i => [i.id, i])), [inds]);
-  const visible = useMemo(() => products.filter(p => allows(p, mode)), [products, mode]);
+  // Industries set to the fashion storefront live on /clothing, so their products stay out of this shop.
+  const fashionCats = useMemo(() => new Set(cats.filter(c => indById.get(c.industry_id)?.storefront === "fashion").map(c => c.id)), [cats, indById]);
+  const visible = useMemo(() => products.filter(p => allows(p, mode) && !fashionCats.has(catKey(p))), [products, mode, fashionCats]);
+  const fashionTabs = useMemo(() => inds.filter(i => i.storefront === "fashion" && products.some(p => allows(p, "individual") && catById.get(catKey(p))?.industry_id === i.id)), [inds, products, catById]);
   const counts = useMemo(() => { const m = new Map<string, number>(); for (const p of visible) m.set(catKey(p), (m.get(catKey(p)) ?? 0) + 1); return m; }, [visible]);
   const indTabs = inds.filter(i => cats.some(c => c.industry_id === i.id && (counts.get(c.id) ?? 0) > 0));
   const effIndustry = indTabs.some(i => i.id === industryId) ? industryId : "all";
@@ -307,12 +336,14 @@ export default function PublicHome() {
   const chooseAudience = (m: Mode) => { changeMode(m); go("public-products"); };
 
   const emptyMessage =
-    status === "loading" ? "Loading our products…"
-    : status === "offline" ? "The product catalogue is not connected yet."
-    : status === "error" ? "We could not load the product list. Please refresh the page."
-    : visible.length === 0 && products.length > 0 ? `No products are listed for ${mode === "business" ? "businesses" : "individuals"} yet. Try the other option above.`
-    : q ? "No products match your search."
-    : "Our product list is being updated. Please check back soon or contact us.";
+    status === "loading" ? "Loading…"
+    : status === "offline" ? "Catalogue not connected yet."
+    : status === "error" ? "Could not load products. Please refresh."
+    : visible.length === 0 && products.length > 0 ? "Nothing here yet. Try the other option."
+    : q ? "No matches."
+    : "Products coming soon.";
+
+  useReveal([shown.length, tiles.length, effIndustry, effCategory, mode, status, indTabs.length]);
 
   return (
     <div className={`public-site${hasCart ? " has-cart" : ""}`}>
@@ -321,14 +352,15 @@ export default function PublicHome() {
         <nav aria-label="Main">
           {NAV.map(n => (
             <a key={n.id} href={`#${n.id}`} className={active === n.id ? "active" : ""} aria-current={active === n.id ? "true" : undefined}
-               onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>
+               onClick={e => { e.preventDefault(); go(n.id); }}><n.Icon size={16} />{n.label}</a>
           ))}
         </nav>
-        {contact.phone && <a className="hm-tel" href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}><Phone size={16} /> {contact.phone}</a>}
+        {contact.phone && <a className="hm-tel" href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`} title="Call" aria-label="Call"><Phone size={18} /></a>}
         <button className="btn gold hm-quote" aria-label={`Request a price${cart.length > 0 ? `, ${cart.length} in your request` : ""}`} onClick={() => setQuoteOpen(true)}>
+          <ClipboardList size={16} />
           <span className="hm-q-full">Request a price</span><span className="hm-q-short">Get price</span><span className="hm-q-xs">Quote</span>{cart.length > 0 && <span> ({cart.length})</span>}
         </button>
-        <button className="hm-staff" onClick={() => navigate("/login")}>Staff login</button>
+        <button className="hm-staff" onClick={() => navigate("/login")} title="Staff login" aria-label="Staff login"><LogIn size={16} /> Staff</button>
         <button className="hm-menu" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} aria-controls="hm-mobile-menu" onClick={() => setMenuOpen(o => !o)}>
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -337,12 +369,12 @@ export default function PublicHome() {
       {menuOpen && (
         <div className="hm-mobile" id="hm-mobile-menu" role="menu">
           {NAV.map(n => (
-            <a key={n.id} href={`#${n.id}`} role="menuitem" className={active === n.id ? "active" : ""} onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>
+            <a key={n.id} href={`#${n.id}`} role="menuitem" className={active === n.id ? "active" : ""} onClick={e => { e.preventDefault(); go(n.id); }}><n.Icon size={20} />{n.label}</a>
           ))}
-          {contact.phone && <a className="hm-mobile-tel" href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`} role="menuitem"><Phone size={18} /> {contact.phone}</a>}
-          {app.canInstall && <button className="hm-install" role="menuitem" onClick={() => { setMenuOpen(false); void app.install(); }}><Download size={18} /> Install TradeLink app</button>}
-          {app.isIos && <p className="hm-install-hint">To install: tap Share, then “Add to Home Screen”.</p>}
-          <a href="/login" role="menuitem" onClick={e => { e.preventDefault(); navigate("/login"); }}>Staff login</a>
+          <div className="hm-mobile-icons"><ContactRow /></div>
+          {app.canInstall && <button className="hm-install" role="menuitem" onClick={() => { setMenuOpen(false); void app.install(); }}><Download size={18} /> Install app</button>}
+          {app.isIos && <p className="hm-install-hint">Tap Share, then “Add to Home Screen”.</p>}
+          <a href="/login" role="menuitem" onClick={e => { e.preventDefault(); navigate("/login"); }}><LogIn size={20} />Staff</a>
         </div>
       )}
 
@@ -350,7 +382,13 @@ export default function PublicHome() {
         <img className="hm-hero-bg" src="/img/warehouse.jpg" alt="Racks and pallets stacked with goods inside the TradeLink warehouse" />
         <div className="hm-hero-shade" />
         <div className="hm-hero-copy">
-          <h1>Rice, sugar and oil, straight from the port</h1>
+          <h1 className="hm-title" aria-label="Rice, sugar and oil">
+            {HERO_ITEMS.map(({ Icon, word }, i) => (
+              <span className="hm-word" key={word} style={{ "--i": i } as React.CSSProperties} aria-hidden="true">
+                <span className="hm-word-ico"><Icon size={34} /></span>{word}
+              </span>
+            ))}
+          </h1>
           <div className="hm-audience" role="group" aria-label="Who are you buying for?">
             <button className={mode === "business" ? "on" : ""} aria-pressed={mode === "business"} onClick={() => chooseAudience("business")}>
               <span className="tag-ico"><Briefcase size={26} /></span>
@@ -365,39 +403,44 @@ export default function PublicHome() {
           </div>
           {reach.length > 0 && <div className="hm-reach"><ContactPills /></div>}
         </div>
+        <button className="hm-scroll" aria-label="Scroll to shop" onClick={() => go("public-products")}><ChevronsDown size={26} /></button>
       </section>
 
       <section className="hm-route" aria-label="From the port to your door">
         <img className="hm-scene" src="/img/port-scene.svg" alt="Illustration of a container ship unloading at a port crane, with a truck loaded with goods driving past the warehouse" />
         <div className="hm-route-body">
-          <ol className={`hm-route-steps${routeSeen ? " in" : ""}`} ref={routeRef}>
-            {ROUTE.map(({ Icon, label }, i) => <li key={label} style={{ "--i": i } as React.CSSProperties}><span className="stop"><Icon size={26} /></span><b>{label}</b></li>)}
-          </ol>
+          <div className="hm-route-track">
+            <ol className={`hm-route-steps${routeSeen ? " in" : ""}`} ref={routeRef}>
+              {ROUTE.map(({ Icon, label }, i) => <li key={label} style={{ "--i": i } as React.CSSProperties}><span className="stop"><Icon size={26} /></span><b>{label}</b></li>)}
+            </ol>
+            {routeSeen && <span className="route-truck" aria-hidden="true"><Truck size={20} /></span>}
+          </div>
         </div>
       </section>
 
       <section className="hm-section" id="public-products">
         <div className="hm-head hm-shop-head">
-          <div><h2>Shop</h2></div>
+          <div><h2 className="hm-h2-ico"><span className="h2-badge"><ShoppingBag size={26} /></span>Shop</h2></div>
           <div className="seg seg-light" role="group" aria-label="I am buying as">
             <button className={mode === "business" ? "on" : ""} aria-pressed={mode === "business"} onClick={() => changeMode("business")}><Briefcase size={15} /> Business</button>
             <button className={mode === "individual" ? "on" : ""} aria-pressed={mode === "individual"} onClick={() => changeMode("individual")}><User size={15} /> Individual</button>
           </div>
         </div>
 
-        {indTabs.length > 1 && (
+        {indTabs.length + fashionTabs.length > 1 && (
           <div className="hm-filters hm-industries" role="group" aria-label="Filter by industry">
-            <button className={effIndustry === "all" ? "on" : ""} aria-pressed={effIndustry === "all"} onClick={() => pickIndustry("all")}>All industries</button>
+            <button className={effIndustry === "all" ? "on" : ""} aria-pressed={effIndustry === "all"} onClick={() => pickIndustry("all")}><LayoutGrid size={15} /> All</button>
             {indTabs.map(i => <button key={i.id} className={effIndustry === i.id ? "on" : ""} aria-pressed={effIndustry === i.id} onClick={() => pickIndustry(i.id)}><IconFor name={i.icon} size={15} /> {i.name}</button>)}
+            {fashionTabs.map(i => <button key={i.id} className="fashion-tab" onClick={() => navigate("/clothing")}><IconFor name={i.icon} size={15} /> {i.name} <ArrowRight size={14} /></button>)}
           </div>
         )}
 
         {tiles.length > 0 && (
           <div className="hm-tiles">
-            {tiles.map(c => (
-              <button key={c.id} className={`hm-tile${effCategory === c.id ? " on" : ""}`} aria-pressed={effCategory === c.id} onClick={() => setCategoryId(effCategory === c.id ? "all" : c.id)}>
+            {tiles.map((c, i) => (
+              <button key={c.id} data-rv="" style={{ "--i": Math.min(i, 8) } as React.CSSProperties} className={`hm-tile${effCategory === c.id ? " on" : ""}`} aria-pressed={effCategory === c.id} onClick={() => setCategoryId(effCategory === c.id ? "all" : c.id)}>
                 {c.image_url ? <img src={c.image_url} alt="" loading="lazy" /> : <span className="tile-ph"><IconFor name={indById.get(c.industry_id)?.icon} size={34} /></span>}
-                <span className="tile-info"><b>{c.name}</b><small>{counts.get(c.id)} {counts.get(c.id) === 1 ? "product" : "products"}</small></span>
+                <span className="tile-info"><b>{c.name}</b><small><Package size={13} /> {counts.get(c.id)}</small></span>
               </button>
             ))}
           </div>
@@ -405,18 +448,18 @@ export default function PublicHome() {
 
         <div className="hm-toolbar">
           <label className="hm-search"><Search size={17} /><input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products" aria-label="Search products" /></label>
-          <span className="hm-count">{shown.length} {shown.length === 1 ? "product" : "products"}{effCategory !== "all" && <button onClick={() => setCategoryId("all")}>Clear category</button>}</span>
+          <span className="hm-count" aria-label={`${shown.length} ${shown.length === 1 ? "product" : "products"}`}><Package size={17} /> {shown.length}{effCategory !== "all" && <button onClick={() => setCategoryId("all")} aria-label="Clear category" title="Clear category"><X size={16} /></button>}</span>
         </div>
 
-        {shown.length === 0 ? <p className="hm-empty">{emptyMessage}</p> : (
+        {shown.length === 0 ? <p className="hm-empty"><PackageOpen size={22} /> {emptyMessage}</p> : (
           <div className="hm-grid">
-            {shown.map(p => {
+            {shown.map((p, i) => {
               const catImg = catById.get(catKey(p))?.image_url;
               const img = p.image_url || catImg;
               const ind = indById.get(catById.get(catKey(p))?.industry_id ?? "");
               const added = inCart(p.id);
               return (
-                <article className="hm-card" key={p.id}>
+                <article className="hm-card" key={p.id} data-rv="" style={{ "--i": i % 4 } as React.CSSProperties}>
                   <div className="media">
                     {img ? <img src={img} alt={p.name} loading="lazy" /> : <div className="ph" role="img" aria-label={p.name}><IconFor name={ind?.icon} size={44} /></div>}
                     <span className="badge">{p.category}</span>
@@ -430,10 +473,10 @@ export default function PublicHome() {
                     <div className="price">
                       {mode === "individual" && Number(p.retail_price) > 0
                         ? <><b>{money(Number(p.retail_price))}</b><small>per {p.unit}</small></>
-                        : <small className="ask"><Tag size={14} /> Ask for price</small>}
+                        : <small className="ask"><Tag size={14} /> Ask</small>}
                     </div>
-                    <button className={`btn cta ${added ? "gold" : "green"}`} onClick={() => addToRequest(p)}>
-                      {added ? <><Check size={16} /> In your request</> : <><Plus size={16} /> Add to request</>}
+                    <button className={`btn cta ${added ? "gold" : "green"}`} onClick={() => addToRequest(p)} aria-label={added ? `${p.name} is in your request` : `Add ${p.name} to your request`}>
+                      {added ? <><Check className="pop" size={18} /> Added</> : <><Plus size={18} /> Add</>}
                     </button>
                     <ContactPills message={`Hello TradeLink, I would like ${mode === "individual" ? "a price" : "a wholesale price"} for ${productLabel(p)}.`} />
                   </div>
@@ -446,10 +489,10 @@ export default function PublicHome() {
 
       <section className="hm-why" id="why">
         <div className="hm-section hm-about">
-          <h2>Why TradeLink</h2>
+          <h2 className="hm-h2-ico"><span className="h2-badge"><Sparkles size={26} /></span>Why us</h2>
           <div className={`hm-points${whySeen ? " in" : ""}`} ref={whyRef}>
             {POINTS.map(({ Icon, title }, i) => (
-              <div key={title} style={{ "--i": i } as React.CSSProperties}><span className="hm-ico"><Icon size={26} /></span><h3>{title}</h3></div>
+              <div key={title} style={{ "--i": i } as React.CSSProperties}><span className="hm-ico"><Icon size={30} /></span><h3>{title}</h3></div>
             ))}
           </div>
         </div>
@@ -458,16 +501,14 @@ export default function PublicHome() {
       <section className="hm-contact" id="contact">
         <div className="hm-section hm-contact-grid">
           <div>
-            <h2>Order now</h2>
+            <h2 className="hm-h2-ico"><span className="h2-badge"><ClipboardList size={26} /></span>Order now</h2>
             <ol className={`hm-steps${stepsSeen ? " in" : ""}`} ref={stepsRef}>
               {STEPS.map(({ Icon, label }, i) => <li key={label} style={{ "--i": i } as React.CSSProperties}><span className="stop"><Icon size={24} /></span><b>{label}</b></li>)}
             </ol>
           </div>
           <div className="hm-contact-panel">
-            {reach.length > 0
-              ? <ContactCards />
-              : <p className="hm-note">Contact details coming soon.</p>}
-            <button className="btn gold hm-big" onClick={() => setQuoteOpen(true)}><ClipboardList size={18} /> Send a request</button>
+            {reach.length > 0 && <ContactCards />}
+            <button className="btn gold hm-big" onClick={() => setQuoteOpen(true)}><ClipboardList size={20} /> Get a price</button>
           </div>
         </div>
       </section>
@@ -475,15 +516,9 @@ export default function PublicHome() {
       <footer className="hm-footer">
         <div className="hm-footer-top">
           <Brand light />
-          <nav aria-label="Footer">{NAV.map(n => <a key={n.id} href={`#${n.id}`} onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>)}</nav>
+          <nav aria-label="Footer">{NAV.map(n => <a key={n.id} href={`#${n.id}`} onClick={e => { e.preventDefault(); go(n.id); }}><n.Icon size={16} />{n.label}</a>)}</nav>
         </div>
-        {(contact.email || contact.address || contact.hours) && (
-          <ul className="hm-footer-info">
-            {contact.email && <li><Mail size={17} /><a href={`mailto:${contact.email}`}>{contact.email}</a></li>}
-            {contact.address && <li><MapPin size={17} /><span>{contact.address}</span></li>}
-            {contact.hours && <li><Clock size={17} /><span>{contact.hours}</span></li>}
-          </ul>
-        )}
+        <div className="hm-footer-icons"><ContactRow /></div>
         <small className="hm-copy">© {new Date().getFullYear()} TradeLink</small>
       </footer>
 

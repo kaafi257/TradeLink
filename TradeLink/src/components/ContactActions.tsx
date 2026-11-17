@@ -1,25 +1,28 @@
-import { MessageCircle, Phone, Send } from "lucide-react";
-import { useChannels, type Channel } from "../lib/contact";
+import { Mail, MapPin, MessageCircle, Phone, Send } from "lucide-react";
+import { useChannels, useContact, type Channel } from "../lib/contact";
 
 export type { Channel };
 const Icon = ({ k, size = 20 }: { k: Channel["key"]; size?: number }) =>
   k === "whatsapp" ? <MessageCircle size={size} /> : k === "telegram" ? <Send size={size} /> : <Phone size={size} />;
 const ext = (c: Channel) => (c.external ? { target: "_blank", rel: "noopener noreferrer" } : {});
 
-/** Small round buttons, for the product showcase. */
+// Contact is shown as icons only: numbers, usernames and addresses are never printed on the page.
+// The label is kept for screen readers and the hover tooltip.
+
+/** Small round buttons. */
 export function ContactIcons({ message }: { message?: string }) {
   const list = useChannels(message);
   if (!list.length) return null;
   return (
     <div className="contact-icons">
       {list.map(c => (
-        <a key={c.key} className={`ci ci-${c.key}`} href={c.href} title={`${c.label}: ${c.detail}`} aria-label={c.label} {...ext(c)}><Icon k={c.key} size={17} /></a>
+        <a key={c.key} className={`ci ci-${c.key}`} href={c.href} title={c.label} aria-label={c.label} {...ext(c)}><Icon k={c.key} size={17} /></a>
       ))}
     </div>
   );
 }
 
-/** Labelled buttons (WhatsApp / Telegram / Call) so customers can see how to reach us. Used on product cards. */
+/** Round icon buttons (WhatsApp / Telegram / Call). Used on product cards and in the hero. */
 export function ContactPills({ message, title }: { message?: string; title?: string }) {
   const list = useChannels(message);
   if (!list.length) return null;
@@ -28,25 +31,41 @@ export function ContactPills({ message, title }: { message?: string; title?: str
       {title && <small>{title}</small>}
       <div className="contact-pills">
         {list.map(c => (
-          <a key={c.key} className={`pill pill-${c.key}`} href={c.href} {...ext(c)}><Icon k={c.key} size={15} />{c.label}</a>
+          <a key={c.key} className={`pill pill-${c.key}`} href={c.href} title={c.label} aria-label={c.label} {...ext(c)}><Icon k={c.key} size={20} /></a>
         ))}
       </div>
     </div>
   );
 }
 
-/** Large cards for the Contact section. */
+/** Large animated icon buttons for the Contact section. */
 export function ContactCards({ message }: { message?: string }) {
   const list = useChannels(message);
   if (!list.length) return null;
   return (
     <div className="contact-cards">
-      {list.map(c => (
-        <a key={c.key} className={`contact-card cc-${c.key}`} href={c.href} {...ext(c)}>
-          <span className="cc-icon"><Icon k={c.key} size={24} /></span>
-          <span className="cc-text"><b>{c.label}</b><small>{c.detail}</small></span>
+      {list.map((c, i) => (
+        <a key={c.key} className={`contact-card cc-${c.key}`} href={c.href} title={c.label} aria-label={c.label} style={{ "--i": i } as React.CSSProperties} {...ext(c)}>
+          <span className="cc-icon"><Icon k={c.key} size={30} /></span>
         </a>
       ))}
+    </div>
+  );
+}
+
+/** One row of every way to reach us, as icons only (chat channels, email, map). */
+export function ContactRow() {
+  const list = useChannels();
+  const c = useContact();
+  const maps = c.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.address)}` : "";
+  if (!list.length && !c.email && !maps) return null;
+  return (
+    <div className="contact-icons contact-row">
+      {list.map(ch => (
+        <a key={ch.key} className={`ci ci-${ch.key}`} href={ch.href} title={ch.label} aria-label={ch.label} {...ext(ch)}><Icon k={ch.key} size={18} /></a>
+      ))}
+      {c.email && <a className="ci ci-mail" href={`mailto:${c.email}`} title="Email" aria-label="Email"><Mail size={18} /></a>}
+      {maps && <a className="ci ci-map" href={maps} target="_blank" rel="noopener noreferrer" title="Map" aria-label="Map"><MapPin size={18} /></a>}
     </div>
   );
 }
@@ -58,7 +77,7 @@ export function FloatingContact() {
   return (
     <div className="fab-stack" aria-label="Contact us">
       {list.map(c => (
-        <a key={c.key} className={`fab fab-${c.key}`} href={c.href} title={`${c.label}: ${c.detail}`} aria-label={c.label} {...ext(c)}><Icon k={c.key} size={24} /></a>
+        <a key={c.key} className={`fab fab-${c.key}`} href={c.href} title={c.label} aria-label={c.label} {...ext(c)}><Icon k={c.key} size={24} /></a>
       ))}
     </div>
   );
