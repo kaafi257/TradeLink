@@ -289,10 +289,7 @@ export default function PublicHome() {
 
   const catById = useMemo(() => new Map(cats.map(c => [c.id, c])), [cats]);
   const indById = useMemo(() => new Map(inds.map(i => [i.id, i])), [inds]);
-  // Industries set to the fashion storefront live on /clothing, so their products stay out of this shop.
-  const fashionCats = useMemo(() => new Set(cats.filter(c => indById.get(c.industry_id)?.storefront === "fashion").map(c => c.id)), [cats, indById]);
-  const visible = useMemo(() => products.filter(p => allows(p, mode) && !fashionCats.has(catKey(p))), [products, mode, fashionCats]);
-  const fashionTabs = useMemo(() => inds.filter(i => i.storefront === "fashion" && products.some(p => allows(p, "individual") && catById.get(catKey(p))?.industry_id === i.id)), [inds, products, catById]);
+  const visible = useMemo(() => products.filter(p => allows(p, mode)), [products, mode]);
   const counts = useMemo(() => { const m = new Map<string, number>(); for (const p of visible) m.set(catKey(p), (m.get(catKey(p)) ?? 0) + 1); return m; }, [visible]);
   const indTabs = inds.filter(i => cats.some(c => c.industry_id === i.id && (counts.get(c.id) ?? 0) > 0));
   const effIndustry = indTabs.some(i => i.id === industryId) ? industryId : "all";
@@ -408,11 +405,11 @@ export default function PublicHome() {
           </div>
         </div>
 
-        {indTabs.length + fashionTabs.length > 1 && (
+        {indTabs.length > 1 && (
           <div className="hm-filters hm-industries" role="group" aria-label="Filter by industry">
             <button className={effIndustry === "all" ? "on" : ""} aria-pressed={effIndustry === "all"} onClick={() => pickIndustry("all")}>All industries</button>
             {indTabs.map(i => <button key={i.id} className={effIndustry === i.id ? "on" : ""} aria-pressed={effIndustry === i.id} onClick={() => pickIndustry(i.id)}><IconFor name={i.icon} size={15} /> {i.name}</button>)}
-            {fashionTabs.map(i => <button key={i.id} className="fashion-tab" onClick={() => navigate("/clothing")}><IconFor name={i.icon} size={15} /> {i.name} <ArrowRight size={14} /></button>)}
+            {indById.get(effIndustry)?.storefront === "fashion" && <button className="fashion-tab" onClick={() => navigate("/clothing")}>Open the {indById.get(effIndustry)!.name} store <ArrowRight size={14} /></button>}
           </div>
         )}
 
