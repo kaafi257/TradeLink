@@ -9,7 +9,6 @@ import { IconFor } from "../lib/icons";
 import { useInstall } from "../lib/install";
 import { useAuth } from "../lib/auth";
 import { useWishlist } from "../lib/wishlist";
-import { storefrontPath } from "../lib/storefront";
 import { Featured, IndustryGrid, MarketFooter, MarketHeader, MarketHero, Popular, Steps, ProductDialog, SupplierDialog, Suppliers, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
@@ -266,7 +265,7 @@ export default function PublicHome() {
   const mInds = inds.some(i => i.id !== "__all") ? inds.filter(i => i.id !== "__all") : inds;
   const allCount = useMemo(() => { const m = new Map<string, number>(); for (const p of products) { const id = catById.get(catKey(p))?.industry_id; if (id) m.set(id, (m.get(id) ?? 0) + 1); } return m; }, [products, catById]);
   // Every industry is listed in both buyer modes; one that only sells to the other type says so and switches when opened.
-  const gridInds = mInds.filter(i => cats.some(c => c.industry_id === i.id) || i.storefront === "fashion").map(i => {
+  const gridInds = mInds.filter(i => cats.some(c => c.industry_id === i.id)).map(i => {
     const count = indCount.get(i.id) ?? 0;
     const note = count === 0 && (allCount.get(i.id) ?? 0) > 0 ? (mode === "individual" ? "Wholesale only" : "Retail only") : undefined;
     return { ind: i, count, note };
@@ -275,14 +274,10 @@ export default function PublicHome() {
   const wishItems = products.filter(p => wish.has(p.id));
   const wishCount = wishItems.length;
   const openIndustry = (i: PublicIndustry) => {
-    const sf = storefrontPath(i);
-    if (sf) { navigate(sf); return; }
     if ((indCount.get(i.id) ?? 0) === 0 && (allCount.get(i.id) ?? 0) > 0) changeMode(mode === "individual" ? "business" : "individual");
     setSearch(""); setIndustryId(i.id); setCategoryId("all"); setMenuOpen(false); go("public-products");
   };
   const openCategory = (c: PublicCategory) => {
-    const sf = indById.get(c.industry_id) ? storefrontPath(indById.get(c.industry_id)!) : null;
-    if (sf) { navigate(sf); return; }
     setSearch(""); setIndustryId(c.industry_id); setCategoryId(c.id); go("public-products");
   };
 
@@ -300,7 +295,7 @@ export default function PublicHome() {
 
   const shelf: Shelf = {
     mode, products: visible, industries: mInds, categories: cats, bestIds,
-    indOf: indOfP, catName: p => catById.get(catKey(p))?.name ?? p.category, isFashion: p => indOfP(p)?.storefront === "fashion",
+    indOf: indOfP, catName: p => catById.get(catKey(p))?.name ?? p.category, isFashion: () => false,
     inRequest: inCart, addToRequest, wished: wish.has, toggleWish: wish.toggle, open: setQuick,
   };
 
@@ -325,7 +320,7 @@ export default function PublicHome() {
       <MarketHero shelf={shelf} onMode={changeMode} query={heroQuery} setQuery={setHeroQuery} searchRef={searchRef}
         onSubmit={() => { setSearch(heroQuery); setIndustryId("all"); setCategoryId("all"); go("public-products"); }}
         onPickIndustry={openIndustry} onPickCategory={openCategory} />
-      <IndustryGrid items={gridInds} onPick={i => (storefrontPath(i) ? navigate(storefrontPath(i)!) : document.getElementById(`ind-${i.id}`) ? go(`ind-${i.id}`) : openIndustry(i))} />
+      <IndustryGrid items={gridInds} onPick={i => (document.getElementById(`ind-${i.id}`) ? go(`ind-${i.id}`) : openIndustry(i))} />
       <Steps />
       <Featured shelf={shelf} status={status} emptyText={emptyMessage} onViewAll={openIndustry} />
       <Popular shelf={shelf} />
@@ -346,7 +341,6 @@ export default function PublicHome() {
           <div className="hm-filters hm-industries" role="group" aria-label="Filter by industry">
             <button className={effIndustry === "all" ? "on" : ""} aria-pressed={effIndustry === "all"} onClick={() => pickIndustry("all")}>All industries</button>
             {indTabs.map(i => <button key={i.id} className={effIndustry === i.id ? "on" : ""} aria-pressed={effIndustry === i.id} onClick={() => pickIndustry(i.id)}><IconFor name={i.icon} size={15} /> {i.name}</button>)}
-            {indById.get(effIndustry) && storefrontPath(indById.get(effIndustry)!) && <button className="fashion-tab" onClick={() => navigate(storefrontPath(indById.get(effIndustry)!)!)}>Open the {indById.get(effIndustry)!.name} store <ArrowRight size={14} /></button>}
           </div>
         )}
 
@@ -422,7 +416,7 @@ export default function PublicHome() {
       )}
       <FloatingContact />
       {supplier && <SupplierDialog s={supplier} industries={inds} cats={supCatNames(supplier.id)} onClose={() => setSupplier(null)} />}
-      {quick && <ProductDialog p={quick} shelf={shelf} onClose={() => setQuick(null)} onStore={p => navigate(`/clothing/${p.id}`)} />}
+      {quick && <ProductDialog p={quick} shelf={shelf} onClose={() => setQuick(null)} onStore={() => setQuick(null)} />}
       {wishOpen && <WishlistDrawer items={wishItems} shelf={shelf} onClose={() => setWishOpen(false)} />}
       {quoteOpen && <RequestModal products={products} mode={mode} onMode={changeMode} initial={cart} onLines={setCart} onClose={() => setQuoteOpen(false)} onSent={() => setCart([])} />}
     </div>
