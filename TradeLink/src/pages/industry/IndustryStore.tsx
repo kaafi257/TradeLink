@@ -16,8 +16,9 @@ import "./fresh.css";
 import "./build.css";
 import "./tech.css";
 import "./farm.css";
+import "./decor.css";
 
-const FONTS = "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Public+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&family=Space+Grotesk:wght@500;700&family=Bitter:wght@600;800&display=swap";
+const FONTS = "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Public+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&family=Space+Grotesk:wght@500;700&family=Bitter:wght@600;800&family=DM+Serif+Display&family=Jost:wght@400;500;600&display=swap";
 const MODE_KEY = "tradelink-mode";
 const readMode = (): Mode => { try { return localStorage.getItem(MODE_KEY) === "individual" ? "individual" : "business"; } catch { return "business"; } };
 const audienceOf = (p: PublicProduct) => p.audience ?? "both";
