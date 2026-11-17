@@ -187,3 +187,30 @@
 .mk-dmedia{overflow:hidden;min-height:0}.mk-dmedia img{min-height:0}
 @media(max-width:640px){.mk-dmedia{aspect-ratio:16/10;height:auto}.mk-dmedia img{position:static}}
 .mk-media{aspect-ratio:4/3}
+
+/* icons instead of words */
+.mk-nav a{display:grid;place-items:center;width:42px;height:42px;padding:0;border-radius:50%}
+.mk-nav{gap:2px}
+.mk-ind{min-height:92px}
+.mk-ind small.n{display:inline-flex;align-items:center;gap:4px;margin-top:4px;padding:2px 8px;border-radius:99px;background:var(--tt);color:var(--ti);font-weight:700;font-size:11.5px}
+.mk-ind small.n.alt{background:var(--mk-soft);color:var(--mk-mute)}
+.mk-all{min-width:40px;min-height:40px;justify-content:center;border-radius:50%;background:#e8f2fb;padding:0 10px;gap:6px;transition:background .2s,color .2s}
+.mk-all b{font-size:12.5px}.mk-all:hover{background:var(--mk-sky);color:#fff}
+.mk-row{flex-wrap:nowrap;align-items:flex-end;margin-top:auto}
+.mk-pv{display:grid;gap:4px;min-width:0}
+.mk-pv .mk-stock{justify-self:start}
+.mk-stock{gap:0}.mk-stock i{width:9px;height:9px;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 22%,transparent)}
+.mk-add{margin:0;flex:none;width:38px;min-height:38px;height:38px;border-radius:50%;padding:0}
+.mk-add:active{transform:scale(.9)}
+.mk-info .mk-row{margin-bottom:0}
+.mk-primary svg+svg{margin-left:-2px}
+.mk-drawer h2 .cnt{background:var(--mk-sky);color:#fff;border-radius:99px;padding:1px 8px;font-size:12px}
+.mk-fico{display:flex;align-items:center;gap:6px;flex-wrap:wrap;align-content:start}
+.mk-fico h4{width:100%;margin:0 0 6px;display:flex}
+.mk-fico button,.mk-fico a{width:42px;height:42px;border-radius:50%;background:#ffffff14;color:#fff;display:grid;place-items:center;border:0;transition:background .2s}
+.mk-fico button:hover,.mk-fico a:hover{background:var(--mk-sky)}
+.mk-footer h4{display:flex;align-items:center;color:#fff}
+.mk-footer h4 svg{color:#8ec5f0}
+.mk-menu a,.mk-menu button{min-height:48px}
+.mk-modes button{min-height:52px}
+.mk-pv{display:flex;align-items:center;gap:10px}.mk-pv .mk-stock{justify-self:auto}
