@@ -11,6 +11,7 @@ export type StoreVariant = "food" | "fresh" | "build" | "tech" | "farm" | "decor
 export const variantFor = (name: string): StoreVariant | null => (isFoodIndustry(name) ? "food" : isHouseholdIndustry(name) ? "fresh" : isBuildIndustry(name) ? "build" : isTechIndustry(name) ? "tech" : isFarmIndustry(name) ? "farm" : isFurnitureIndustry(name) ? "decor" : null);
 export function storefrontPath(i: { id: string; name: string; storefront?: string }): string | null {
   if (i.storefront === "fashion") return "/clothing";
-  if (variantFor(i.name)) return `/industry/${i.id}`;
+  // Every other industry opens inside the main marketplace so the whole store is one market.
+  // (Per-industry designs live at /industry/:id but are no longer linked.)
   return null;
 }
