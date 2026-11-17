@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { Shirt } from "lucide-react";
-import { RequestModal } from "../PublicHome";
+import { RequestModal } from "../RequestModal";
 import { optionText, FashionProvider, useFashion } from "./store";
 import { BestSellers, Catalogue, Categories, Footer, Hero, NewArrivals, Promo } from "./sections";
 import { CartDrawer, Header, MobileMenu, QuickView, SearchPanel, WishlistDrawer, useReveal } from "./parts";

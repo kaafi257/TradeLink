@@ -3,7 +3,7 @@ import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { Brand } from "./components/Brand";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { arrivedFromEmailLink } from "./lib/supabase";
-import PublicHome from "./pages/PublicHome";
+import Market from "./pages/market/Market";
 import Login from "./pages/Login";
 import SetPassword from "./pages/SetPassword";
 
@@ -29,7 +29,7 @@ export default function App() {
       <EmailLinkGate />
       <Suspense fallback={<div className="loading-screen"><Brand /><p>Loading TradeLink…</p></div>}>
         <Routes>
-          <Route path="/" element={<PublicHome />} />
+          <Route path="/" element={<Market />} />
           <Route path="/clothing/*" element={<Clothing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/set-password" element={<SetPassword />} />
