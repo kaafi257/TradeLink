@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ArrowRight, Check, ChevronRight, Download, Heart, LogIn, Menu, Package, Plus, Search, ShoppingBag, Store, Tag, Trash2, User, Briefcase, X, Layers, MessageCircle } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, ClipboardList, Clock, Download, Eye, Flame, Headphones, Heart, LogIn, Menu, Package, Plus, Search, ShoppingBag, Store, Sparkles, Tag, Trash2, User, Briefcase, X, Layers, MessageCircle } from "lucide-react";
 import { Brand } from "../../components/Brand";
 import { ContactIcons } from "../../components/ContactActions";
 import { money } from "../../lib/format";
@@ -52,13 +52,13 @@ export function priceOf(p: PublicProduct) {
 function Stock({ p }: { p: PublicProduct }) {
   if (!p.stock_status) return null;
   const t = p.stock_status === "in" ? "In stock" : p.stock_status === "low" ? "Few left" : "Sold out";
-  return <span className={`mk-stock ${p.stock_status}`}><i />{t}</span>;
+  return <span className={`mk-stock ${p.stock_status}`} title={t} role="img" aria-label={t}><i /></span>;
 }
 
 function Price({ p, mode }: { p: PublicProduct; mode: Mode }) {
   const { now, was } = priceOf(p);
   if (mode === "individual" && now !== null) return <span className="mk-price"><b>{money(now)}</b>{was !== null && <s>{money(was)}</s>}</span>;
-  return <span className="mk-price ask"><Tag size={14} />Ask for price</span>;
+  return <span className="mk-price ask" title="Ask for price" role="img" aria-label="Ask for price"><Tag size={15} /></span>;
 }
 
 /* ------------------------------------------------------------------ header */
@@ -79,9 +79,9 @@ export function MarketHeader({ industries, wishCount, requestCount, signedIn, ca
       <div className="mk-bar">
         <a href="#top" className="mk-logo" aria-label="TradeLink home" onClick={e => { e.preventDefault(); onNav("top"); }}><Brand /></a>
         <nav className="mk-nav" aria-label="Main">
-          <a href="#industries" onClick={e => { e.preventDefault(); onNav("industries"); }}>Industries</a>
-          <a href="#public-products" onClick={e => { e.preventDefault(); onNav("public-products"); }}>Shop</a>
-          <a href="#contact" onClick={e => { e.preventDefault(); onNav("contact"); }}>Contact</a>
+          <a href="#industries" title="Industries" aria-label="Industries" onClick={e => { e.preventDefault(); onNav("industries"); }}><Layers size={19} /></a>
+          <a href="#public-products" title="Shop" aria-label="Shop" onClick={e => { e.preventDefault(); onNav("public-products"); }}><Store size={19} /></a>
+          <a href="#contact" title="Contact" aria-label="Contact" onClick={e => { e.preventDefault(); onNav("contact"); }}><MessageCircle size={19} /></a>
         </nav>
         <div className="mk-actions">
           <button className="mk-icon mk-sbtn" aria-label="Search" title="Search" onClick={onSearch}><Search size={19} /></button>
@@ -144,7 +144,6 @@ export function MarketHero({ shelf, onMode, query, setQuery, onSubmit, onPickInd
     <section className="mk-hero" id="top">
       <div className="mk-wrap">
         <h1>Discover Everything. <span>Trade Everywhere.</span></h1>
-        <p>Explore products and connect with businesses across multiple industries.</p>
         <div className="mk-searchbox">
           <form role="search" onSubmit={e => { e.preventDefault(); setFocus(false); onSubmit(); }}>
             <Search size={19} />
@@ -167,10 +166,10 @@ export function MarketHero({ shelf, onMode, query, setQuery, onSubmit, onPickInd
         </div>
         <div className="mk-modes" role="group" aria-label="I am shopping as">
           <button className={shelf.mode === "individual" ? "on" : ""} aria-pressed={shelf.mode === "individual"} onClick={() => onMode("individual")}>
-            <span className="ic"><User size={17} /></span><span><b>Individual</b><small>Personal shopping</small></span><Check className="ck" size={16} />
+            <span className="ic"><User size={17} /></span><span><b>Individual</b></span><Check className="ck" size={16} />
           </button>
           <button className={shelf.mode === "business" ? "on" : ""} aria-pressed={shelf.mode === "business"} onClick={() => onMode("business")}>
-            <span className="ic"><Briefcase size={17} /></span><span><b>Business</b><small>Wholesale &amp; suppliers</small></span><Check className="ck" size={16} />
+            <span className="ic"><Briefcase size={17} /></span><span><b>Business</b></span><Check className="ck" size={16} />
           </button>
         </div>
       </div>
@@ -185,13 +184,16 @@ export function IndustryGrid({ items, onPick }: { items: { ind: PublicIndustry; 
   return (
     <Reveal className="mk-block" as="section">
       <div className="mk-wrap" id="industries">
-        <div className="mk-head"><h2>Industries</h2></div>
         <div className="mk-inds">
           {items.map(({ ind, count, note }, k) => (
             <button key={ind.id} className="mk-ind" style={{ ...tone(ind.name), "--k": k } as CSSProperties} onClick={() => onPick(ind)} title={ind.description ?? ind.name}>
               <span className="ic"><IconFor name={ind.icon} size={20} /></span>
               <b>{ind.name}</b>
-              <small>{count > 0 ? `${count} ${count === 1 ? "product" : "products"}` : note ?? "Coming soon"}</small>
+              {count > 0
+                ? <small className="n" title={`${count} ${count === 1 ? "product" : "products"}`}><Package size={12} />{count}</small>
+                : note
+                  ? <small className="n alt" title={note}>{note.startsWith("Wholesale") ? <Briefcase size={12} /> : <User size={12} />}</small>
+                  : <small className="n alt" title="Coming soon"><Clock size={12} /></small>}
             </button>
           ))}
         </div>
@@ -216,10 +218,12 @@ export function MiniCard({ p, shelf }: { p: PublicProduct; shelf: Shelf }) {
       <div className="mk-info">
         <small className="mk-cat">{shelf.catName(p)}</small>
         <h3><button onClick={() => shelf.open(p)}>{p.name}</button></h3>
-        <div className="mk-row"><Price p={p} mode={shelf.mode} /><Stock p={p} /></div>
-        {fashion
-          ? <a className="mk-add" href={`/clothing/${p.id}`} onClick={e => { e.preventDefault(); shelf.open(p); }}>View<ArrowRight size={15} /></a>
-          : <button className={`mk-add${added ? " done" : ""}`} onClick={() => shelf.addToRequest(p)}>{added ? <><Check size={15} />Added</> : <><Plus size={15} />Add</>}</button>}
+        <div className="mk-row">
+          <div className="mk-pv"><Price p={p} mode={shelf.mode} /><Stock p={p} /></div>
+          {fashion
+            ? <button className="mk-add" aria-label={`View ${p.name}`} title="View" onClick={() => shelf.open(p)}><Eye size={17} /></button>
+            : <button className={`mk-add${added ? " done" : ""}`} aria-label={added ? "Added to request" : `Add ${p.name} to request`} title={added ? "Added" : "Add to request"} onClick={() => shelf.addToRequest(p)}>{added ? <Check size={17} /> : <Plus size={17} />}</button>}
+        </div>
       </div>
     </article>
   );
@@ -233,7 +237,7 @@ export function Featured({ shelf, onViewAll, status, emptyText }: { shelf: Shelf
     .filter(s => s.items.length > 0), [shelf]);
   if (sections.length === 0) {
     return (
-      <section className="mk-block"><div className="mk-wrap"><div className="mk-empty"><Package size={28} /><p>{status === "loading" ? "Loading products…" : emptyText}</p></div></div></section>
+      <section className="mk-block"><div className="mk-wrap"><div className="mk-empty" role="status" aria-label={status === "loading" ? "Loading products" : emptyText}><Package size={34} /></div></div></section>
     );
   }
   return (
@@ -243,7 +247,7 @@ export function Featured({ shelf, onViewAll, status, emptyText }: { shelf: Shelf
           <div className="mk-wrap" id={`ind-${ind.id}`}>
             <div className="mk-head" style={tone(ind.name)}>
               <h2><span className="ic"><IconFor name={ind.icon} size={17} /></span>{ind.name}</h2>
-              <button className="mk-all" onClick={() => onViewAll(ind)}>View all{total > items.length ? ` (${total})` : ""}<ArrowRight size={15} /></button>
+              <button className="mk-all" aria-label={`View all ${ind.name}`} title="View all" onClick={() => onViewAll(ind)}>{total > items.length && <b>{total}</b>}<ArrowRight size={16} /></button>
             </div>
             <div className="mk-grid">{items.map(p => <MiniCard key={p.id} p={p} shelf={shelf} />)}</div>
           </div>
@@ -272,7 +276,7 @@ export function Popular({ shelf }: { shelf: Shelf }) {
   return (
     <Reveal className="mk-block" as="section">
       <div className="mk-wrap">
-        <div className="mk-head"><h2>{ranked.hasBest ? "Popular products" : "Latest products"}</h2></div>
+        <div className="mk-head"><h2 style={tone("Popular")}><span className="ic">{ranked.hasBest ? <Flame size={17} /> : <Sparkles size={17} />}</span><span className="sr-only">{ranked.hasBest ? "Popular products" : "Latest products"}</span></h2></div>
         {chips.length > 1 && (
           <div className="mk-chips" role="group" aria-label="Filter by industry">
             <button className={active === "all" ? "on" : ""} aria-pressed={active === "all"} onClick={() => { setChip("all"); setMore(1); }}>All</button>
@@ -280,7 +284,7 @@ export function Popular({ shelf }: { shelf: Shelf }) {
           </div>
         )}
         <div className="mk-grid" key={active}>{shown.map(p => <MiniCard key={p.id} p={p} shelf={shelf} />)}</div>
-        {shown.length < list.length && <div className="mk-more"><button onClick={() => setMore(m => m + 1)}>Show more<Plus size={15} /></button></div>}
+        {shown.length < list.length && <div className="mk-more"><button aria-label="Show more" title="Show more" onClick={() => setMore(m => m + 1)}><Plus size={18} /></button></div>}
       </div>
     </Reveal>
   );
@@ -319,12 +323,12 @@ export function ProductDialog({ p, shelf, onClose, onStore }: { p: PublicProduct
           {p.description && <p className="mk-desc">{p.description}</p>}
           <div className="mk-facts">
             <span><Package size={14} />{p.package_size || p.unit}</span>
-            {shelf.mode === "business" && <span title="Minimum order"><Layers size={14} />Min {Number(p.min_order_quantity)} {p.unit}</span>}
+            {shelf.mode === "business" && <span title={`Minimum order ${Number(p.min_order_quantity)} ${p.unit}`}><Layers size={14} />{Number(p.min_order_quantity)}</span>}
           </div>
           <div className="mk-dact">
             {fashion
-              ? <button className="mk-primary" onClick={() => onStore(p)}>Open in store<ArrowRight size={16} /></button>
-              : <button className="mk-primary" onClick={() => { shelf.addToRequest(p); if (!added) onClose(); }}>{added ? <><Check size={16} />Added</> : <><Plus size={16} />Add to request</>}</button>}
+              ? <button className="mk-primary" aria-label="Open in store" title="Open in store" onClick={() => onStore(p)}><Store size={20} /><ArrowRight size={18} /></button>
+              : <button className="mk-primary" aria-label={added ? "Added to request" : "Add to request"} title={added ? "Added" : "Add to request"} onClick={() => { shelf.addToRequest(p); if (!added) onClose(); }}>{added ? <Check size={20} /> : <><Plus size={20} /><ClipboardList size={20} /></>}</button>}
             <button className={`mk-sq${wished ? " on" : ""}`} aria-pressed={wished} aria-label={wished ? "Remove from wishlist" : "Save to wishlist"} onClick={() => shelf.toggleWish(p.id)}><Heart size={18} /></button>
           </div>
           <ContactIcons message={`Hello TradeLink, I would like ${shelf.mode === "individual" ? "a price" : "a wholesale price"} for ${p.name}.`} />
@@ -340,9 +344,9 @@ export function WishlistDrawer({ items, shelf, onClose }: { items: PublicProduct
     <div className="mk-layer side" role="dialog" aria-modal="true" aria-label="Wishlist">
       <button className="mk-scrim" aria-label="Close" onClick={onClose} />
       <aside className="mk-drawer">
-        <header><h2><Heart size={18} />Wishlist</h2><button className="mk-x" aria-label="Close" onClick={onClose}><X size={18} /></button></header>
+        <header><h2><Heart size={18} /><span className="sr-only">Wishlist</span>{items.length > 0 && <b className="cnt">{items.length}</b>}</h2><button className="mk-x" aria-label="Close" onClick={onClose}><X size={18} /></button></header>
         {items.length === 0
-          ? <div className="mk-empty"><Heart size={28} /><p>Tap the heart on a product to save it here.</p></div>
+          ? <div className="mk-empty" role="img" aria-label="No saved products yet"><Heart size={34} /></div>
           : <ul>{items.map(p => (
               <li key={p.id}>
                 <button className="th" onClick={() => { onClose(); shelf.open(p); }}>{p.image_url ? <img src={p.image_url} alt="" /> : <IconFor name={shelf.indOf(p)?.icon} size={22} />}</button>
@@ -364,20 +368,17 @@ export function MarketFooter({ industries, onIndustry, onRequest, onAccount, sig
       <div className="mk-wrap mk-fgrid">
         <div className="mk-fbrand">
           <Brand light />
-          <p>Products and suppliers across many industries.</p>
           <ContactIcons />
         </div>
         {industries.length > 0 && (
-          <nav aria-label="Industries"><h4>Industries</h4>
+          <nav aria-label="Industries"><h4 title="Industries"><Layers size={18} /></h4>
             <ul>{industries.slice(0, 8).map(i => <li key={i.id}><button onClick={() => onIndustry(i)}>{i.name}</button></li>)}</ul>
           </nav>
         )}
-        <nav aria-label="Support"><h4>Support</h4>
-          <ul>
-            <li><button onClick={onRequest}>Request a price</button></li>
-            <li><a href="#public-products" onClick={e => { e.preventDefault(); document.getElementById("public-products")?.scrollIntoView({ behavior: "smooth" }); }}>Shop</a></li>
-            <li><button onClick={onAccount}>{signedIn ? "Admin" : "Staff sign in"}</button></li>
-          </ul>
+        <nav aria-label="Support" className="mk-fico"><h4 title="Support"><Headphones size={18} /></h4>
+          <button aria-label="Request a price" title="Request a price" onClick={onRequest}><ClipboardList size={19} /></button>
+          <a href="#public-products" aria-label="Shop" title="Shop" onClick={e => { e.preventDefault(); document.getElementById("public-products")?.scrollIntoView({ behavior: "smooth" }); }}><Store size={19} /></a>
+          <button aria-label={signedIn ? "Admin" : "Staff sign in"} title={signedIn ? "Admin" : "Staff sign in"} onClick={onAccount}><LogIn size={19} /></button>
         </nav>
       </div>
       <div className="mk-wrap mk-copy"><small>© {new Date().getFullYear()} TradeLink</small></div>
