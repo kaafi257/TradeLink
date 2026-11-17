@@ -9,7 +9,7 @@ import { IconFor } from "../lib/icons";
 import { useInstall } from "../lib/install";
 import { useAuth } from "../lib/auth";
 import { useWishlist } from "../lib/wishlist";
-import { Featured, IndustryGrid, MarketFooter, MarketHeader, MarketHero, Popular, Steps, ProductDialog, SupplierDialog, Suppliers, WishlistDrawer, type Shelf } from "./market/Market";
+import { Featured, IndustryGrid, MarketFooter, MarketHeader, MarketHero, MarketShop, Popular, Steps, ProductDialog, SupplierDialog, Suppliers, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
 import "./home.css";
@@ -326,85 +326,9 @@ export default function PublicHome() {
       <Popular shelf={shelf} />
       <Suppliers items={suppliers} industries={inds} catNames={supCatNames} onOpen={setSupplier} />
 
-      <div className="hm-shop-env" data-mode={mode} data-style={shopStyle} style={lookVars(envLook)}>
-      <div className="env-pat" key={envLook.key} aria-hidden="true" />
-      <section className="hm-section" id="public-products">
-        <div className="hm-head hm-shop-head">
-          <div><h2>Shop</h2></div>
-          <div className="seg seg-light" role="group" aria-label="I am buying as">
-            <button className={mode === "business" ? "on" : ""} aria-pressed={mode === "business"} onClick={() => changeMode("business")}><Briefcase size={15} /> Business</button>
-            <button className={mode === "individual" ? "on" : ""} aria-pressed={mode === "individual"} onClick={() => changeMode("individual")}><User size={15} /> Individual</button>
-          </div>
-        </div>
-
-        {indTabs.length > 1 && (
-          <div className="hm-filters hm-industries" role="group" aria-label="Filter by industry">
-            <button className={effIndustry === "all" ? "on" : ""} aria-pressed={effIndustry === "all"} onClick={() => pickIndustry("all")}>All industries</button>
-            {indTabs.map(i => <button key={i.id} className={effIndustry === i.id ? "on" : ""} aria-pressed={effIndustry === i.id} onClick={() => pickIndustry(i.id)}><IconFor name={i.icon} size={15} /> {i.name}</button>)}
-          </div>
-        )}
-
-        {tiles.length > 0 && (
-          <div className="hm-tiles">
-            {tiles.map(c => (
-              <button key={c.id} style={lookVars(looks.get(c.id)!)} data-style={styleOf(c.id)} className={`hm-tile${effCategory === c.id ? " on" : ""}`} aria-pressed={effCategory === c.id} onClick={() => setCategoryId(effCategory === c.id ? "all" : c.id)}>
-                {c.image_url ? <img src={c.image_url} alt="" loading="lazy" /> : <span className="tile-ph"><IconFor name={indById.get(c.industry_id)?.icon} size={26} /></span>}
-                <span className="tile-ico">{(() => { const I = looks.get(c.id)!.Icon; return <I size={17} />; })()}</span>
-                <span className="tile-info"><b>{c.name}</b><em className="tile-count">{counts.get(c.id)}</em></span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {activeLook && (
-          <div className="hm-banner" key={effCategory} data-style={styleOf(effCategory)} style={{ ...lookVars(activeLook), ...(catById.get(effCategory)?.image_url ? { "--bi": `url("${catById.get(effCategory)!.image_url}")` } : {}) } as React.CSSProperties}>
-            <span className="bn-ico"><activeLook.Icon size={24} /></span>
-            <b>{catById.get(effCategory)?.name}</b>
-            <span className="bn-float" aria-hidden="true"><activeLook.Icon size={28} /><activeLook.Icon size={20} /><activeLook.Icon size={22} /></span>
-          </div>
-        )}
-
-        <div className="hm-toolbar">
-          <label className="hm-search"><Search size={17} /><input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products" aria-label="Search products" /></label>
-          <span className="hm-count"><Package size={16} /><b>{shown.length}</b>{effCategory !== "all" && <button onClick={() => setCategoryId("all")} aria-label="Clear category" title="Clear category"><X size={15} /></button>}</span>
-        </div>
-
-        {shown.length === 0 ? <p className="hm-empty">{emptyMessage}</p> : (
-          <div className="hm-grid">
-            {shown.map(p => {
-              const catImg = catById.get(catKey(p))?.image_url;
-              const img = p.image_url || catImg;
-              const ind = indById.get(catById.get(catKey(p))?.industry_id ?? "");
-              const added = inCart(p.id);
-              return (
-                <article className="hm-card" key={p.id} data-style={styleOf(catKey(p))} style={lookVars(looks.get(catKey(p)) ?? envLook)}>
-                  <div className="media">
-                    {img ? <img src={img} alt={p.name} loading="lazy" /> : <div className="ph" role="img" aria-label={p.name}><IconFor name={ind?.icon} size={30} /></div>}
-                    <span className="badge" title={p.category}>{(() => { const I = (looks.get(catKey(p)) ?? envLook).Icon; return <I size={18} />; })()}</span>
-                  </div>
-                  <div className="body">
-                    <h3>{p.name}</h3>
-                    <div className="chips">
-                      <span className="chip"><Package size={14} />{p.package_size || p.unit}</span>
-                      {mode === "business" && <span className="chip gold" title={`Minimum order ${Number(p.min_order_quantity)} ${p.unit}`}><Layers size={14} />{Number(p.min_order_quantity)}</span>}
-                    </div>
-                    <div className="price">
-                      {mode === "individual" && Number(p.retail_price) > 0
-                        ? <><b>{money(Number(p.retail_price))}</b><small>per {p.unit}</small></>
-                        : <small className="ask" title="Ask for price"><Tag size={16} /></small>}
-                    </div>
-                    <button className={`btn cta ${added ? "gold" : "green"}`} onClick={() => addToRequest(p)}>
-                      {added ? <><Check size={18} /> Added</> : <><Plus size={18} /> Add</>}
-                    </button>
-                    <ContactIcons message={`Hello TradeLink, I would like ${mode === "individual" ? "a price" : "a wholesale price"} for ${productLabel(p)}.`} />
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
-      </div>
+      <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
+        industry={effIndustry} category={effCategory} setIndustry={setIndustryId} setCategory={setCategoryId}
+        search={search} setSearch={setSearch} items={shown} emptyText={emptyMessage} />
 
       <MarketFooter industries={headerInds} onIndustry={openIndustry} onRequest={() => setQuoteOpen(true)} signedIn={!!session} onAccount={() => navigate(session ? "/admin" : "/login")} />
 
