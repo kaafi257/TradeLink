@@ -1,0 +1,54 @@
+/* Household variant: crisp, clean, aqua. Same markup as food, different system. */
+.fd-fresh{--cream:#f2fbfd;--leaf:#0b4a63;--leaf2:#0aa5c9;--ink:#0d3345;--mute:#5b7a88;--line:#d4eaf1;--saf:#7be0ff;--tom:#ff5d8f;
+  font-family:'Public Sans',system-ui,sans-serif}
+.fd-fresh .fd-hero h1,.fd-fresh .fd-shead h2,.fd-fresh .fd-card h3{font-family:'Public Sans',system-ui,sans-serif;letter-spacing:-.035em}
+.fd-fresh .fd-hero h1{font-weight:800;color:var(--leaf)}
+.fd-fresh .fd-card h3{font-weight:700;font-size:.98rem}
+.fd-fresh .fd-bar{background:#ffffffee;box-shadow:0 14px 30px -18px #0a6a8aaa,0 0 0 1px var(--line)}
+.fd-fresh .fd-back,.fd-fresh .fd-ic:hover{background:#e4f6fb}
+.fd-fresh .fd-mode{background:#e4f3f8}
+.fd-fresh .fd-hero{background:linear-gradient(180deg,#d9f4fb 0%,var(--cream) 100%)}
+.fd-fresh .fd-blob.a{background:radial-gradient(circle at 30% 30%,#fff,#5fd3f0);opacity:.45}
+.fd-fresh .fd-blob.b{background:#8fe3ff66}.fd-fresh .fd-blob.c{background:#ffffffaa}
+.fd-fresh .fd-kicker{background:linear-gradient(135deg,#27c3e8,#0a7fb0);border-radius:50%;box-shadow:0 16px 28px -14px #0a7fb0}
+.fd-fresh .fd-facts span{border-color:#cfe9f1;color:var(--leaf)}
+/* rising bubbles */
+.fd-bubbles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.fd-bubbles i{position:absolute;bottom:-60px;left:calc(var(--k)*8.4%);width:calc(14px + (var(--k)*7px)%30px);width:calc(12px + var(--k)*3px);height:calc(12px + var(--k)*3px);border-radius:50%;
+  background:radial-gradient(circle at 30% 28%,#fff 0 18%,#ffffff55 30%,#9be7ff44 70%);border:1.5px solid #ffffffcc;box-shadow:inset -4px -4px 8px #5fd3f044;animation:fd-rise-b calc(7s + var(--k)*.9s) linear infinite;animation-delay:calc(var(--k)*-1.3s)}
+@keyframes fd-rise-b{to{transform:translate(calc(sin(var(--k))*30px),-640px)}}
+/* collage: circles and rounded squares instead of arches */
+.fd-fresh .fd-collage .fr{border-width:5px}
+.fd-fresh .fd-collage .f0{border-radius:50%;width:56%;height:auto;aspect-ratio:1;top:14%}
+.fd-fresh .fd-collage .f1{border-radius:36px;width:38%;height:40%}
+.fd-fresh .fd-collage .f2{border-radius:50%;width:36%;height:auto;aspect-ratio:1}
+.fd-fresh .fd-collage figcaption{background:#fff;color:var(--leaf);box-shadow:0 8px 14px -8px #0a6a8a}
+.fd-fresh .fd-collage .orb{color:var(--leaf2)}
+/* layout: vertical category rail on desktop */
+@media(min-width:1000px){
+  .fd-fresh .fd-body{max-width:1200px;margin:0 auto;padding:0 clamp(14px,3.4vw,40px);display:grid;grid-template-columns:220px minmax(0,1fr);gap:28px;align-items:start}
+  .fd-fresh .fd-aisles{position:sticky;top:84px;padding:0;background:none;margin-top:18px}
+  .fd-fresh .fd-aisles-in{flex-direction:column;overflow:visible;padding:10px;gap:6px;border-radius:28px;background:#fff;border:1px solid var(--line);box-shadow:0 20px 40px -30px #0a6a8a}
+  .fd-fresh .fd-aisles button{height:50px;width:100%;border:0;background:transparent;border-radius:18px;padding:0 10px 0 6px}
+  .fd-fresh .fd-aisles button:hover{transform:translateX(4px);background:var(--ct)}
+  .fd-fresh .fd-aisles b{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis}
+  .fd-fresh .fd-aisles button.on{background:var(--ca)}
+  .fd-fresh .fd-main .fd-wrap{padding-inline:0;max-width:none}
+  .fd-fresh .fd-grid{grid-template-columns:repeat(3,1fr)}
+}
+.fd-fresh .fd-aisles button{border-radius:18px}
+/* cards: rounded squares, bubble seal, soft aqua */
+.fd-fresh .fd-card{border-radius:30px;border-color:var(--line);box-shadow:0 14px 28px -24px #0a6a8a}
+.fd-fresh .fd-card:hover{transform:translateY(-6px);box-shadow:0 30px 36px -26px #0a8fb5;border-color:#7fd8ee}
+.fd-fresh .fd-card.in{background:linear-gradient(180deg,#eefbff,#fff 60%);border-color:#7fd8ee}
+.fd-fresh .fd-photo{border-radius:24px;aspect-ratio:1/.92}
+.fd-fresh .fd-seal{left:auto;right:8px;bottom:8px;border-radius:50%;background:radial-gradient(circle at 30% 28%,#fff,#bff0ff);color:var(--leaf);border:1.5px solid #fff;outline:0;box-shadow:inset -4px -4px 8px #5fd3f055,0 10px 18px -10px #0a6a8a;transform:none;animation:fd-bob 5s ease-in-out infinite}
+.fd-fresh .fd-card:hover .fd-seal{transform:scale(1.12)}
+.fd-fresh .fd-step{background:#e4f3f8}
+.fd-fresh .fd-add{border-radius:18px}
+.fd-fresh .fd-add:hover{transform:scale(1.08)}
+.fd-fresh .fd-shead .bub{border-radius:50%}
+.fd-fresh .fd-shead .rule{background:linear-gradient(90deg,var(--ca),transparent);height:3px;opacity:.5}
+.fd-fresh .fd-cartbar,.fd-fresh .fd-foot{background:var(--leaf)}
+.fd-fresh .fd-cartbar button,.fd-fresh .fd-cartbar b{background:var(--saf);color:#043247}
+@media(prefers-reduced-motion:reduce){.fd-bubbles i{animation:none}}
