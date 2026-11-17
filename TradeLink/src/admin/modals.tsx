@@ -3,6 +3,7 @@ import { ArrowRight, ImagePlus, X } from "lucide-react";
 import { IMAGE_ACCEPT, checkImage, removeProductImage, uploadProductImage } from "../lib/upload";
 import { errorText, requireSupabase, type Product } from "../lib/supabase";
 import { useAdmin } from "./AdminData";
+import { FashionFields, useFashionEditor } from "./FashionFields";
 
 export function ProductModal({ editing, onClose }: { editing: Product | null; onClose: () => void }) {
   const { notify, reload, industries, categories } = useAdmin();
@@ -11,6 +12,7 @@ export function ProductModal({ editing, onClose }: { editing: Product | null; on
   const [file, setFile] = useState<File | null>(null);
   const [removed, setRemoved] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const fashion = useFashionEditor(editing?.id ?? null, notify);
 
   useEffect(() => {
     if (!file) { setPreview(null); return; }
@@ -49,14 +51,24 @@ export function ProductModal({ editing, onClose }: { editing: Product | null; on
     };
     // Opening stock is allowed on creation only; afterwards stock changes go through Inventory → Adjust.
     if (!editing) row.stock_quantity = Number(f.get("stock_quantity") || 0);
+    if (fashion.ready) {
+      const sale = text("sale_price");
+      row.brand = text("brand") || null;
+      row.sale_price = sale ? Number(sale) : null;
+      if (row.sale_price !== null && !(Number(row.sale_price) < Number(row.retail_price))) { notify("The sale price must be lower than the retail price."); return; }
+    }
     setBusy(true);
     let uploaded: string | null = null;
     try {
       const s = requireSupabase();
       row.image_url = file ? (uploaded = await uploadProductImage(file)) : removed ? null : editing?.image_url ?? null;
-      const result = editing ? await s.from("products").update(row).eq("id", editing.id) : await s.from("products").insert(row);
+      const result = editing
+        ? await s.from("products").update(row).eq("id", editing.id).select("id").single()
+        : await s.from("products").insert(row).select("id").single();
       if (result.error) throw result.error;
       if ((file || removed) && editing?.image_url) void removeProductImage(editing.image_url);
+      try { await fashion.save(result.data.id as string); }
+      catch (err) { notify(`Product saved, but its photos or options were not: ${errorText(err, "please try again")}`); onClose(); await reload(); return; }
       notify("Product saved successfully.");
       onClose();
       await reload();
@@ -109,6 +121,11 @@ export function ProductModal({ editing, onClose }: { editing: Product | null; on
               <input ref={fileRef} type="file" accept={IMAGE_ACCEPT} onChange={pick} hidden />
             </div>
           </div>
+          {fashion.ready && <>
+            <label>Brand<input name="brand" maxLength={60} defaultValue={editing?.brand || ""} placeholder="Optional" /></label>
+            <label>Sale price (ETB)<input name="sale_price" type="number" min="0" step="0.01" defaultValue={editing?.sale_price ?? ""} /><small>Optional. Must be lower than the retail price; shows the retail price struck through.</small></label>
+          </>}
+          <FashionFields ed={fashion} />
           <label className="full">Description<textarea name="description" rows={2} defaultValue={editing?.description || ""} /></label>
           <label className="checkbox-label full"><input name="active" type="checkbox" defaultChecked={editing?.active ?? true} /> Product is active and visible on public website</label>
           <button className="btn green full" type="submit" disabled={busy}>{busy ? (file ? "Uploading image…" : "Saving…") : editing ? "Save Changes" : "Add Product"} <ArrowRight /></button>

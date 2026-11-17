@@ -9,6 +9,8 @@ import SetPassword from "./pages/SetPassword";
 
 // The admin workspace (and its charts) is only downloaded by people who sign in.
 const AdminLayout = lazy(() => import("./admin/AdminLayout"));
+// The fashion storefront is its own chunk, so the main shop never downloads it.
+const Clothing = lazy(() => import("./pages/clothing/Clothing"));
 
 /** Invite and reset emails land on the site root; send those visitors to choose a password first. */
 function EmailLinkGate() {
@@ -28,6 +30,7 @@ export default function App() {
       <Suspense fallback={<div className="loading-screen"><Brand /><p>Loading TradeLink…</p></div>}>
         <Routes>
           <Route path="/" element={<PublicHome />} />
+          <Route path="/clothing/*" element={<Clothing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/set-password" element={<SetPassword />} />
           <Route path="/admin/*" element={<AdminLayout />} />

@@ -30,7 +30,10 @@ function IndustryModal({ editing, onClose }: { editing: Industry | null; onClose
     const row = {
       name: String(f.get("name") ?? "").trim(), description: String(f.get("description") ?? "").trim() || null, icon,
       sort_order: Number(f.get("sort_order") || 100), active: f.get("active") === "on",
-    };
+    } as Record<string, unknown>;
+    // Only sent once migration 0006 exists (or when the owner picks the fashion look), so older databases keep saving.
+    const storefront = String(f.get("storefront") ?? "standard");
+    if (storefront === "fashion" || editing?.storefront !== undefined) row.storefront = storefront;
     setBusy(true);
     try {
       const t = requireSupabase().from("industries");
@@ -53,6 +56,13 @@ function IndustryModal({ editing, onClose }: { editing: Industry | null; onClose
         </label>
         <label className="full">Short description<input name="description" maxLength={200} defaultValue={editing?.description || ""} placeholder="Shown on the website under the industry name" /></label>
         <label>Display order<input name="sort_order" type="number" step="1" defaultValue={editing?.sort_order ?? (industries.length + 1) * 10} /><small>Smaller numbers show first.</small></label>
+        <label>Website style
+          <select name="storefront" defaultValue={editing?.storefront || "standard"}>
+            <option value="standard">Standard shop</option>
+            <option value="fashion">Fashion storefront (/clothing)</option>
+          </select>
+          <small>Fashion gives this industry its own page with sizes, colours and photo galleries. Needs migration 0006.</small>
+        </label>
         <label className="checkbox-label"><input name="active" type="checkbox" defaultChecked={editing?.active ?? true} /> Show on the public website</label>
         <button className="btn green full" type="submit" disabled={busy}>{busy ? "Saving…" : editing ? "Save changes" : "Add industry"}</button>
       </form>

@@ -1,5 +1,5 @@
-import { MessageCircle, Phone, Send } from "lucide-react";
-import { useChannels, type Channel } from "../lib/contact";
+import { Mail, MapPin, MessageCircle, Phone, Send } from "lucide-react";
+import { useChannels, useContact, type Channel } from "../lib/contact";
 
 export type { Channel };
 const Icon = ({ k, size = 20 }: { k: Channel["key"]; size?: number }) =>
@@ -59,6 +59,23 @@ export function FloatingContact() {
       {list.map(c => (
         <a key={c.key} className={`fab fab-${c.key}`} href={c.href} title={c.label} aria-label={c.label} {...ext(c)}><Icon k={c.key} size={20} /></a>
       ))}
+    </div>
+  );
+}
+
+/** One row of every way to reach us, as icons only (chat channels, email, map). */
+export function ContactRow() {
+  const list = useChannels();
+  const c = useContact();
+  const maps = c.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.address)}` : "";
+  if (!list.length && !c.email && !maps) return null;
+  return (
+    <div className="contact-icons contact-row">
+      {list.map(ch => (
+        <a key={ch.key} className={`ci ci-${ch.key}`} href={ch.href} title={ch.label} aria-label={ch.label} {...ext(ch)}><Icon k={ch.key} size={18} /></a>
+      ))}
+      {c.email && <a className="ci ci-mail" href={`mailto:${c.email}`} title="Email" aria-label="Email"><Mail size={18} /></a>}
+      {maps && <a className="ci ci-map" href={maps} target="_blank" rel="noopener noreferrer" title="Map" aria-label="Map"><MapPin size={18} /></a>}
     </div>
   );
 }

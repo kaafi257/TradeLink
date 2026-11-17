@@ -53,8 +53,8 @@ function useInView<T extends HTMLElement>() {
   return [ref, seen] as const;
 }
 
-type Mode = "business" | "individual";
-type Line = { key: string; productId: string; qty: string };
+export type Mode = "business" | "individual";
+export type Line = { key: string; productId: string; qty: string };
 type Status = "loading" | "ready" | "error" | "offline";
 
 const MODE_KEY = "tradelink-mode";
@@ -64,9 +64,11 @@ const allows = (p: PublicProduct, m: Mode) => audienceOf(p) === "both" || audien
 const defaultQty = (p: PublicProduct | undefined, m: Mode) => (m === "individual" ? "1" : String(Number(p?.min_order_quantity ?? 1)));
 const catKey = (p: PublicProduct) => p.category_id ?? `name:${p.category}`;
 const productLabel = (p: PublicProduct) => (p.package_size ? `${p.name} — ${p.package_size}` : p.name);
-const newKey = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Math.random()));
+export const newKey = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Math.random()));
 
-function RequestModal({ products, mode, onMode, initial, onLines, onClose, onSent }: {
+/** Also used by the fashion storefront. `extraNotes` adds a line per product (e.g. size and colour); `lockType` hides the wholesale switch. */
+export function RequestModal({ products, mode, onMode, initial, onLines, onClose, onSent, extraNotes, lockType }: {
+  extraNotes?: Record<string, string>; lockType?: boolean;
   products: PublicProduct[]; mode: Mode; onMode: (m: Mode) => void; initial: Line[]; onLines: (l: Line[]) => void; onClose: () => void; onSent: () => void;
 }) {
   const [type, setType] = useState<Mode>(mode);
@@ -109,6 +111,8 @@ function RequestModal({ products, mode, onMode, initial, onLines, onClose, onSen
       name: String(f.get("name") ?? ""), phone: String(f.get("phone") ?? ""), email: String(f.get("email") ?? ""),
       location: String(f.get("location") ?? ""), notes: String(f.get("notes") ?? ""), website: String(f.get("website") ?? ""),
     };
+    const extra = chosen.filter(l => extraNotes?.[l.productId]).map(l => `${products.find(p => p.id === l.productId)?.name}: ${extraNotes![l.productId]}`).join("\n");
+    if (extra) fields.notes = [fields.notes.trim(), extra].filter(Boolean).join("\n");
     if (TURNSTILE_SITE_KEY && !token) { setError("Please complete the security check."); return; }
     setBusy(true); setError("");
     let data: unknown; let failure = "";
@@ -148,10 +152,10 @@ function RequestModal({ products, mode, onMode, initial, onLines, onClose, onSen
           <>
             <small className="kicker">Price request</small>
             <h2>Tell us what you need</h2>
-            <div className="seg" role="group" aria-label="I am buying as">
+            {!lockType && <div className="seg" role="group" aria-label="I am buying as">
               <button type="button" className={type === "business" ? "on" : ""} onClick={() => switchType("business")}><Briefcase size={15} /> Business (wholesale)</button>
               <button type="button" className={type === "individual" ? "on" : ""} onClick={() => switchType("individual")}><User size={15} /> Individual (retail)</button>
-            </div>
+            </div>}
             <form className="form-grid" onSubmit={submit}>
               <div className="full req-lines">
                 {lines.map(l => {
@@ -285,7 +289,10 @@ export default function PublicHome() {
 
   const catById = useMemo(() => new Map(cats.map(c => [c.id, c])), [cats]);
   const indById = useMemo(() => new Map(inds.map(i => [i.id, i])), [inds]);
-  const visible = useMemo(() => products.filter(p => allows(p, mode)), [products, mode]);
+  // Industries set to the fashion storefront live on /clothing, so their products stay out of this shop.
+  const fashionCats = useMemo(() => new Set(cats.filter(c => indById.get(c.industry_id)?.storefront === "fashion").map(c => c.id)), [cats, indById]);
+  const visible = useMemo(() => products.filter(p => allows(p, mode) && !fashionCats.has(catKey(p))), [products, mode, fashionCats]);
+  const fashionTabs = useMemo(() => inds.filter(i => i.storefront === "fashion" && products.some(p => allows(p, "individual") && catById.get(catKey(p))?.industry_id === i.id)), [inds, products, catById]);
   const counts = useMemo(() => { const m = new Map<string, number>(); for (const p of visible) m.set(catKey(p), (m.get(catKey(p)) ?? 0) + 1); return m; }, [visible]);
   const indTabs = inds.filter(i => cats.some(c => c.industry_id === i.id && (counts.get(c.id) ?? 0) > 0));
   const effIndustry = indTabs.some(i => i.id === industryId) ? industryId : "all";
@@ -401,10 +408,11 @@ export default function PublicHome() {
           </div>
         </div>
 
-        {indTabs.length > 1 && (
+        {indTabs.length + fashionTabs.length > 1 && (
           <div className="hm-filters hm-industries" role="group" aria-label="Filter by industry">
             <button className={effIndustry === "all" ? "on" : ""} aria-pressed={effIndustry === "all"} onClick={() => pickIndustry("all")}>All industries</button>
             {indTabs.map(i => <button key={i.id} className={effIndustry === i.id ? "on" : ""} aria-pressed={effIndustry === i.id} onClick={() => pickIndustry(i.id)}><IconFor name={i.icon} size={15} /> {i.name}</button>)}
+            {fashionTabs.map(i => <button key={i.id} className="fashion-tab" onClick={() => navigate("/clothing")}><IconFor name={i.icon} size={15} /> {i.name} <ArrowRight size={14} /></button>)}
           </div>
         )}
 
