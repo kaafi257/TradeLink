@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ArrowRight, Check, ChevronRight, ClipboardList, Clock, Download, Eye, Flame, Headphones, Heart, LogIn, Menu, Package, Plus, Search, ShoppingBag, Store, Sparkles, Tag, Trash2, User, Briefcase, X, Layers, MessageCircle } from "lucide-react";
+import { ArrowRight, Building2, Check, MapPin, ChevronRight, ClipboardList, Clock, Download, Eye, Flame, Headphones, Heart, LogIn, Menu, Package, Plus, Search, ShoppingBag, Store, Sparkles, Tag, Trash2, User, Briefcase, X, Layers, MessageCircle } from "lucide-react";
 import { Brand } from "../../components/Brand";
 import { ContactIcons } from "../../components/ContactActions";
 import { money } from "../../lib/format";
 import { IconFor } from "../../lib/icons";
 import { lookFor } from "../../lib/theme";
-import type { PublicCategory, PublicIndustry, PublicProduct } from "../../lib/supabase";
+import type { PublicCategory, PublicIndustry, PublicProduct, PublicSupplier } from "../../lib/supabase";
 import "./market.css";
 
 export type Mode = "business" | "individual";
@@ -254,6 +254,58 @@ export function Featured({ shelf, onViewAll, status, emptyText }: { shelf: Shelf
         </Reveal>
       ))}
     </>
+  );
+}
+
+/* ------------------------------------------------------------- suppliers */
+/** Real businesses from the suppliers directory (Admin → Suppliers). Hidden when there are none. */
+export function Suppliers({ items, industries, catNames, onOpen }: { items: PublicSupplier[]; industries: PublicIndustry[]; catNames: (id: string) => string[]; onOpen: (s: PublicSupplier) => void }) {
+  if (items.length === 0) return null;
+  return (
+    <Reveal className="mk-block" as="section">
+      <div className="mk-wrap" id="suppliers">
+        <div className="mk-head"><h2><span className="ic"><Building2 size={17} /></span><span className="sr-only">Suppliers</span></h2></div>
+        <div className="mk-sups">
+          {items.slice(0, 8).map(s => {
+            const ind = industries.find(i => i.id === s.industry_id);
+            const cats = catNames(s.id);
+            return (
+              <article className="mk-sup" key={s.id}>
+                <span className="ic"><IconFor name={ind?.icon} size={18} /></span>
+                <div>
+                  <h3>{s.name}</h3>
+                  <small>{ind?.name}{s.location && <> · <MapPin size={12} /> {s.location}</>}</small>
+                  {cats.length > 0 && <p className="tags">{cats.slice(0, 3).map(n => <span key={n}>{n}</span>)}{cats.length > 3 && <span>+{cats.length - 3}</span>}</p>}
+                </div>
+                <button className="go" aria-label={`View ${s.name}`} title="View Business" onClick={() => onOpen(s)}><ArrowRight size={16} /></button>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </Reveal>
+  );
+}
+
+export function SupplierDialog({ s, industries, cats, onClose }: { s: PublicSupplier; industries: PublicIndustry[]; cats: string[]; onClose: () => void }) {
+  useLock(true, onClose);
+  const ind = industries.find(i => i.id === s.industry_id);
+  return (
+    <div className="mk-layer" role="dialog" aria-modal="true" aria-label={s.name}>
+      <button className="mk-scrim" aria-label="Close" onClick={onClose} />
+      <div className="mk-dialog mk-sdlg">
+        <button className="mk-x" aria-label="Close" onClick={onClose}><X size={18} /></button>
+        <div className="mk-dbody">
+          <span className="ic big"><IconFor name={ind?.icon} size={24} /></span>
+          <small className="mk-cat">{ind?.name}</small>
+          <h3>{s.name}</h3>
+          {s.location && <p className="mk-brand"><MapPin size={13} /> {s.location}</p>}
+          {s.about && <p className="mk-desc">{s.about}</p>}
+          {cats.length > 0 && <p className="tags">{cats.map(n => <span key={n}>{n}</span>)}</p>}
+          <ContactIcons message={`Hello TradeLink, I would like to connect with ${s.name}.`} />
+        </div>
+      </div>
+    </div>
   );
 }
 
