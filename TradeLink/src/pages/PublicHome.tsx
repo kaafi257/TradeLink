@@ -9,7 +9,7 @@ import { IconFor } from "../lib/icons";
 import { useInstall } from "../lib/install";
 import { useAuth } from "../lib/auth";
 import { useWishlist } from "../lib/wishlist";
-import { Featured, IndustryGrid, MarketFooter, MarketHeader, MarketHero, Popular, ProductDialog, SupplierDialog, Suppliers, WishlistDrawer, type Shelf } from "./market/Market";
+import { Featured, IndustryGrid, MarketFooter, MarketHeader, MarketHero, Popular, Steps, ProductDialog, SupplierDialog, Suppliers, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
 import "./home.css";
@@ -323,6 +323,7 @@ export default function PublicHome() {
         onSubmit={() => { setSearch(heroQuery); setIndustryId("all"); setCategoryId("all"); go("public-products"); }}
         onPickIndustry={openIndustry} onPickCategory={openCategory} />
       <IndustryGrid items={gridInds} onPick={i => (i.storefront === "fashion" ? navigate("/clothing") : document.getElementById(`ind-${i.id}`) ? go(`ind-${i.id}`) : openIndustry(i))} />
+      <Steps />
       <Featured shelf={shelf} status={status} emptyText={emptyMessage} onViewAll={openIndustry} />
       <Popular shelf={shelf} />
       <Suppliers items={suppliers} industries={inds} catNames={supCatNames} onOpen={setSupplier} />
