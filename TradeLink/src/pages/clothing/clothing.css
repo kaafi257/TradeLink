@@ -288,6 +288,11 @@
 .fx-footer>small{display:block;padding:18px clamp(16px,4vw,64px);border-top:1px solid #ffffff1f;font-size:12px;opacity:.6;max-width:1560px;margin:0 auto}
 .fx-footer .contact-icons{justify-content:flex-start}
 
+.fx .contact-row{display:flex;flex-wrap:wrap;gap:12px}
+.fx .ci-mail{background:#e9a71b;color:#1b1405}
+.fx .ci-map{background:#e5484d;color:#fff}
+.fx .contact-row .ci{width:44px;height:44px}
+
 /* ---------- motion ---------- */
 @keyframes fx-zoom{from{transform:scale(1)}to{transform:scale(1.14)}}
 @keyframes fx-rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
