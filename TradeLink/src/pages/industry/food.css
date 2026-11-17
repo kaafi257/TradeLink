@@ -145,3 +145,4 @@
   .fd *,.fd *::before,.fd *::after{animation:none!important;transition:none!important}
   .fd-shelf{opacity:1;transform:none}.fd-shead .rule{transform:none}
 }
+@media(max-width:860px){.fd-collage:not(:has(.fr)){aspect-ratio:1/.42}.fd-collage .ico{width:64px;height:64px;border-radius:22px}}

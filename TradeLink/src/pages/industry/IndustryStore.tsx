@@ -5,13 +5,14 @@ import { Brand } from "../../components/Brand";
 import { ContactIcons } from "../../components/ContactActions";
 import { money } from "../../lib/format";
 import { IconFor } from "../../lib/icons";
-import { isFoodIndustry } from "../../lib/storefront";
+import { variantFor, type StoreVariant } from "../../lib/storefront";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct } from "../../lib/supabase";
 import { lookFor } from "../../lib/theme";
 import { useWishlist } from "../../lib/wishlist";
 import { newKey, RequestModal, type Line, type Mode } from "../PublicHome";
 import { Reveal, flyToBag, priceOf } from "../market/Market";
 import "./food.css";
+import "./fresh.css";
 
 const FONTS = "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Public+Sans:wght@400;500;600;700&display=swap";
 const MODE_KEY = "tradelink-mode";
@@ -56,13 +57,13 @@ export default function IndustryStore() {
     link.rel = "stylesheet"; link.href = FONTS;
     document.head.appendChild(link);
   }, []);
-  if (d.status === "missing" || (d.industry && !isFoodIndustry(d.industry.name))) return <Navigate to="/" replace />;
-  return <FoodStore {...d} />;
+  if (d.status === "missing" || (d.industry && !variantFor(d.industry.name))) return <Navigate to="/" replace />;
+  return <FoodStore {...d} variant={d.industry ? variantFor(d.industry.name)! : "food"} />;
 }
 
 const sealText = (p: PublicProduct) => (p.package_size || p.unit || "").trim().split(/\s+/)[0];
 
-function FoodStore({ status, industry, categories, products }: { status: Status; industry: PublicIndustry | null; categories: PublicCategory[]; products: PublicProduct[] }) {
+function FoodStore({ status, industry, categories, products, variant }: { variant: StoreVariant; status: Status; industry: PublicIndustry | null; categories: PublicCategory[]; products: PublicProduct[] }) {
   const wish = useWishlist();
   const [mode, setModeState] = useState<Mode>(readMode);
   const [cat, setCat] = useState("all");
@@ -109,7 +110,7 @@ function FoodStore({ status, industry, categories, products }: { status: Status;
   const heroLook = lookFor(iname);
 
   return (
-    <div className="fd" style={{ "--ha": heroLook.a, "--hb": heroLook.b } as CSSProperties}>
+    <div className={`fd fd-${variant}`} style={{ "--ha": heroLook.a, "--hb": heroLook.b } as CSSProperties}>
       <header className="fd-top">
         <div className="fd-bar">
           <Link to="/" className="fd-back" aria-label="Back to TradeLink"><ArrowLeft size={19} /></Link>
@@ -134,6 +135,7 @@ function FoodStore({ status, industry, categories, products }: { status: Status;
 
       <section className="fd-hero">
         <i className="fd-blob a" aria-hidden="true" /><i className="fd-blob b" aria-hidden="true" /><i className="fd-blob c" aria-hidden="true" />
+        {variant === "fresh" && <span className="fd-bubbles" aria-hidden="true">{Array.from({ length: 12 }, (_, k) => <i key={k} style={{ "--k": k } as CSSProperties} />)}</span>}
         <div className="fd-wrap fd-hero-grid">
           <div className="fd-copy">
             <span className="fd-kicker"><IconFor name={industry?.icon} size={22} /></span>
@@ -159,6 +161,7 @@ function FoodStore({ status, industry, categories, products }: { status: Status;
         </div>
       </section>
 
+      <div className="fd-body">
       {status === "ready" && (
         <nav className="fd-aisles" aria-label="Categories">
           <div className="fd-aisles-in">
@@ -205,6 +208,7 @@ function FoodStore({ status, industry, categories, products }: { status: Status;
           })}
         </div>
       </main>
+      </div>
 
       <footer className="fd-foot">
         <div className="fd-wrap fd-foot-in">
