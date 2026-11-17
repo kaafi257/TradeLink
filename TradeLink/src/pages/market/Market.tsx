@@ -180,18 +180,18 @@ export function MarketHero({ shelf, onMode, query, setQuery, onSubmit, onPickInd
 
 /* --------------------------------------------------------------- industries */
 
-export function IndustryGrid({ items, onPick }: { items: { ind: PublicIndustry; count: number }[]; onPick: (i: PublicIndustry) => void }) {
+export function IndustryGrid({ items, onPick }: { items: { ind: PublicIndustry; count: number; note?: string }[]; onPick: (i: PublicIndustry) => void }) {
   if (items.length === 0) return null;
   return (
     <Reveal className="mk-block" as="section">
       <div className="mk-wrap" id="industries">
         <div className="mk-head"><h2>Industries</h2></div>
         <div className="mk-inds">
-          {items.map(({ ind, count }, k) => (
+          {items.map(({ ind, count, note }, k) => (
             <button key={ind.id} className="mk-ind" style={{ ...tone(ind.name), "--k": k } as CSSProperties} onClick={() => onPick(ind)} title={ind.description ?? ind.name}>
               <span className="ic"><IconFor name={ind.icon} size={20} /></span>
               <b>{ind.name}</b>
-              <small>{count > 0 ? `${count} ${count === 1 ? "product" : "products"}` : "Coming soon"}</small>
+              <small>{count > 0 ? `${count} ${count === 1 ? "product" : "products"}` : note ?? "Coming soon"}</small>
             </button>
           ))}
         </div>
