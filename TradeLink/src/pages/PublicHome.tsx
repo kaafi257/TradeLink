@@ -1,57 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Briefcase, Check, ClipboardList, Headphones, Menu, Package, Phone, Plus, Search, ShieldCheck, Tag, Trash2, Truck, User, X, Layers, Download, Ship, Warehouse, Home, Store, Info, MessageCircle, Wheat, Droplets } from "lucide-react";
-import { Brand } from "../components/Brand";
-import { ContactCards, ContactIcons, ContactPills, FloatingContact } from "../components/ContactActions";
+import { ArrowRight, Briefcase, Check, ClipboardList, Package, Plus, Search, Tag, Trash2, User, X, Layers } from "lucide-react";
+
+import { ContactIcons, ContactPills, FloatingContact } from "../components/ContactActions";
 import { TURNSTILE_SITE_KEY, Turnstile } from "../components/Turnstile";
-import { useChannels, useContact } from "../lib/contact";
 import { money } from "../lib/format";
 import { IconFor } from "../lib/icons";
 import { useInstall } from "../lib/install";
-import { MODE_LOOK, lookFor, type Look } from "../lib/theme";
+import { useAuth } from "../lib/auth";
+import { useWishlist } from "../lib/wishlist";
+import { Featured, IndustryGrid, MarketFooter, MarketHeader, MarketHero, Popular, ProductDialog, WishlistDrawer, type Shelf } from "./market/Market";
+import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct } from "../lib/supabase";
 import "./home.css";
-
-const NAV = [
-  { id: "top", label: "Home" },
-  { id: "public-products", label: "Shop" },
-  { id: "why", label: "About Us" },
-  { id: "contact", label: "Contact" },
-];
-const NAV_ICON: Record<string, JSX.Element> = {
-  top: <Home size={20} />, "public-products": <Store size={20} />, why: <Info size={20} />, contact: <MessageCircle size={20} />,
-};
-const ROUTE = [
-  { Icon: Package, label: "Bulk" },
-  { Icon: Ship, label: "Port" },
-  { Icon: Warehouse, label: "Stored" },
-  { Icon: Truck, label: "Delivered" },
-];
-const POINTS = [
-  { Icon: ShieldCheck, title: "Quality checked" },
-  { Icon: Tag, title: "Wholesale and retail" },
-  { Icon: Layers, title: "Many industries" },
-  { Icon: Headphones, title: "Real person" },
-];
-const STEPS = [
-  { Icon: Package, label: "Choose" },
-  { Icon: Tag, label: "Get price" },
-  { Icon: Truck, label: "Delivery" },
-];
-
-/** True once the element has scrolled into view (so entrance animations play when seen, not on page load). */
-function useInView<T extends HTMLElement>() {
-  const ref = useRef<T>(null);
-  const [seen, setSeen] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || !("IntersectionObserver" in window)) { setSeen(true); return; }
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setSeen(true); io.disconnect(); } }, { threshold: 0.3 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return [ref, seen] as const;
-}
 
 export type Mode = "business" | "individual";
 export type Line = { key: string; productId: string; qty: string };
@@ -199,11 +160,6 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
 export default function PublicHome() {
   const navigate = useNavigate();
   const app = useInstall();
-  const [routeRef, routeSeen] = useInView<HTMLOListElement>();
-  const [whyRef, whySeen] = useInView<HTMLDivElement>();
-  const [stepsRef, stepsSeen] = useInView<HTMLOListElement>();
-  const contact = useContact();
-  const reach = useChannels();
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [industries, setIndustries] = useState<PublicIndustry[]>([]);
   const [categories, setCategories] = useState<PublicCategory[]>([]);
@@ -215,8 +171,13 @@ export default function PublicHome() {
   const [categoryId, setCategoryId] = useState("all");
   const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [active, setActive] = useState("top");
-  const [solid, setSolid] = useState(false);
+  const { session } = useAuth();
+  const wish = useWishlist();
+  const [bestIds, setBestIds] = useState<string[]>([]);
+  const [quick, setQuick] = useState<PublicProduct | null>(null);
+  const [wishOpen, setWishOpen] = useState(false);
+  const [heroQuery, setHeroQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
   const hasCart = cart.length > 0 && !quoteOpen;
 
   const go = useCallback((id: string) => {
@@ -229,25 +190,6 @@ export default function PublicHome() {
     history.replaceState(null, "", `#${id}`);
     setMenuOpen(false);
   }, []);
-
-  useEffect(() => {
-    const ids = NAV.map(n => n.id);
-    const onScroll = () => {
-      const header = document.querySelector<HTMLElement>(".hm-header")?.offsetHeight ?? 72;
-      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
-      let current = "top";
-      for (const id of ids) {
-        const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect().top <= header + 120) current = id;
-      }
-      setActive(atBottom ? "contact" : current);
-      setSolid(window.scrollY > 24);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); };
-  }, [products.length]);
 
   // Escape closes the phone menu.
   useEffect(() => {
@@ -274,6 +216,10 @@ export default function PublicHome() {
       setIndustries(i.error ? [] : ((i.data ?? []) as PublicIndustry[]));
       setCategories(c.error ? [] : ((c.data ?? []) as PublicCategory[]));
       setStatus("ready");
+      // Real sales ranking (migration 0006). Without it the page simply shows the newest products.
+      void supabase!.from("public_best_sellers").select("*").order("rank").then(r => {
+        if (!r.error) setBestIds(((r.data ?? []) as { product_id: string }[]).map(b => b.product_id));
+      });
     });
   }, []);
 
@@ -300,10 +246,28 @@ export default function PublicHome() {
   const q = search.trim().toLowerCase();
   const activeLook = effCategory !== "all" ? looks.get(effCategory) : undefined;
   const envLook = activeLook ?? MODE_LOOK[mode];
+  const styleOf = (catId: string) => styleFor(indById.get(catById.get(catId)?.industry_id ?? "")?.name);
+  const shopStyle: ShopStyle = effIndustry !== "all" ? styleFor(indById.get(effIndustry)?.name) : effCategory !== "all" ? styleOf(effCategory) : "food";
   const shown = visible.filter(p =>
     (effCategory === "all" || catKey(p) === effCategory) &&
     (effIndustry === "all" || catById.get(catKey(p))?.industry_id === effIndustry) &&
     (!q || `${p.name} ${p.category} ${p.package_size ?? ""}`.toLowerCase().includes(q)));
+
+  const indOfP = (p: PublicProduct) => indById.get(catById.get(catKey(p))?.industry_id ?? "");
+  const indCount = useMemo(() => { const m = new Map<string, number>(); for (const p of visible) { const id = catById.get(catKey(p))?.industry_id; if (id) m.set(id, (m.get(id) ?? 0) + 1); } return m; }, [visible, catById]);
+  const mInds = inds.some(i => i.id !== "__all") ? inds.filter(i => i.id !== "__all") : inds;
+  const gridInds = mInds.filter(i => (cats.some(c => c.industry_id === i.id) || i.storefront === "fashion")).map(i => ({ ind: i, count: indCount.get(i.id) ?? 0 }));
+  const headerInds = mInds.filter(i => ((indCount.get(i.id) ?? 0) > 0 || i.storefront === "fashion"));
+  const wishItems = products.filter(p => wish.has(p.id));
+  const wishCount = wishItems.length;
+  const openIndustry = (i: PublicIndustry) => {
+    if (i.storefront === "fashion") { navigate("/clothing"); return; }
+    setSearch(""); setIndustryId(i.id); setCategoryId("all"); setMenuOpen(false); go("public-products");
+  };
+  const openCategory = (c: PublicCategory) => {
+    if (indById.get(c.industry_id)?.storefront === "fashion") { navigate("/clothing"); return; }
+    setSearch(""); setIndustryId(c.industry_id); setCategoryId(c.id); go("public-products");
+  };
 
   const changeMode = (m: Mode) => {
     setModeState(m);
@@ -316,7 +280,12 @@ export default function PublicHome() {
     setCart(c => [...c, { key: newKey(), productId: p.id, qty: defaultQty(p, mode) }]);
   };
   const pickIndustry = (id: string) => { setIndustryId(id); setCategoryId("all"); };
-  const chooseAudience = (m: Mode) => { changeMode(m); go("public-products"); };
+
+  const shelf: Shelf = {
+    mode, products: visible, industries: mInds, categories: cats, bestIds,
+    indOf: indOfP, catName: p => catById.get(catKey(p))?.name ?? p.category, isFashion: p => indOfP(p)?.storefront === "fashion",
+    inRequest: inCart, addToRequest, wished: wish.has, toggleWish: wish.toggle, open: setQuick,
+  };
 
   const emptyMessage =
     status === "loading" ? "Loading our products…"
@@ -328,73 +297,22 @@ export default function PublicHome() {
 
   return (
     <div className={`public-site${hasCart ? " has-cart" : ""}`}>
-      <header className={`hm-header${solid || menuOpen ? " solid" : ""}`}>
-        <a href="#top" className="brand-link" onClick={e => { e.preventDefault(); go("top"); }}><Brand light /></a>
-        <nav aria-label="Main">
-          {NAV.map(n => (
-            <a key={n.id} href={`#${n.id}`} className={active === n.id ? "active" : ""} aria-current={active === n.id ? "true" : undefined}
-               onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>
-          ))}
-        </nav>
-        {contact.phone && <a className="hm-tel" aria-label="Call" title="Call" href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}><Phone size={18} /></a>}
-        <button className="btn gold hm-quote" aria-label={`Request a price${cart.length > 0 ? `, ${cart.length} in your request` : ""}`} onClick={() => setQuoteOpen(true)}>
-          <span className="hm-q-full">Request a price</span><span className="hm-q-short">Get price</span><span className="hm-q-xs">Quote</span>{cart.length > 0 && <span> ({cart.length})</span>}
-        </button>
-        <button className="hm-staff" onClick={() => navigate("/login")}>Staff login</button>
-        <button className="hm-menu" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} aria-controls="hm-mobile-menu" onClick={() => setMenuOpen(o => !o)}>
-          {menuOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
-      </header>
-      {menuOpen && <button className="hm-scrim" aria-label="Close menu" onClick={() => setMenuOpen(false)} />}
-      {menuOpen && (
-        <div className="hm-mobile" id="hm-mobile-menu" role="menu">
-          {NAV.map(n => (
-            <a key={n.id} href={`#${n.id}`} role="menuitem" className={active === n.id ? "active" : ""} onClick={e => { e.preventDefault(); go(n.id); }}>{n.label}</a>
-          ))}
-          {reach.length > 0 && <div className="hm-mobile-reach"><ContactIcons /></div>}
-          {app.canInstall && <button className="hm-install" role="menuitem" onClick={() => { setMenuOpen(false); void app.install(); }}><Download size={18} /> Install TradeLink app</button>}
-          {app.isIos && <p className="hm-install-hint">To install: tap Share, then “Add to Home Screen”.</p>}
-          <a href="/login" role="menuitem" onClick={e => { e.preventDefault(); navigate("/login"); }}>Staff login</a>
-        </div>
-      )}
+      <MarketHeader
+        industries={headerInds} wishCount={wishCount} requestCount={cart.length} signedIn={!!session} canInstall={app.canInstall}
+        onInstall={() => { setMenuOpen(false); void app.install(); }}
+        onIndustry={i => (i ? openIndustry(i) : (setIndustryId("all"), setCategoryId("all"), go("public-products")))}
+        onNav={go} onWishlist={() => setWishOpen(true)} onRequest={() => setQuoteOpen(true)} onAccount={() => navigate(session ? "/admin" : "/login")}
+        onSearch={() => { go("top"); window.setTimeout(() => searchRef.current?.focus(), 350); }}
+        menuOpen={menuOpen} setMenuOpen={setMenuOpen}
+      />
+      <MarketHero shelf={shelf} onMode={changeMode} query={heroQuery} setQuery={setHeroQuery} searchRef={searchRef}
+        onSubmit={() => { setSearch(heroQuery); setIndustryId("all"); setCategoryId("all"); go("public-products"); }}
+        onPickIndustry={openIndustry} onPickCategory={openCategory} />
+      <IndustryGrid items={gridInds} onPick={i => (i.storefront === "fashion" ? navigate("/clothing") : document.getElementById(`ind-${i.id}`) ? go(`ind-${i.id}`) : openIndustry(i))} />
+      <Featured shelf={shelf} status={status} emptyText={emptyMessage} onViewAll={openIndustry} />
+      <Popular shelf={shelf} />
 
-      <section className="hm-hero" id="top">
-        <img className="hm-hero-bg" src="/img/warehouse.jpg" alt="Racks and pallets stacked with goods inside the TradeLink warehouse" />
-        <div className="hm-hero-shade" />
-        <div className="hm-floaters" aria-hidden="true">
-          <span style={{ "--d": "0s" } as React.CSSProperties}><Wheat size={20} /></span>
-          <span style={{ "--d": "-1.4s" } as React.CSSProperties}><Droplets size={20} /></span>
-          <span style={{ "--d": "-2.6s" } as React.CSSProperties}><Package size={20} /></span>
-          <span style={{ "--d": "-3.8s" } as React.CSSProperties}><Truck size={20} /></span>
-        </div>
-        <div className="hm-hero-copy">
-          <h1 className="sr-only">TradeLink: rice, sugar and oil, straight from the port</h1>
-          <div className="hm-audience" role="group" aria-label="Who are you buying for?">
-            <button className={mode === "business" ? "on" : ""} aria-pressed={mode === "business"} onClick={() => chooseAudience("business")}>
-              <span className="tag-ico"><Briefcase size={20} /></span>
-              <b>Business</b>
-              <ArrowRight className="tag-go" size={20} />
-            </button>
-            <button className={mode === "individual" ? "on" : ""} aria-pressed={mode === "individual"} onClick={() => chooseAudience("individual")}>
-              <span className="tag-ico"><User size={20} /></span>
-              <b>Personal</b>
-              <ArrowRight className="tag-go" size={20} />
-            </button>
-          </div>
-          {reach.length > 0 && <div className="hm-reach"><ContactIcons /></div>}
-        </div>
-      </section>
-
-      <section className="hm-route" aria-label="From the port to your door">
-        <img className="hm-scene" src="/img/port-scene.svg" alt="Illustration of a container ship unloading at a port crane, with a truck loaded with goods driving past the warehouse" />
-        <div className="hm-route-body">
-          <ol className={`hm-route-steps${routeSeen ? " in" : ""}`} ref={routeRef}>
-            {ROUTE.map(({ Icon, label }, i) => <li key={label} style={{ "--i": i } as React.CSSProperties}><span className="stop"><Icon size={20} /></span><b>{label}</b></li>)}
-          </ol>
-        </div>
-      </section>
-
-      <div className="hm-shop-env" data-mode={mode} style={lookVars(envLook)}>
+      <div className="hm-shop-env" data-mode={mode} data-style={shopStyle} style={lookVars(envLook)}>
       <div className="env-pat" key={envLook.key} aria-hidden="true" />
       <section className="hm-section" id="public-products">
         <div className="hm-head hm-shop-head">
@@ -416,7 +334,7 @@ export default function PublicHome() {
         {tiles.length > 0 && (
           <div className="hm-tiles">
             {tiles.map(c => (
-              <button key={c.id} style={lookVars(looks.get(c.id)!)} className={`hm-tile${effCategory === c.id ? " on" : ""}`} aria-pressed={effCategory === c.id} onClick={() => setCategoryId(effCategory === c.id ? "all" : c.id)}>
+              <button key={c.id} style={lookVars(looks.get(c.id)!)} data-style={styleOf(c.id)} className={`hm-tile${effCategory === c.id ? " on" : ""}`} aria-pressed={effCategory === c.id} onClick={() => setCategoryId(effCategory === c.id ? "all" : c.id)}>
                 {c.image_url ? <img src={c.image_url} alt="" loading="lazy" /> : <span className="tile-ph"><IconFor name={indById.get(c.industry_id)?.icon} size={26} /></span>}
                 <span className="tile-ico">{(() => { const I = looks.get(c.id)!.Icon; return <I size={17} />; })()}</span>
                 <span className="tile-info"><b>{c.name}</b><em className="tile-count">{counts.get(c.id)}</em></span>
@@ -426,7 +344,7 @@ export default function PublicHome() {
         )}
 
         {activeLook && (
-          <div className="hm-banner" key={effCategory} style={lookVars(activeLook)}>
+          <div className="hm-banner" key={effCategory} data-style={styleOf(effCategory)} style={{ ...lookVars(activeLook), ...(catById.get(effCategory)?.image_url ? { "--bi": `url("${catById.get(effCategory)!.image_url}")` } : {}) } as React.CSSProperties}>
             <span className="bn-ico"><activeLook.Icon size={24} /></span>
             <b>{catById.get(effCategory)?.name}</b>
             <span className="bn-float" aria-hidden="true"><activeLook.Icon size={28} /><activeLook.Icon size={20} /><activeLook.Icon size={22} /></span>
@@ -446,7 +364,7 @@ export default function PublicHome() {
               const ind = indById.get(catById.get(catKey(p))?.industry_id ?? "");
               const added = inCart(p.id);
               return (
-                <article className="hm-card" key={p.id} style={lookVars(looks.get(catKey(p)) ?? envLook)}>
+                <article className="hm-card" key={p.id} data-style={styleOf(catKey(p))} style={lookVars(looks.get(catKey(p)) ?? envLook)}>
                   <div className="media">
                     {img ? <img src={img} alt={p.name} loading="lazy" /> : <div className="ph" role="img" aria-label={p.name}><IconFor name={ind?.icon} size={30} /></div>}
                     <span className="badge" title={p.category}>{(() => { const I = (looks.get(catKey(p)) ?? envLook).Icon; return <I size={18} />; })()}</span>
@@ -475,41 +393,7 @@ export default function PublicHome() {
       </section>
       </div>
 
-      <section className="hm-why" id="why">
-        <div className="hm-section hm-about">
-          <h2>Why TradeLink</h2>
-          <div className={`hm-points${whySeen ? " in" : ""}`} ref={whyRef}>
-            {POINTS.map(({ Icon, title }, i) => (
-              <div key={title} style={{ "--i": i } as React.CSSProperties}><span className="hm-ico"><Icon size={20} /></span><h3>{title}</h3></div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="hm-contact" id="contact">
-        <div className="hm-section hm-contact-grid">
-          <div>
-            <h2>Order now</h2>
-            <ol className={`hm-steps${stepsSeen ? " in" : ""}`} ref={stepsRef}>
-              {STEPS.map(({ Icon, label }, i) => <li key={label} style={{ "--i": i } as React.CSSProperties}><span className="stop"><Icon size={18} /></span><b>{label}</b></li>)}
-            </ol>
-          </div>
-          <div className="hm-contact-panel">
-            {reach.length > 0
-              ? <ContactCards />
-              : <p className="hm-note">Contact details coming soon.</p>}
-            <button className="btn gold hm-big" onClick={() => setQuoteOpen(true)}><ClipboardList size={20} /> Request</button>
-          </div>
-        </div>
-      </section>
-
-      <footer className="hm-footer">
-        <div className="hm-footer-top">
-          <Brand light />
-          <nav aria-label="Footer">{NAV.map(n => <a key={n.id} href={`#${n.id}`} title={n.label} aria-label={n.label} onClick={e => { e.preventDefault(); go(n.id); }}>{NAV_ICON[n.id] ?? <Home size={20} />}</a>)}</nav>
-        </div>
-        <small className="hm-copy">© {new Date().getFullYear()} TradeLink</small>
-      </footer>
+      <MarketFooter industries={headerInds} onIndustry={openIndustry} onRequest={() => setQuoteOpen(true)} signedIn={!!session} onAccount={() => navigate(session ? "/admin" : "/login")} />
 
       {cart.length > 0 && !quoteOpen && (
         <div className="hm-cartbar" role="status">
@@ -518,6 +402,8 @@ export default function PublicHome() {
         </div>
       )}
       <FloatingContact />
+      {quick && <ProductDialog p={quick} shelf={shelf} onClose={() => setQuick(null)} onStore={p => navigate(`/clothing/${p.id}`)} />}
+      {wishOpen && <WishlistDrawer items={wishItems} shelf={shelf} onClose={() => setWishOpen(false)} />}
       {quoteOpen && <RequestModal products={products} mode={mode} onMode={changeMode} initial={cart} onLines={setCart} onClose={() => setQuoteOpen(false)} onSent={() => setCart([])} />}
     </div>
   );

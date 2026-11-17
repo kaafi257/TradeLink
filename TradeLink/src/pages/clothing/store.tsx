@@ -104,10 +104,9 @@ export function FashionProvider({ children }: { children: ReactNode }) {
   const imgMap = useMemo(() => { const m = new Map<string, string[]>(); for (const i of images) m.set(i.product_id, [...(m.get(i.product_id) ?? []), i.url]); return m; }, [images]);
   const optMap = useMemo(() => { const m = new Map<string, ProductOption[]>(); for (const o of options) m.set(o.product_id, [...(m.get(o.product_id) ?? []), o]); return m; }, [options]);
 
-  // Forget wishlist / cart entries whose product is gone (deactivated or deleted by an admin).
+  // Forget cart entries whose product is gone (deactivated or deleted by an admin).
   useEffect(() => {
     if (status !== "ready" && status !== "empty") return;
-    setWishIds(w => { const n = w.filter(id => byId.has(id)); return n.length === w.length ? w : n; });
     setCart(c => { const n = c.filter(l => byId.has(l.productId)); return n.length === c.length ? c : n; });
   }, [status, byId]);
   useEffect(() => { write(WISH_KEY, wishIds); }, [wishIds]);
@@ -119,7 +118,8 @@ export function FashionProvider({ children }: { children: ReactNode }) {
     photos: p => Array.from(new Set([p.image_url, ...(imgMap.get(p.id) ?? [])].filter((u): u is string => !!u))),
     sizes: id => (optMap.get(id) ?? []).filter(o => o.kind === "size").map(o => o.label),
     colors: id => (optMap.get(id) ?? []).filter(o => o.kind === "color").map(o => ({ label: o.label, hex: o.color_hex || "#111111" })),
-    wished: new Set(wishIds),
+    // The saved list is shared with the main shop, so ids from other industries are kept but not counted here.
+    wished: new Set(wishIds.filter(id => byId.has(id))),
     toggleWish: id => setWishIds(w => (w.includes(id) ? w.filter(x => x !== id) : [...w, id])),
     cart,
     addToCart: line => setCart(c => (c.some(l => l.productId === line.productId) ? c.map(l => (l.productId === line.productId ? line : l)) : [...c, line])),
