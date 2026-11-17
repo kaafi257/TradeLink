@@ -44,9 +44,9 @@ export function Reveal({ children, className = "", as: Tag = "div" }: { children
 const tone = (name: string) => { const l = lookFor(name); return { "--ta": l.a, "--tt": l.tint, "--ti": l.ink, "--tp": l.pat } as CSSProperties; };
 
 /** A small dot arcs from the pressed button to the request bag in the header. */
-function flyToBag(from: HTMLElement) {
+export function flyToBag(from: HTMLElement, target = '.mk-actions [aria-label^="Price request"]') {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const to = document.querySelector<HTMLElement>('.mk-actions [aria-label^="Price request"]');
+  const to = document.querySelector<HTMLElement>(target);
   if (!to || !from.animate) return;
   const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
   const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);

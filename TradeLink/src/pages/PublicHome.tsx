@@ -9,6 +9,7 @@ import { IconFor } from "../lib/icons";
 import { useInstall } from "../lib/install";
 import { useAuth } from "../lib/auth";
 import { useWishlist } from "../lib/wishlist";
+import { storefrontPath } from "../lib/storefront";
 import { Featured, IndustryGrid, MarketFooter, MarketHeader, MarketHero, Popular, Steps, ProductDialog, SupplierDialog, Suppliers, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
@@ -274,12 +275,14 @@ export default function PublicHome() {
   const wishItems = products.filter(p => wish.has(p.id));
   const wishCount = wishItems.length;
   const openIndustry = (i: PublicIndustry) => {
-    if (i.storefront === "fashion") { navigate("/clothing"); return; }
+    const sf = storefrontPath(i);
+    if (sf) { navigate(sf); return; }
     if ((indCount.get(i.id) ?? 0) === 0 && (allCount.get(i.id) ?? 0) > 0) changeMode(mode === "individual" ? "business" : "individual");
     setSearch(""); setIndustryId(i.id); setCategoryId("all"); setMenuOpen(false); go("public-products");
   };
   const openCategory = (c: PublicCategory) => {
-    if (indById.get(c.industry_id)?.storefront === "fashion") { navigate("/clothing"); return; }
+    const sf = indById.get(c.industry_id) ? storefrontPath(indById.get(c.industry_id)!) : null;
+    if (sf) { navigate(sf); return; }
     setSearch(""); setIndustryId(c.industry_id); setCategoryId(c.id); go("public-products");
   };
 
@@ -322,7 +325,7 @@ export default function PublicHome() {
       <MarketHero shelf={shelf} onMode={changeMode} query={heroQuery} setQuery={setHeroQuery} searchRef={searchRef}
         onSubmit={() => { setSearch(heroQuery); setIndustryId("all"); setCategoryId("all"); go("public-products"); }}
         onPickIndustry={openIndustry} onPickCategory={openCategory} />
-      <IndustryGrid items={gridInds} onPick={i => (i.storefront === "fashion" ? navigate("/clothing") : document.getElementById(`ind-${i.id}`) ? go(`ind-${i.id}`) : openIndustry(i))} />
+      <IndustryGrid items={gridInds} onPick={i => (storefrontPath(i) ? navigate(storefrontPath(i)!) : document.getElementById(`ind-${i.id}`) ? go(`ind-${i.id}`) : openIndustry(i))} />
       <Steps />
       <Featured shelf={shelf} status={status} emptyText={emptyMessage} onViewAll={openIndustry} />
       <Popular shelf={shelf} />
@@ -343,7 +346,7 @@ export default function PublicHome() {
           <div className="hm-filters hm-industries" role="group" aria-label="Filter by industry">
             <button className={effIndustry === "all" ? "on" : ""} aria-pressed={effIndustry === "all"} onClick={() => pickIndustry("all")}>All industries</button>
             {indTabs.map(i => <button key={i.id} className={effIndustry === i.id ? "on" : ""} aria-pressed={effIndustry === i.id} onClick={() => pickIndustry(i.id)}><IconFor name={i.icon} size={15} /> {i.name}</button>)}
-            {indById.get(effIndustry)?.storefront === "fashion" && <button className="fashion-tab" onClick={() => navigate("/clothing")}>Open the {indById.get(effIndustry)!.name} store <ArrowRight size={14} /></button>}
+            {indById.get(effIndustry) && storefrontPath(indById.get(effIndustry)!) && <button className="fashion-tab" onClick={() => navigate(storefrontPath(indById.get(effIndustry)!)!)}>Open the {indById.get(effIndustry)!.name} store <ArrowRight size={14} /></button>}
           </div>
         )}
 
