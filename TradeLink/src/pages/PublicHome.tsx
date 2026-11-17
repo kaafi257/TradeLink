@@ -256,12 +256,19 @@ export default function PublicHome() {
   const indOfP = (p: PublicProduct) => indById.get(catById.get(catKey(p))?.industry_id ?? "");
   const indCount = useMemo(() => { const m = new Map<string, number>(); for (const p of visible) { const id = catById.get(catKey(p))?.industry_id; if (id) m.set(id, (m.get(id) ?? 0) + 1); } return m; }, [visible, catById]);
   const mInds = inds.some(i => i.id !== "__all") ? inds.filter(i => i.id !== "__all") : inds;
-  const gridInds = mInds.filter(i => (cats.some(c => c.industry_id === i.id) || i.storefront === "fashion")).map(i => ({ ind: i, count: indCount.get(i.id) ?? 0 }));
-  const headerInds = mInds.filter(i => ((indCount.get(i.id) ?? 0) > 0 || i.storefront === "fashion"));
+  const allCount = useMemo(() => { const m = new Map<string, number>(); for (const p of products) { const id = catById.get(catKey(p))?.industry_id; if (id) m.set(id, (m.get(id) ?? 0) + 1); } return m; }, [products, catById]);
+  // Every industry is listed in both buyer modes; one that only sells to the other type says so and switches when opened.
+  const gridInds = mInds.filter(i => cats.some(c => c.industry_id === i.id) || i.storefront === "fashion").map(i => {
+    const count = indCount.get(i.id) ?? 0;
+    const note = count === 0 && (allCount.get(i.id) ?? 0) > 0 ? (mode === "individual" ? "Wholesale only" : "Retail only") : undefined;
+    return { ind: i, count, note };
+  });
+  const headerInds = gridInds.map(g => g.ind);
   const wishItems = products.filter(p => wish.has(p.id));
   const wishCount = wishItems.length;
   const openIndustry = (i: PublicIndustry) => {
     if (i.storefront === "fashion") { navigate("/clothing"); return; }
+    if ((indCount.get(i.id) ?? 0) === 0 && (allCount.get(i.id) ?? 0) > 0) changeMode(mode === "individual" ? "business" : "individual");
     setSearch(""); setIndustryId(i.id); setCategoryId("all"); setMenuOpen(false); go("public-products");
   };
   const openCategory = (c: PublicCategory) => {
