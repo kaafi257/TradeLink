@@ -8,6 +8,7 @@ import { money } from "../lib/format";
 import { IconFor } from "../lib/icons";
 import { useInstall } from "../lib/install";
 import { useAuth } from "../lib/auth";
+import { track, trackState } from "../lib/track";
 import { useWishlist } from "../lib/wishlist";
 import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, ShopByIndustry, SupplierStrip, TradeHeader, TradeHero, TradeNav, TradeRow } from "./market/Trade";
 import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
@@ -173,7 +174,14 @@ export default function PublicHome() {
   const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [rfqOpen, setRfqOpen] = useState(false);
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
+  // Staff browsing the public site are not counted as visitors. One visit per browser tab.
+  useEffect(() => {
+    trackState.off = !!session;
+    if (authLoading || session) return;
+    try { if (sessionStorage.getItem("tl-visit")) return; sessionStorage.setItem("tl-visit", "1"); } catch { /* storage unavailable */ }
+    track("visit", { mode: readMode() });
+  }, [authLoading, session]);
   const wish = useWishlist();
   const [bestIds, setBestIds] = useState<string[]>([]);
   const [suppliers, setSuppliers] = useState<PublicSupplier[]>([]);
@@ -277,9 +285,11 @@ export default function PublicHome() {
   const wishCount = wishItems.length;
   const openIndustry = (i: PublicIndustry) => {
     if ((indCount.get(i.id) ?? 0) === 0 && (allCount.get(i.id) ?? 0) > 0) changeMode(mode === "individual" ? "business" : "individual");
+    track("industry_view", { ref: i.id });
     setSearch(""); setIndustryId(i.id); setCategoryId("all"); setMenuOpen(false); go("public-products");
   };
   const openCategory = (c: PublicCategory) => {
+    track("category_view", { ref: c.id });
     setSearch(""); setIndustryId(c.industry_id); setCategoryId(c.id); go("public-products");
   };
 
@@ -333,7 +343,11 @@ export default function PublicHome() {
       <AnnouncementBar products={products.length} industries={mInds.filter(i => (indCount.get(i.id) ?? 0) > 0).length} />
       <TradeHeader shelf={shelf} suppliers={suppliers} wishCount={wishCount} requestCount={cart.length} signedIn={!!session}
         onWishlist={() => setWishOpen(true)} onRequest={() => setQuoteOpen(true)} onAccount={() => navigate(session ? "/admin" : "/login")}
-        onSearch={(text, ind) => { setSearch(text); setIndustryId(ind); setCategoryId("all"); go("public-products"); }}
+        onSearch={(text, ind) => {
+          const t = text.trim().toLowerCase();
+          if (t.length >= 2) track("search", { term: t, mode, results: products.filter(p => (ind === "all" || shelf.indOf(p)?.id === ind) && `${p.name} ${p.brand ?? ""} ${p.category}`.toLowerCase().includes(t)).length });
+          setSearch(text); setIndustryId(ind); setCategoryId("all"); go("public-products");
+        }}
         onPickIndustry={openIndustry} onPickCategory={openCategory} onSupplier={setSupplier} searchRef={searchRef}
         openMenu={() => setMenuOpen(v => !v)} menuOpen={menuOpen} />
       <TradeNav mode={mode} industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} onRfq={() => setRfqOpen(true)} />

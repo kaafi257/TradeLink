@@ -3,6 +3,7 @@ import { ArrowRight, Building2, Check, MapPin, ChevronRight, ClipboardList, Cloc
 import { Brand, LogoMark } from "../../components/Brand";
 import { ContactIcons } from "../../components/ContactActions";
 import { money } from "../../lib/format";
+import { track } from "../../lib/track";
 import { useProductImages } from "../../lib/gallery";
 import { ProductGallery } from "../../components/ProductGallery";
 import { IconFor } from "../../lib/icons";
@@ -596,6 +597,7 @@ function useLock(on: boolean, close: () => void) {
 
 export function ProductDialog({ p, shelf, onClose, onStore }: { p: PublicProduct; shelf: Shelf; onClose: () => void; onStore: (p: PublicProduct) => void }) {
   useLock(true, onClose);
+  useEffect(() => { track("product_view", { ref: p.id }); }, [p.id]);
   const ind = shelf.indOf(p);
   const wished = shelf.wished(p.id);
   const added = shelf.inRequest(p.id);
