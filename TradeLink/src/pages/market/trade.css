@@ -480,3 +480,123 @@ body:has(.public-site),.public-site{background:var(--tl-bg)!important}
 .public-site .mk-footer .mk-copy{padding-block:12px}
 .public-site .mk-top{height:30px;padding:0 12px;font-size:12.5px}
 @media(max-width:560px){.public-site .mk-fgrid{gap:16px 18px}.public-site .mk-footer li button,.public-site .mk-footer li a{min-height:30px}}
+
+/* =====================================================================
+   Compact spacing pass: tighter gaps, padding and sizes only.
+   Same colours, logo, sections and behaviour. Phones get the biggest change;
+   desktop only loses its extra air.
+   ===================================================================== */
+/* ---- all sizes: a little less air between sections ---- */
+.public-site .tl-sec,.public-site .mk-shop{padding-top:20px}
+.public-site .tl-sh{margin-bottom:10px}
+.public-site .tl-sh small{margin-top:2px}
+.public-site .tl-prods,.public-site .mk-shop-grid{gap:12px}
+.public-site .tl-card .info{padding:9px 11px 11px;gap:3px}
+.public-site .tl-sups{gap:10px}
+.public-site .tl-sups button{padding:11px 12px}
+.public-site .tl-inds{gap:10px}
+.public-site .tl-inds button{padding:14px 10px 12px;gap:6px}
+.public-site .tl-inds .ic{width:46px;height:46px}
+.public-site .tl-rfqbar{padding:16px 20px}
+.public-site .tl-hero{padding:12px 0 2px}
+.public-site .tl-banner{min-height:380px}
+.public-site .tl-nav-in{min-height:44px}.public-site .tl-links button,.public-site .tl-allcat{height:44px}
+
+/* ---- phones ---- */
+@media(max-width:760px){
+  .public-site .tl-ann{font-size:12px}.public-site .tl-ann .tl-wrap{min-height:26px;height:26px}
+  .public-site .tl-head-in{padding-block:6px 6px;gap:6px}
+  .public-site .tl-logo .brand-mark{width:30px;height:30px}.public-site .tl-logo .brand b{font-size:18px}
+  .public-site .tl-search form{height:40px}
+  .public-site .tl-acts .tl-act{width:36px;height:36px}
+  .public-site .tl-links button{height:38px;padding:0 11px;font-size:13px}
+  .public-site .tl-links{gap:2px}
+  .public-site .tl-buy.mobile{margin:4px 12px 0;height:34px}.public-site .tl-buy.mobile button{font-size:13px}
+  .public-site .tl-hero{padding-top:8px}
+  .public-site .tl-banner{min-height:190px;border-radius:14px}
+  .public-site .tl-slide .tx{left:16px;right:16px;bottom:30px;gap:10px}
+  .public-site .tl-slide h1,.public-site .tl-slide h2{font-size:clamp(1.5rem,6.6vw,1.9rem);line-height:1.1}
+  .public-site .tl-slide .tx button{height:38px;padding:0 16px;font-size:13.5px}
+  .public-site .tl-banner .dots{left:16px;bottom:12px}
+  .public-site .tl-banner .dots button{width:26px}.public-site .tl-banner .dots button.on{width:26px}
+
+  .public-site .tl-sec,.public-site .mk-shop{padding-top:14px}
+  .public-site .tl-sh{margin-bottom:8px;gap:8px}
+  .public-site .tl-sh h2{font-size:1.05rem}
+  .public-site .tl-sh small{font-size:12px;line-height:1.3}
+  .public-site .tl-sh>button{font-size:13px}
+
+  /* industry tiles: shorter and narrower so more fit across */
+  .public-site .tl-inds{gap:8px;padding:2px 12px 2px}
+  .public-site .tl-inds button{flex:0 0 92px;padding:10px 6px 9px;gap:5px;border-radius:10px}
+  .public-site .tl-inds .ic{width:36px;height:36px}.public-site .tl-inds .ic svg{width:18px;height:18px}
+  .public-site .tl-inds b{font-size:12px;line-height:1.2}.public-site .tl-inds small{font-size:11px}
+
+  /* products: shorter pictures, tighter text, more cards on screen */
+  .public-site .tl-prods{gap:8px;padding:2px 12px 4px;scroll-padding-inline:12px}
+  .public-site .tl-prods .tl-card{flex:0 0 clamp(138px,40vw,164px)}
+  .public-site .mk-shop-grid{gap:8px}
+  .public-site .tl-card{border-radius:10px}
+  .public-site .tl-card .media{aspect-ratio:5/4}
+  .public-site .tl-card .info{padding:7px 9px 9px;gap:2px}
+  .public-site .tl-card h3,.public-site .tl-card h3{font-size:13px;line-height:1.28;min-height:2.56em}
+  .public-site .tl-card .price b{font-size:15px}.public-site .tl-card .price.ask{font-size:13px}
+  .public-site .tl-card .moq{font-size:11.5px}
+  .public-site .tl-card .heart{width:28px;height:28px;right:6px;top:6px}
+  .public-site .tl-card .off{left:6px;top:6px;font-size:11px;padding:2px 6px}.public-site .tl-card .out{left:6px;bottom:6px;font-size:11px;padding:2px 7px}
+
+  /* all products: toolbar and department chips */
+  .public-site .mk-shop-in{gap:8px}
+  .public-site .mk-dept-list{gap:6px;padding:1px 1px 4px}
+  .public-site .mk-dept-row{height:38px;gap:7px;padding:0 10px 0 4px;font-size:13px}
+  .public-site .mk-dept-row .ic{width:28px;height:28px}.public-site .mk-dept-row b{font-size:13px}
+  .public-site .mk-dept-row em{min-width:20px;height:20px;font-size:11px}
+  .public-site .mk-dept-grp.open .mk-dept-sub button{height:36px;padding:0 12px;font-size:13px}
+  .public-site .mk-shop-bar{gap:6px;margin-bottom:6px}
+  .public-site .mk-shop-search{height:40px;padding:0 6px 0 12px}.public-site .mk-shop-search input{font-size:14px}
+  .public-site .mk-sort{height:40px}
+  .public-site .mk-shop-now{min-height:26px;margin-bottom:8px;gap:6px}
+  .public-site .mk-shop-now .chip{height:28px;font-size:12px}
+
+  /* suppliers */
+  .public-site .tl-sups{gap:8px}
+  .public-site .tl-sups button{padding:9px 11px;gap:10px;border-radius:10px}
+  .public-site .tl-sups .lg{width:36px;height:36px;border-radius:9px;font-size:13.5px}
+  .public-site .tl-sups b{font-size:13.5px}.public-site .tl-sups small{font-size:12px}
+
+  /* quote banner */
+  .public-site .tl-rfqbar{padding:14px;gap:10px;border-radius:10px}
+  .public-site .tl-rfqbar h2{font-size:16px}.public-site .tl-rfqbar p{font-size:13px;margin-top:2px}
+  .public-site .tl-rfqbar button{height:40px;font-size:14px}
+
+  /* footer */
+  .public-site .mk-footer{margin-top:18px;padding-top:18px;padding-bottom:64px}
+  .public-site .mk-fgrid{gap:12px 16px;padding-bottom:10px}
+  .public-site .mk-fbrand{gap:8px}
+  .public-site .mk-fbrand p{font-size:12.5px}
+  .public-site .mk-footer h4{margin-bottom:4px;font-size:10px}
+  .public-site .mk-footer li button,.public-site .mk-footer li a{min-height:26px;font-size:13px}
+  .public-site .mk-footer .mk-copy{padding-block:8px}
+  .public-site .mk-footer .contact-icons{margin-top:2px;gap:6px}.public-site .mk-footer .contact-icons .fab,.public-site .mk-footer .contact-icons a,.public-site .mk-footer .contact-icons button{width:36px;height:36px}
+}
+
+/* ---- very small phones ---- */
+@media(max-width:360px){
+  .public-site .tl-inds button{flex-basis:86px}
+  .public-site .tl-prods .tl-card{flex-basis:clamp(130px,42vw,150px)}
+  .public-site .tl-card h3{font-size:12.5px}
+  .public-site .tl-links button{padding:0 9px}
+}
+
+/* ---- tablets and desktop: same look, less empty space ---- */
+@media(min-width:761px){
+  .public-site .tl-banner{min-height:360px}
+  .public-site .tl-sec,.public-site .mk-shop{padding-top:22px}
+  .public-site .tl-card .info{padding:10px 12px 12px}
+  .public-site .mk-footer{margin-top:24px}
+}
+/* Tablets: the category sidebar is hidden here, so the banner must use the full width (it was squeezed into a 200px column). */
+@media(max-width:1000px){
+  .public-site .tl-hero-in{grid-template-columns:minmax(0,1fr)!important}
+  .public-site .tl-banner{min-height:240px}
+}
