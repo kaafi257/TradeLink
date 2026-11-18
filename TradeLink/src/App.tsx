@@ -10,6 +10,8 @@ import SetPassword from "./pages/SetPassword";
 // The admin workspace (and its charts) is only downloaded by people who sign in.
 const AdminLayout = lazy(() => import("./admin/AdminLayout"));
 // The fashion storefront is its own chunk, so the main shop never downloads it.
+const SupplierRegister = lazy(() => import("./pages/supplier/Register"));
+const SupplierPortal = lazy(() => import("./pages/supplier/Portal"));
 const Clothing = lazy(() => import("./pages/clothing/Clothing"));
 const IndustryStore = lazy(() => import("./pages/industry/IndustryStore"));
 
@@ -33,6 +35,8 @@ export default function App() {
           <Route path="/" element={<PublicHome />} />
           <Route path="/clothing/*" element={<Clothing />} />
           <Route path="/industry/:id" element={<IndustryStore />} />
+          <Route path="/supplier/register" element={<SupplierRegister />} />
+          <Route path="/supplier/*" element={<SupplierPortal />} />
           <Route path="/login" element={<Login />} />
           <Route path="/set-password" element={<SetPassword />} />
           <Route path="/admin/*" element={<AdminLayout />} />

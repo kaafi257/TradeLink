@@ -664,6 +664,7 @@ export function MarketFooter({ industries, onIndustry, onRequest, onAccount, sig
         <nav aria-label="Support" className="mk-fico"><h4 title="Support"><Headphones size={18} /></h4>
           <button aria-label="Request a price" title="Request a price" onClick={onRequest}><ClipboardList size={19} /></button>
           <a href="#public-products" aria-label="Shop" title="Shop" onClick={e => { e.preventDefault(); document.getElementById("public-products")?.scrollIntoView({ behavior: "smooth" }); }}><Store size={19} /></a>
+          <a href="/supplier/register" aria-label="Become a supplier" title="Become a supplier"><Building2 size={19} /></a>
           <button aria-label={signedIn ? "Admin" : "Staff sign in"} title={signedIn ? "Admin" : "Staff sign in"} onClick={onAccount}><LogIn size={19} /></button>
         </nav>
       </div>
