@@ -33,6 +33,8 @@ const STEPS = [
 export default function SupplierRegister() {
   const navigate = useNavigate();
   const [industries, setIndustries] = useState<PublicIndustry[]>([]);
+  const [industryId, setIndustryId] = useState("");
+  const [bizType, setBizType] = useState("");
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [previewBad, setPreviewBad] = useState(false);
@@ -79,12 +81,13 @@ export default function SupplierRegister() {
     const f = new FormData(e.currentTarget);
     const g = (k: string) => String(f.get(k) ?? "").trim();
     if (g("password") !== String(f.get("password2") ?? "")) { setError("The two passwords do not match."); return; }
+    if (!industryId && !g("industry_id")) { setError("Please choose your industry."); return; }
     if (TURNSTILE_SITE_KEY && !token) { setError("Please complete the security check."); return; }
     setBusy(true);
     try {
       const db = requireSupabase();
       const body = {
-        business_name: g("business_name"), industry_id: g("industry_id"), business_type: g("business_type"), location: g("location"), address: g("address"), about: g("about"),
+        business_name: g("business_name"), industry_id: industryId || g("industry_id"), business_type: bizType || g("business_type"), location: g("location"), address: g("address"), about: g("about"),
         owner_name: g("owner_name"), phone: g("phone"), email: g("email"), password: String(f.get("password") ?? ""), website: g("website"), token,
       };
       const { data, error: fnError } = await db.functions.invoke("register-supplier", { body });
@@ -145,13 +148,13 @@ export default function SupplierRegister() {
             <label>Business name<input name="business_name" required minLength={2} maxLength={80} autoComplete="organization" /></label>
             <div className="row">
               <label>Industry
-                <select name="industry_id" required defaultValue="">
+                <select name="industry_id" required value={industryId} onChange={e => setIndustryId(e.target.value)}>
                   <option value="" disabled>Choose an industry</option>
                   {industries.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
                 </select>
               </label>
               <label>Business type
-                <select name="business_type" required defaultValue="">
+                <select name="business_type" required value={bizType} onChange={e => setBizType(e.target.value)}>
                   <option value="" disabled>Choose a type</option>
                   {BUSINESS_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
                 </select>
