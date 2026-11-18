@@ -235,7 +235,7 @@ export function TradeRow({ id, title, sub, shelf, items, mode, onAll, max = 6 }:
     <Reveal className="tl-sec" as="section">
       <div className="tl-wrap" id={id}>
         <div className="tl-sh"><div><h2>{title}</h2>{sub && <small>{sub}</small>}</div>{onAll && <button onClick={onAll}>View all<ArrowRight size={15} /></button>}</div>
-        <div className="tl-prods">{items.slice(0, max).map(p => <CleanCard key={p.id} p={p} shelf={shelf} mode={mode} />)}</div>
+        <div className="tl-prods">{[...new Map(items.map(p => [p.id, p])).values()].slice(0, max).map(p => <CleanCard key={p.id} p={p} shelf={shelf} mode={mode} />)}</div>
       </div>
     </Reveal>
   );

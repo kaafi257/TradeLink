@@ -1,4 +1,5 @@
-import { Mail, MapPin, MessageCircle, Phone, Send } from "lucide-react";
+import { useState } from "react";
+import { Mail, MapPin, MessageCircle, Phone, Send, X } from "lucide-react";
 import { useChannels, useContact, type Channel } from "../lib/contact";
 
 export type { Channel };
@@ -53,9 +54,14 @@ export function ContactCards({ message }: { message?: string }) {
 /** Always-visible round buttons at the screen edge. */
 export function FloatingContact() {
   const list = useChannels();
+  const [open, setOpen] = useState(false);
   if (!list.length) return null;
   return (
-    <div className="fab-stack" aria-label="Contact us">
+    <div className={`fab-stack${open ? " open" : ""}`} aria-label="Contact us">
+      {/* On phones the channels fold into one button so they never cover products. */}
+      <button type="button" className="fab fab-toggle" aria-expanded={open} aria-label={open ? "Close contact options" : "Contact us"} onClick={() => setOpen(o => !o)}>
+        {open ? <X size={20} /> : <MessageCircle size={20} />}
+      </button>
       {list.map(c => (
         <a key={c.key} className={`fab fab-${c.key}`} href={c.href} title={c.label} aria-label={c.label} {...ext(c)}><Icon k={c.key} size={20} /></a>
       ))}
