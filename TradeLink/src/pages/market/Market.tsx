@@ -330,6 +330,33 @@ export function MiniCard({ p, shelf }: { p: PublicProduct; shelf: Shelf }) {
 }
 
 
+/** The clean marketplace card: big photo, short name, price, minimum order. The whole card opens the product. */
+export function CleanCard({ p, shelf, mode }: { p: PublicProduct; shelf: Shelf; mode?: Mode }) {
+  const m = mode ?? shelf.mode;
+  const wished = shelf.wished(p.id);
+  const { now, was } = priceOf(p);
+  const off = m === "individual" && now !== null && was !== null ? Math.round((1 - now / was) * 100) : 0;
+  const moq = Number(p.min_order_quantity);
+  return (
+    <article className="tl-card">
+      <div className="media">
+        {p.image_url ? <img src={p.image_url} alt="" loading="lazy" /> : <span className="ph"><IconFor name={shelf.indOf(p)?.icon} size={34} /></span>}
+        {off > 0 && <span className="off">-{off}%</span>}
+        {p.stock_status === "out" && <span className="out">Sold out</span>}
+      </div>
+      <div className="info">
+        <h3>{p.name}</h3>
+        {m === "individual" && now !== null
+          ? <p className="price"><b>{money(now)}</b>{was !== null && <s>{money(was)}</s>}<small>/ {p.unit}</small></p>
+          : <p className="price ask">Ask for price</p>}
+        <p className="moq">{m === "business" && moq > 1 ? `Min. order ${moq} ${p.unit}` : p.package_size ?? shelf.catName(p)}</p>
+      </div>
+      <button className="cover" aria-label={`Details: ${p.name}`} onClick={() => shelf.open(p)} />
+      <button className={`heart${wished ? " on" : ""}`} aria-pressed={wished} aria-label={wished ? "Remove from wishlist" : "Save to wishlist"} onClick={() => shelf.toggleWish(p.id)}><Heart size={16} /></button>
+    </article>
+  );
+}
+
 /* ------------------------------------------------------ the big shop: departments + one grid */
 
 type SortKey = "new" | "az" | "low" | "high";
@@ -358,7 +385,7 @@ export function MarketShop({ shelf, onMode, industries, categories, counts, indu
   const activeCat = categories.find(c => c.id === category);
   const choose = (i: string, c = "all") => { setIndustry(i); setCategory(c); setDeptOpen(false); };
   return (
-    <section className="mk-shop" id="public-products" aria-label="Shop">
+    <section className="mk-shop" id="public-products" aria-label="All products"><div className="mk-wrap"><div className="tl-sh"><div><h2>All products</h2><small>Browse by department</small></div></div></div>
       <div className="mk-wrap mk-shop-in">
         <aside className={`mk-dept${deptOpen ? " open" : ""}`} aria-label="Departments">
           <button className="mk-dept-head" aria-expanded={deptOpen} onClick={() => setDeptOpen(o => !o)}>
@@ -410,7 +437,7 @@ export function MarketShop({ shelf, onMode, industries, categories, counts, indu
           </div>
           {sorted.length === 0 ? <p className="mk-empty">{emptyText}</p> : (
             <>
-              <div className="mk-grid mk-shop-grid">{sorted.slice(0, limit).map(p => <MiniCard key={p.id} p={p} shelf={shelf} />)}</div>
+              <div className="mk-grid mk-shop-grid">{sorted.slice(0, limit).map(p => <CleanCard key={p.id} p={p} shelf={shelf} />)}</div>
               {sorted.length > limit && <button className="mk-more" onClick={() => setLimit(l => l + PAGE)}><Plus size={18} /><b>{sorted.length - limit}</b></button>}
             </>
           )}

@@ -6,7 +6,7 @@ import { useContact } from "../../lib/contact";
 import { IconFor } from "../../lib/icons";
 import { lookFor } from "../../lib/theme";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../../lib/supabase";
-import { MiniCard, Reveal, type Mode, type Shelf } from "./Market";
+import { CleanCard, Reveal, type Mode, type Shelf } from "./Market";
 import "./trade.css";
 
 const tone = (name: string) => { const l = lookFor(name); return { "--ta": l.a, "--tt": l.tint, "--ti": l.ink } as CSSProperties; };
@@ -105,9 +105,19 @@ export function TradeHeader({ shelf, suppliers, wishCount, requestCount, signedI
 
 /* --------------------------------------------------- secondary navigation */
 
-export function TradeNav({ industries, categories, counts, onMode, onPickIndustry, onPickCategory, open, setOpen }: {
-  industries: PublicIndustry[]; categories: PublicCategory[]; counts: Map<string, number>;
-  onMode: (m: Mode) => void; onPickIndustry: (i: PublicIndustry) => void; onPickCategory: (c: PublicCategory) => void; open: boolean; setOpen: (v: boolean) => void;
+export function ModeToggle({ mode, onMode, className = "" }: { mode: Mode; onMode: (m: Mode) => void; className?: string }) {
+  return (
+    <div className={`tl-buy ${mode} ${className}`} role="group" aria-label="I am buying as">
+      <i className="thumb" aria-hidden="true" />
+      <button aria-pressed={mode === "individual"} onClick={() => onMode("individual")}><User size={15} />Retail</button>
+      <button aria-pressed={mode === "business"} onClick={() => onMode("business")}><Briefcase size={15} />Wholesale</button>
+    </div>
+  );
+}
+
+export function TradeNav({ mode, industries, categories, counts, onMode, onPickIndustry, onPickCategory, open, setOpen, onRfq }: {
+  mode: Mode; industries: PublicIndustry[]; categories: PublicCategory[]; counts: Map<string, number>;
+  onMode: (m: Mode) => void; onPickIndustry: (i: PublicIndustry) => void; onPickCategory: (c: PublicCategory) => void; open: boolean; setOpen: (v: boolean) => void; onRfq: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -124,12 +134,11 @@ export function TradeNav({ industries, categories, counts, onMode, onPickIndustr
         <button className={`tl-allcat${open ? " on" : ""}`} aria-expanded={open} onClick={() => setOpen(!open)}><Menu size={18} /><b>All categories</b><ChevronDown size={15} /></button>
         <div className="tl-links">
           <button onClick={() => go("business", "wholesale")}><Briefcase size={16} />Wholesale</button>
-          <button onClick={() => go("individual", "retail")}><ShoppingBag size={16} />Retail</button>
           <button onClick={() => go(null, "suppliers")}><Building2 size={16} />Suppliers</button>
           <button onClick={() => go(null, "new-arrivals")}><Sparkles size={16} />New arrivals</button>
-          <button onClick={() => go(null, "best-sellers")}><Flame size={16} />Best sellers</button>
-          <button className="rfq" onClick={() => go(null, "rfq")}><ClipboardList size={16} />Request for quotation</button>
+          <button className="rfq" onClick={onRfq}><ClipboardList size={16} />Request a quote</button>
         </div>
+        <ModeToggle mode={mode} onMode={onMode} />
       </div>
       {open && (
         <div className="tl-mega" role="menu">
@@ -155,9 +164,9 @@ export function TradeNav({ industries, categories, counts, onMode, onPickIndustr
 
 type Slide = { ind: PublicIndustry; img: string | null; count: number };
 
-export function TradeHero({ shelf, slides, counts, onMode, onPickIndustry, onPickCategory, onRfq, onAccount, signedIn }: {
-  shelf: Shelf; slides: Slide[]; counts: Map<string, number>; onMode: (m: Mode) => void;
-  onPickIndustry: (i: PublicIndustry) => void; onPickCategory: (c: PublicCategory) => void; onRfq: () => void; onAccount: () => void; signedIn: boolean;
+export function TradeHero({ shelf, slides, counts, onPickIndustry, onPickCategory }: {
+  shelf: Shelf; slides: Slide[]; counts: Map<string, number>;
+  onPickIndustry: (i: PublicIndustry) => void; onPickCategory: (c: PublicCategory) => void;
 }) {
   const [hover, setHover] = useState<string | null>(null);
   const [n, setN] = useState(0);
@@ -171,7 +180,6 @@ export function TradeHero({ shelf, slides, counts, onMode, onPickIndustry, onPic
   const cur = slides[Math.min(n, Math.max(0, len - 1))];
   const hov = shelf.industries.find(i => i.id === hover);
   const hovCats = hov ? shelf.categories.filter(c => c.industry_id === hov.id && (counts.get(c.id) ?? 0) > 0) : [];
-  const c = useContact();
   return (
     <section className="tl-hero" id="top">
       <div className="tl-wrap tl-hero-in">
@@ -198,7 +206,6 @@ export function TradeHero({ shelf, slides, counts, onMode, onPickIndustry, onPic
             <div key={s.ind.id} className={`tl-slide${k === n ? " on" : ""}`} style={tone(s.ind.name)} aria-hidden={k !== n}>
               {s.img ? <img src={s.img} alt="" loading={k === 0 ? "eager" : "lazy"} /> : <span className="wm"><IconFor name={s.ind.icon} size={220} /></span>}
               <div className="tx">
-                <span className="tag"><IconFor name={s.ind.icon} size={15} />{s.count} {s.count === 1 ? "product" : "products"}</span>
                 {k === 0 ? <h1>{s.ind.name}</h1> : <h2>{s.ind.name}</h2>}
                 {s.ind.description && <p>{s.ind.description}</p>}
                 <button tabIndex={k === n ? 0 : -1} onClick={() => onPickIndustry(s.ind)}>Shop now<ArrowRight size={16} /></button>
@@ -213,17 +220,6 @@ export function TradeHero({ shelf, slides, counts, onMode, onPickIndustry, onPic
           {cur && len > 1 && <><button className="arr l" aria-label="Previous banner" onClick={() => setN((n - 1 + len) % len)}><ChevronRight size={20} style={{ transform: "scaleX(-1)" }} /></button><button className="arr r" aria-label="Next banner" onClick={() => setN((n + 1) % len)}><ChevronRight size={20} /></button></>}
         </div>
 
-        <aside className="tl-panel" aria-label="Welcome">
-          <div className="hi"><span className="av"><Store size={20} /></span><div><b>Welcome to TradeLink</b><small>Buy retail or source wholesale</small></div></div>
-          <div className={`tl-buy ${shelf.mode}`} role="group" aria-label="I am buying as">
-            <i className="thumb" aria-hidden="true" />
-            <button aria-pressed={shelf.mode === "individual"} onClick={() => onMode("individual")}><User size={16} />Retail</button>
-            <button aria-pressed={shelf.mode === "business"} onClick={() => onMode("business")}><Briefcase size={16} />Wholesale</button>
-          </div>
-          <button className="tl-cta" onClick={onRfq}><ClipboardList size={17} />Request for quotation</button>
-          <button className="tl-ghost" onClick={onAccount}><LogIn size={16} />{signedIn ? "Open admin" : "Staff sign in"}</button>
-          <div className="ct"><small>Talk to us{c.hours ? ` · ${c.hours}` : ""}</small><ContactIcons message="Hello TradeLink, I would like to source products." /></div>
-        </aside>
       </div>
     </section>
   );
@@ -231,25 +227,86 @@ export function TradeHero({ shelf, slides, counts, onMode, onPickIndustry, onPic
 
 /* ------------------------------------------------------------ product rows */
 
-export function TradeRow({ id, icon, title, note, tint, shelf, items, more }: {
-  id: string; icon: React.ReactNode; title: string; note?: string; tint?: string; shelf: Shelf; items: PublicProduct[]; more?: { label: string; onClick: () => void };
+export function TradeRow({ id, title, sub, shelf, items, mode, onAll, max = 6 }: {
+  id: string; title: string; sub?: string; shelf: Shelf; items: PublicProduct[]; mode?: Mode; onAll?: () => void; max?: number;
 }) {
   if (items.length === 0) return null;
   return (
-    <Reveal className="tl-row" as="section">
-      <div className="tl-wrap" id={id} style={tint ? tone(tint) : undefined}>
-        <div className="tl-rh"><h2><span className="ic">{icon}</span>{title}</h2>{note && <small>{note}</small>}{more && <button onClick={more.onClick}>{more.label}<ArrowRight size={15} /></button>}</div>
-        <div className="mk-railwrap"><div className="mk-rail">{items.map(p => <MiniCard key={p.id} p={p} shelf={shelf} />)}</div></div>
+    <Reveal className="tl-sec" as="section">
+      <div className="tl-wrap" id={id}>
+        <div className="tl-sh"><div><h2>{title}</h2>{sub && <small>{sub}</small>}</div>{onAll && <button onClick={onAll}>View all<ArrowRight size={15} /></button>}</div>
+        <div className="tl-prods">{items.slice(0, max).map(p => <CleanCard key={p.id} p={p} shelf={shelf} mode={mode} />)}</div>
       </div>
     </Reveal>
   );
 }
 
+/** Shop by industry: neutral tiles, name and product count. */
+export function ShopByIndustry({ items, onPick }: { items: { ind: PublicIndustry; count: number }[]; onPick: (i: PublicIndustry) => void }) {
+  if (items.length === 0) return null;
+  return (
+    <Reveal className="tl-sec" as="section">
+      <div className="tl-wrap" id="industries">
+        <div className="tl-sh"><div><h2>Shop by industry</h2></div></div>
+        <div className="tl-inds">
+          {items.map(({ ind, count }) => (
+            <button key={ind.id} onClick={() => onPick(ind)}>
+              <span className="ic"><IconFor name={ind.icon} size={24} /></span>
+              <b>{ind.name}</b>
+              {count > 0 && <small>{count}</small>}
+            </button>
+          ))}
+        </div>
+      </div>
+    </Reveal>
+  );
+}
+
+/** Featured suppliers from the admin-managed directory. */
+export function SupplierStrip({ items, industries, onOpen }: { items: PublicSupplier[]; industries: PublicIndustry[]; onOpen: (s: PublicSupplier) => void }) {
+  if (items.length === 0) return null;
+  const initials = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]!.toUpperCase()).join("");
+  return (
+    <Reveal className="tl-sec" as="section">
+      <div className="tl-wrap" id="suppliers">
+        <div className="tl-sh"><div><h2>Featured suppliers</h2></div></div>
+        <div className="tl-sups">
+          {items.slice(0, 6).map(sp => (
+            <button key={sp.id} onClick={() => onOpen(sp)}>
+              <span className="lg">{initials(sp.name)}</span>
+              <span className="tx"><b>{sp.name}</b><small>{[industries.find(i => i.id === sp.industry_id)?.name, sp.location].filter(Boolean).join(" · ")}</small></span>
+              <ChevronRight size={16} />
+            </button>
+          ))}
+        </div>
+      </div>
+    </Reveal>
+  );
+}
+
+/** Compact sourcing banner; the full form opens in a dialog. */
+export function RfqBanner({ onOpen }: { onOpen: () => void }) {
+  return (
+    <section className="tl-sec"><div className="tl-wrap">
+      <div className="tl-rfqbar">
+        <span className="ic"><ClipboardList size={24} /></span>
+        <div><h2>Looking for products in bulk?</h2><p>Send your requirements and get a price from the team.</p></div>
+        <button onClick={onOpen}>Request a quote<ArrowRight size={17} /></button>
+      </div>
+    </div></section>
+  );
+}
+
 /* ----------------------------------------------------- request for quotation */
 
-export function RfqSection({ products, industries, categories, catOf, onSent }: {
-  products: PublicProduct[]; industries: PublicIndustry[]; categories: PublicCategory[]; catOf: (p: PublicProduct) => PublicCategory | undefined; onSent?: () => void;
+export function RfqModal({ products, industries, categories, catOf, onClose }: {
+  products: PublicProduct[]; industries: PublicIndustry[]; categories: PublicCategory[]; catOf: (p: PublicProduct) => PublicCategory | undefined; onClose: () => void;
 }) {
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", k); const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", k); document.body.style.overflow = prev; };
+  }, [onClose]);
   const [ind, setInd] = useState("all");
   const [pid, setPid] = useState("");
   const [qty, setQty] = useState("");
@@ -273,11 +330,12 @@ export function RfqSection({ products, industries, categories, catOf, onSent }: 
     });
     setBusy(false);
     if (error) { setErr(error.message); return; }
-    setDone(String(data ?? "") || "QTN-RECEIVED"); onSent?.();
+    setDone(String(data ?? "") || "QTN-RECEIVED");
   };
   return (
-    <Reveal className="tl-rfq-wrap" as="section">
-      <div className="tl-wrap" id="rfq">
+    <div className="tl-modal" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="tl-dialog" role="dialog" aria-modal="true" aria-label="Request a quote">
+        <button className="x" aria-label="Close" onClick={onClose}><X size={18} /></button>
         <div className="tl-rfq">
           <div className="lead">
             <span className="ic"><ClipboardList size={26} /></span>
@@ -310,25 +368,7 @@ export function RfqSection({ products, industries, categories, catOf, onSent }: 
           )}
         </div>
       </div>
-    </Reveal>
-  );
-}
-
-/* --------------------------------------------------------------- trust strip */
-
-export function TrustStrip() {
-  const items = [
-    { i: <Search size={20} />, t: "Easy discovery", d: "Search by product, brand, category or supplier." },
-    { i: <Briefcase size={20} />, t: "Wholesale sourcing", d: "Minimum order quantities shown on every wholesale product." },
-    { i: <ShoppingBag size={20} />, t: "Retail purchasing", d: "Unit prices for individual buyers." },
-    { i: <Building2 size={20} />, t: "Listed suppliers", d: "Suppliers shown here are chosen by TradeLink." },
-    { i: <Headphones size={20} />, t: "Customer support", d: "WhatsApp, Telegram and phone." },
-    { i: <Truck size={20} />, t: "Delivery", d: "Tell us where; we confirm delivery with your price." },
-  ];
-  return (
-    <section className="tl-trust" aria-label="About the marketplace"><div className="tl-wrap">
-      {items.map(x => <div key={x.t}><span>{x.i}</span><b>{x.t}</b><small>{x.d}</small></div>)}
-    </div></section>
+    </div>
   );
 }
 
@@ -348,5 +388,3 @@ export function BottomNav({ wishCount, requestCount, onHome, onCategories, onSea
   );
 }
 
-export const OffersIcon = <Percent size={17} />;
-export const ShieldIcon = <ShieldCheck size={17} />;
