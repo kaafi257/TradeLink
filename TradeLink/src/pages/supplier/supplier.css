@@ -31,7 +31,11 @@
 .sp textarea{resize:vertical;min-height:80px}
 .sp input:focus,.sp select:focus,.sp textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px #0d5b9b1f}
 .sp input:disabled{background:#f4f6f7;color:var(--muted)}
-.sp .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sp .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.sp .row>label,.sp-auth-card label{min-width:0;align-content:start}
+.sp label em{display:inline;font-style:normal;font-weight:500;color:var(--muted)}
+.sp input,.sp select,.sp textarea{min-width:0;max-width:100%;box-sizing:border-box}
+.sp-auth-main,.sp-auth-card{min-width:0}
 .sp-hp{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0}
 
 /* auth pages (register, status screens) */
@@ -56,7 +60,7 @@
 .sp-auth:has(.sp-done:only-child){grid-template-columns:minmax(0,1fr);place-items:center;padding:20px}
 .sp-warn{list-style:none;text-align:left;display:grid;gap:6px;background:#fff5dc;color:#795a12;padding:12px;border-radius:10px;font-size:13px}
 .sp-files{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.sp-logo-pick{display:flex;align-items:center;gap:12px}.sp-logo-pick small,.sp-docs small{display:block;color:var(--muted);font-size:12px;font-weight:500}
+.sp-logo-pick{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}.sp-logo-pick small{overflow-wrap:anywhere}.sp-logo-pick small,.sp-docs small{display:block;color:var(--muted);font-size:12px;font-weight:500}
 .sp-logo-box,.sp-logo{display:grid;place-items:center;width:64px;height:64px;flex:none;border:1px dashed #b9c6d0;border-radius:14px;background:#f7f9fa;color:var(--muted);overflow:hidden}
 .sp-logo{border-style:solid;border-color:var(--line)}.sp-logo.big{width:84px;height:84px}
 .sp-logo-box img,.sp-logo img{width:100%;height:100%;object-fit:cover}
@@ -131,7 +135,7 @@
   .sp-close,.sp-burger{display:grid}
   .sp-grid,.sp-grid.two{grid-template-columns:minmax(0,1fr)}
 }
-@media (max-width:560px){
+@media (max-width:700px){
   .sp .row,.sp-files{grid-template-columns:minmax(0,1fr)}
   .sp-top .sp-pill{display:none}
   .sp-status{flex-direction:column;gap:10px}
