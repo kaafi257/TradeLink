@@ -326,3 +326,126 @@ body:has(.public-site),.public-site{background:var(--tl-bg)!important}
 /* Landscape phones: the bottom bar and floating button take less room. */
 @media(max-height:480px) and (orientation:landscape){.public-site .fab-stack{bottom:12px}.tl-bottom{position:static}.public-site{padding-bottom:0}}
 @media(min-width:761px){.tl-inds{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}}
+
+/* =====================================================================
+   Premium header, search, navigation, Retail/Wholesale switch and hero.
+   Palette: white, deep navy, one soft blue. Only these sections are styled here.
+   ===================================================================== */
+.public-site{--pm-navy:#0b1f3a;--pm-navy2:#13305a;--pm-blue:#2f6df6;--pm-tint:#eef3fd;--pm-line:#e3e9f3;--pm-mute:#6b7a90;--pm-ease:cubic-bezier(.22,.8,.3,1)}
+
+/* ---- announcement: one quiet line ---- */
+.public-site .tl-ann{background:var(--pm-navy);color:#c9d6ea;font-size:12px;letter-spacing:.02em}
+.public-site .tl-ann .tl-wrap{justify-content:space-between;min-height:30px;gap:16px}
+.public-site .tl-ann a{color:#fff;font-weight:600}
+
+/* ---- header ---- */
+.public-site .tl-head{background:rgba(255,255,255,.92);-webkit-backdrop-filter:saturate(1.4) blur(14px);backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid transparent;transition:box-shadow .3s,border-color .3s}
+.public-site .tl-head.solid{border-bottom-color:var(--pm-line);box-shadow:0 10px 30px -22px #0b1f3a66}
+.public-site .tl-head-in{min-height:72px;gap:24px;transition:min-height .3s var(--pm-ease)}
+.public-site .tl-head.solid .tl-head-in{min-height:62px}
+.public-site .tl-logo{transition:transform .3s var(--pm-ease)}.public-site .tl-logo:hover{transform:translateY(-1px)}
+.public-site .tl-search{max-width:680px;margin-inline:auto}
+.public-site .tl-search form{height:46px;border:1px solid var(--pm-line);border-radius:999px;background:#fff;box-shadow:0 1px 2px #0b1f3a0d;padding:0 5px 0 4px;transition:border-color .25s,box-shadow .25s}
+.public-site .tl-search form:hover{border-color:#cfd9ea}
+.public-site .tl-search form:focus-within{border-color:var(--pm-blue);box-shadow:0 0 0 4px #2f6df61f,0 8px 24px -14px #2f6df680}
+.public-site .tl-scope{border:0;border-right:1px solid var(--pm-line);border-radius:0;background:none;margin:9px 0;padding-right:10px}
+.public-site .tl-scope select{font-size:13.5px;font-weight:600;color:var(--pm-navy);padding:0 22px 0 16px;max-width:130px;text-overflow:ellipsis}
+.public-site .tl-search input{font-size:14.5px;padding:0 14px;color:var(--pm-navy)}
+.public-site .tl-search input::placeholder{color:#8a97aa}
+.public-site .tl-search .go{align-self:center;width:36px;height:36px;padding:0;border-radius:50%;justify-content:center;background:var(--pm-navy);color:#fff;transition:background .25s,transform .25s var(--pm-ease)}
+.public-site .tl-search .go span{display:none}
+.public-site .tl-search .go:hover{background:var(--pm-blue);transform:scale(1.06)}
+.public-site .tl-suggest{border:1px solid var(--pm-line);border-radius:18px;box-shadow:0 24px 50px -24px #0b1f3a66;padding:6px}
+.public-site .tl-suggest button{border-radius:12px}.public-site .tl-suggest button:hover{background:var(--pm-tint)}
+.public-site .tl-suggest .ic{background:var(--pm-tint);color:var(--pm-navy2)}
+.public-site .tl-acts{gap:4px}
+.public-site .tl-act{width:44px;height:44px;min-width:0;padding:0;border-radius:50%;justify-content:center;color:var(--pm-navy);transition:background .2s,transform .2s var(--pm-ease)}
+.public-site .tl-act:hover{background:var(--pm-tint);color:var(--pm-blue);transform:translateY(-1px)}
+.public-site .tl-act i{top:3px;right:3px;background:var(--pm-blue);box-shadow:0 0 0 2px #fff}
+
+/* ---- navigation ---- */
+.public-site .tl-nav{background:#fff;border-bottom:1px solid var(--pm-line)}
+.public-site .tl-nav-in{min-height:50px;gap:10px}
+.public-site .tl-allcat{height:36px;padding:0 16px 0 12px;border-radius:999px;background:var(--pm-navy);gap:8px;font-size:13.5px;transition:background .2s,transform .2s var(--pm-ease)}
+.public-site .tl-allcat:hover,.public-site .tl-allcat.on{background:var(--pm-navy2)}
+.public-site .tl-allcat:active{transform:scale(.97)}
+.public-site .tl-links{gap:2px;margin-left:8px}
+.public-site .tl-links button{height:50px;padding:0 14px;font-size:14px;font-weight:600;color:var(--pm-navy);letter-spacing:.005em}
+.public-site .tl-links button::after{left:14px;right:14px;bottom:0;height:2px;border-radius:2px;background:var(--pm-blue);transform:scaleX(0);transform-origin:left;transition:transform .3s var(--pm-ease)}
+.public-site .tl-links button:hover::after{transform:scaleX(1)}
+.public-site .tl-links button:hover{color:var(--pm-blue)}
+.public-site .tl-links .rfq{color:var(--pm-blue)}
+.public-site .tl-mega{border-top:1px solid var(--pm-line);box-shadow:0 30px 50px -30px #0b1f3a55}
+.public-site .tl-mega .h .ic{background:var(--pm-tint);color:var(--pm-navy2)}
+
+/* ---- Retail / Wholesale: slim segmented switch with a sliding thumb ---- */
+.public-site .tl-buy{height:36px;padding:3px;border-radius:999px;background:var(--pm-tint);border:1px solid var(--pm-line)}
+.public-site .tl-buy .thumb{top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:var(--pm-navy);box-shadow:0 4px 12px -4px #0b1f3a80;transition:transform .45s var(--pm-ease)}
+.public-site .tl-buy button{font:600 13px 'Inter',sans-serif;letter-spacing:.01em;color:var(--pm-mute);padding:0 14px;transition:color .3s}
+.public-site .tl-buy button[aria-pressed="true"]{color:#fff}
+.public-site .tl-nav-in .tl-buy{width:196px}
+
+/* ---- hero ---- */
+.public-site .tl-hero{padding:18px 0 8px}
+.public-site .tl-hero-in{grid-template-columns:230px minmax(0,1fr)!important;gap:16px}
+.public-site .tl-side{border:1px solid var(--pm-line);border-radius:20px;box-shadow:none;padding:8px}
+.public-site .tl-side h2{padding:12px 12px 8px;font:700 11px 'Inter',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--pm-mute)}
+.public-site .tl-side li button{border-radius:12px;padding:10px 12px;transition:background .2s,padding .25s var(--pm-ease)}
+.public-site .tl-side li b{font-size:14px;font-weight:600;color:var(--pm-navy)}
+.public-site .tl-side li.on button,.public-site .tl-side li button:hover{background:var(--pm-tint);padding-left:16px}
+.public-site .tl-side li svg{color:#9aa8bd}
+.public-site .tl-fly{border:1px solid var(--pm-line);border-radius:20px;box-shadow:0 24px 50px -26px #0b1f3a66}
+.public-site .tl-banner{min-height:440px;border-radius:24px;background:var(--pm-navy);box-shadow:0 30px 60px -36px #0b1f3a99}
+.public-site .tl-slide{background:linear-gradient(125deg,var(--pm-navy),var(--pm-navy2) 60%,#1f4a86)}
+.public-site .tl-slide img{transform:scale(1.08);transition:transform 7s linear}
+.public-site .tl-slide.on img{transform:scale(1)}
+.public-site .tl-slide::after{background:linear-gradient(95deg,#071427f2 0%,#0b1f3acc 34%,#0b1f3a40 68%,#0b1f3a00 100%)}
+.public-site .tl-slide .wm{color:#ffffff14}
+.public-site .tl-slide .tx{left:clamp(24px,5vw,64px);bottom:clamp(28px,6vw,72px);gap:20px;max-width:min(560px,86%)}
+.public-site .tl-slide h1,.public-site .tl-slide h2{font:800 clamp(2rem,1.2rem + 3.4vw,4rem)/1.02 'Manrope','Inter',sans-serif;letter-spacing:-.03em;text-shadow:0 2px 24px #0006}
+.public-site .tl-slide .tx button{height:50px;padding:0 26px;border-radius:999px;background:#fff;color:var(--pm-navy);font:700 15px 'Inter',sans-serif;box-shadow:0 14px 30px -14px #000a;transition:transform .3s var(--pm-ease),background .25s,color .25s,gap .3s}
+.public-site .tl-slide .tx button:hover{background:var(--pm-blue);color:#fff;transform:translateY(-2px);gap:12px}
+.public-site .tl-slide.on .tx>*{animation:pm-rise .8s var(--pm-ease) both}
+.public-site .tl-slide.on .tx>:nth-child(2){animation-delay:.12s}
+@keyframes pm-rise{from{opacity:0;transform:translateY(22px)}}
+.public-site .tl-banner .arr{width:44px;height:44px;border-radius:50%;background:#ffffff26;border:1px solid #ffffff40;color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);opacity:0;transition:opacity .3s,background .2s}
+.public-site .tl-banner:hover .arr{opacity:1}.public-site .tl-banner .arr:hover{background:#ffffff40}
+/* slide progress: each dot fills while its slide is showing */
+.public-site .tl-banner .dots{right:auto;left:clamp(24px,5vw,64px);bottom:clamp(14px,2.4vw,26px);gap:8px}
+.public-site .tl-banner .dots button{position:relative;width:34px;height:3px;border-radius:3px;overflow:hidden;background:#ffffff4d;padding:0}
+.public-site .tl-banner .dots button.on{width:34px;background:#ffffff4d}
+.public-site .tl-banner .dots button i{position:absolute;inset:0;background:#fff;transform:scaleX(0);transform-origin:left}
+.public-site .tl-banner .dots button.on i{animation:pm-fill 5.2s linear forwards}
+.public-site .tl-banner .dots button.on i.held{animation-play-state:paused}
+@keyframes pm-fill{to{transform:scaleX(1)}}
+@media(prefers-reduced-motion:reduce){.public-site .tl-slide img,.public-site .tl-slide.on .tx>*{animation:none!important;transition:none!important}.public-site .tl-banner .dots button.on i{animation:none;transform:scaleX(1)}}
+
+/* ---- tablet ---- */
+@media(max-width:1180px){.public-site .tl-hero-in{grid-template-columns:200px minmax(0,1fr)!important}.public-site .tl-banner{min-height:400px}}
+@media(max-width:1000px){.public-site .tl-head-in{gap:14px}.public-site .tl-nav-in .tl-buy{width:180px}}
+
+/* ---- phone ---- */
+@media(max-width:760px){
+  .public-site .tl-ann .tl-wrap{justify-content:center}
+  .public-site .tl-head-in{min-height:0;padding-block:10px 10px;gap:10px}
+  .public-site .tl-search{margin:0;max-width:none}
+  .public-site .tl-search form{height:44px}
+  .public-site .tl-scope select{max-width:96px;padding-left:12px}
+  .public-site .tl-acts .tl-act{width:40px;height:40px}
+  .public-site .tl-acts .tl-burger{display:flex}
+  .public-site .tl-nav{border-bottom:0}
+  .public-site .tl-links{margin-left:0;padding-inline:14px;gap:4px}
+  .public-site .tl-links button{height:42px;padding:0 12px;font-size:13.5px}
+  .public-site .tl-buy.mobile{display:grid;margin:6px 14px 2px;height:38px}
+  .public-site .tl-hero{padding-top:8px}
+  .public-site .tl-hero-in{grid-template-columns:minmax(0,1fr)!important}
+  .public-site .tl-banner{min-height:300px;border-radius:20px}
+  .public-site .tl-slide .tx{left:20px;right:20px;bottom:36px;gap:14px;max-width:none}
+  .public-site .tl-slide h1,.public-site .tl-slide h2{font-size:clamp(1.9rem,8.4vw,2.6rem)}
+  .public-site .tl-slide .tx button{height:46px;padding:0 22px;font-size:14.5px}
+  .public-site .tl-slide::after{background:linear-gradient(0deg,#071427f0 0%,#0b1f3ab0 42%,#0b1f3a30 100%)}
+  .public-site .tl-banner .dots{left:20px;bottom:16px}
+}
+@media(hover:none){.public-site .tl-banner .arr{display:none}}
+.public-site .tl-acts .tl-act:first-child{display:flex}
+.public-site .tl-side li button{min-width:0}.public-site .tl-side li b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.public-site .tl-side li svg{flex:none}

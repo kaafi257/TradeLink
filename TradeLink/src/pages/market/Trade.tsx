@@ -15,15 +15,13 @@ const nav = (id: string) => document.getElementById(id)?.scrollIntoView({ behavi
 /* ---------------------------------------------------------- announcement bar */
 
 /** Only facts we really have: catalogue size and the contact details saved in Admin. */
-export function AnnouncementBar({ products, industries }: { products: number; industries: number }) {
+export function AnnouncementBar({ products }: { products: number; industries: number }) {
   const c = useContact();
   return (
     <div className="tl-ann" role="region" aria-label="Marketplace information">
       <div className="tl-wrap">
-        {products > 0 && <span><Package size={14} />{products} products · {industries} industries</span>}
-        <span><Briefcase size={14} />Wholesale and retail in one catalogue</span>
-        {c.hours && <span className="hide-s"><Clock size={14} />{c.hours}</span>}
-        {c.phone && <a className="hide-s" href={`tel:${c.phone.replace(/[^0-9+]/g, "")}`}><Headphones size={14} />{c.phone}</a>}
+        <span>Wholesale and retail, one marketplace{products > 0 ? ` · ${products} products` : ""}</span>
+        {c.phone && <a className="hide-s" href={`tel:${c.phone.replace(/[^0-9+]/g, "")}`}>{c.phone}</a>}
       </div>
     </div>
   );
@@ -75,9 +73,9 @@ export function TradeHeader({ shelf, suppliers, wishCount, requestCount, signedI
               <option value="all">All</option>{shelf.industries.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
             </select><ChevronDown size={14} /></label>
             <input ref={searchRef} type="search" value={q} onChange={e => { setQ(e.target.value); setFocus(true); }} onFocus={() => setFocus(true)} onBlur={() => window.setTimeout(() => setFocus(false), 150)}
-              placeholder="Search products, brands, categories or suppliers" aria-label="Search" autoComplete="off" />
+              placeholder="Search products" aria-label="Search" autoComplete="off" />
             {q && <button type="button" className="clr" aria-label="Clear" onClick={() => { setQ(""); searchRef.current?.focus(); }}><X size={15} /></button>}
-            <button className="go" aria-label="Search"><Search size={19} /><span>Search</span></button>
+            <button className="go" aria-label="Search"><Search size={18} /></button>
           </form>
           {focus && t.length >= 2 && (
             <ul className="tl-suggest" role="listbox">
@@ -92,10 +90,9 @@ export function TradeHeader({ shelf, suppliers, wishCount, requestCount, signedI
           )}
         </div>
         <div className="tl-acts">
-          <button className="tl-act" onClick={() => nav("contact")} title="Messages and inquiries"><MessageCircle size={20} /><span>Inquiries</span></button>
-          <button className="tl-act" onClick={onWishlist} title="Wishlist"><Heart size={20} />{wishCount > 0 && <i key={wishCount}>{wishCount}</i>}<span>Wishlist</span></button>
-          <button className="tl-act" onClick={onRequest} title="Price request" aria-label={`Price request, ${requestCount} ${requestCount === 1 ? "product" : "products"}`}><ShoppingBag size={20} />{requestCount > 0 && <i key={requestCount}>{requestCount}</i>}<span>Request</span></button>
-          <button className="tl-act" onClick={onAccount} title={signedIn ? "Admin" : "Staff sign in"}><User size={20} /><span>{signedIn ? "Admin" : "Sign in"}</span></button>
+          <button className="tl-act" onClick={onWishlist} title="Wishlist" aria-label="Wishlist"><Heart size={20} />{wishCount > 0 && <i key={wishCount}>{wishCount}</i>}</button>
+          <button className="tl-act" onClick={onRequest} title="Price request" aria-label={`Price request, ${requestCount} ${requestCount === 1 ? "product" : "products"}`}><ShoppingBag size={20} />{requestCount > 0 && <i key={requestCount}>{requestCount}</i>}</button>
+          <button className="tl-act" onClick={onAccount} title={signedIn ? "Admin" : "Sign in"} aria-label={signedIn ? "Admin" : "Sign in"}><User size={20} /></button>
           <button className="tl-act tl-burger" onClick={openMenu} aria-label="Categories" aria-expanded={menuOpen}><Menu size={22} /></button>
         </div>
       </div>
@@ -109,8 +106,8 @@ export function ModeToggle({ mode, onMode, className = "" }: { mode: Mode; onMod
   return (
     <div className={`tl-buy ${mode} ${className}`} role="group" aria-label="I am buying as">
       <i className="thumb" aria-hidden="true" />
-      <button aria-pressed={mode === "individual"} onClick={() => onMode("individual")}><User size={15} />Retail</button>
-      <button aria-pressed={mode === "business"} onClick={() => onMode("business")}><Briefcase size={15} />Wholesale</button>
+      <button aria-pressed={mode === "individual"} onClick={() => onMode("individual")}>Retail</button>
+      <button aria-pressed={mode === "business"} onClick={() => onMode("business")}>Wholesale</button>
     </div>
   );
 }
@@ -131,12 +128,12 @@ export function TradeNav({ mode, industries, categories, counts, onMode, onPickI
   return (
     <nav className="tl-nav" aria-label="Marketplace" ref={ref}>
       <div className="tl-wrap tl-nav-in">
-        <button className={`tl-allcat${open ? " on" : ""}`} aria-expanded={open} onClick={() => setOpen(!open)}><Menu size={18} /><b>All categories</b><ChevronDown size={15} /></button>
+        <button className={`tl-allcat${open ? " on" : ""}`} aria-expanded={open} onClick={() => setOpen(!open)}><Menu size={17} /><b>Categories</b></button>
         <div className="tl-links">
-          <button onClick={() => go("business", "wholesale")}><Briefcase size={16} />Wholesale</button>
-          <button onClick={() => go(null, "suppliers")}><Building2 size={16} />Suppliers</button>
-          <button onClick={() => go(null, "new-arrivals")}><Sparkles size={16} />New arrivals</button>
-          <button className="rfq" onClick={onRfq}><ClipboardList size={16} />Request a quote</button>
+          <button onClick={() => go("business", "wholesale")}>Wholesale</button>
+          <button onClick={() => go(null, "suppliers")}>Suppliers</button>
+          <button onClick={() => go(null, "new-arrivals")}>New</button>
+          <button className="rfq" onClick={onRfq}>Get a quote</button>
         </div>
         <ModeToggle mode={mode} onMode={onMode} />
       </div>
@@ -184,11 +181,11 @@ export function TradeHero({ shelf, slides, counts, onPickIndustry, onPickCategor
     <section className="tl-hero" id="top">
       <div className="tl-wrap tl-hero-in">
         <aside className="tl-side" aria-label="Categories" onMouseLeave={() => setHover(null)}>
-          <h2><Menu size={16} />Categories</h2>
+          <h2>Categories</h2>
           <ul>
             {shelf.industries.map(i => (
               <li key={i.id} style={tone(i.name)} className={hover === i.id ? "on" : ""} onMouseEnter={() => setHover(i.id)}>
-                <button onClick={() => onPickIndustry(i)} onFocus={() => setHover(i.id)}><span className="ic"><IconFor name={i.icon} size={16} /></span><b>{i.name}</b><ChevronRight size={14} /></button>
+                <button onClick={() => onPickIndustry(i)} onFocus={() => setHover(i.id)}><b>{i.name}</b><ChevronRight size={14} /></button>
               </li>
             ))}
           </ul>
@@ -207,14 +204,13 @@ export function TradeHero({ shelf, slides, counts, onPickIndustry, onPickCategor
               {s.img ? <img src={s.img} alt="" loading={k === 0 ? "eager" : "lazy"} /> : <span className="wm"><IconFor name={s.ind.icon} size={220} /></span>}
               <div className="tx">
                 {k === 0 ? <h1>{s.ind.name}</h1> : <h2>{s.ind.name}</h2>}
-                {s.ind.description && <p>{s.ind.description}</p>}
                 <button tabIndex={k === n ? 0 : -1} onClick={() => onPickIndustry(s.ind)}>Shop now<ArrowRight size={16} /></button>
               </div>
             </div>
           ))}
           {len > 1 && (
             <div className="dots" role="tablist" aria-label="Banners">
-              {slides.map((s, k) => <button key={s.ind.id} role="tab" aria-selected={k === n} aria-label={s.ind.name} className={k === n ? "on" : ""} onClick={() => setN(k)} />)}
+              {slides.map((s, k) => <button key={s.ind.id} role="tab" aria-selected={k === n} aria-label={s.ind.name} className={k === n ? "on" : ""} onClick={() => setN(k)}><i key={k === n ? `on${n}` : "off"} className={hold ? "held" : ""} /></button>)}
             </div>
           )}
           {cur && len > 1 && <><button className="arr l" aria-label="Previous banner" onClick={() => setN((n - 1 + len) % len)}><ChevronRight size={20} style={{ transform: "scaleX(-1)" }} /></button><button className="arr r" aria-label="Next banner" onClick={() => setN((n + 1) % len)}><ChevronRight size={20} /></button></>}
