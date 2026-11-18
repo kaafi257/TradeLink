@@ -35,6 +35,7 @@ export default function SupplierRegister() {
   const [industries, setIndustries] = useState<PublicIndustry[]>([]);
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [previewBad, setPreviewBad] = useState(false);
   const [docs, setDocs] = useState<File[]>([]);
   const [token, setToken] = useState("");
   const [busy, setBusy] = useState(false);
@@ -50,7 +51,7 @@ export default function SupplierRegister() {
   useEffect(() => {
     if (!logo) { setLogoPreview(null); return undefined; }
     const url = URL.createObjectURL(logo);
-    setLogoPreview(url);
+    setLogoPreview(url); setPreviewBad(false);
     return () => { URL.revokeObjectURL(url); };
   }, [logo]);
 
@@ -182,9 +183,9 @@ export default function SupplierRegister() {
             <div className="sp-files">
               <div className="sp-logo-pick">
                 <button type="button" className="sp-logo-box" onClick={() => logoInput.current?.click()} aria-label="Choose a logo">
-                  {logoPreview ? <img src={logoPreview} alt="Logo preview" /> : <ImagePlus size={24} />}
+                  {logoPreview && !previewBad ? <img src={logoPreview} alt="Logo preview" onError={() => setPreviewBad(true)} /> : <ImagePlus size={24} />}
                 </button>
-                <div><b>Business logo</b><small>JPG, PNG or WebP</small>
+                <div><b>Business logo</b><small>{logo ? logo.name : "JPG, PNG or WebP"}</small>
                   {logo && <button type="button" className="sp-link" onClick={() => setLogo(null)}>Remove</button>}</div>
                 <input ref={logoInput} type="file" accept={LOGO_ACCEPT} hidden onChange={e => { pickLogo(e.target.files?.[0]); e.target.value = ""; }} />
               </div>
