@@ -3,6 +3,8 @@ import { ArrowRight, Building2, Check, MapPin, ChevronRight, ClipboardList, Cloc
 import { Brand, LogoMark } from "../../components/Brand";
 import { ContactIcons } from "../../components/ContactActions";
 import { money } from "../../lib/format";
+import { useProductImages } from "../../lib/gallery";
+import { ProductGallery } from "../../components/ProductGallery";
 import { IconFor } from "../../lib/icons";
 import { lookFor } from "../../lib/theme";
 import type { PublicCategory, PublicIndustry, PublicProduct, PublicSupplier } from "../../lib/supabase";
@@ -598,12 +600,13 @@ export function ProductDialog({ p, shelf, onClose, onStore }: { p: PublicProduct
   const wished = shelf.wished(p.id);
   const added = shelf.inRequest(p.id);
   const fashion = shelf.isFashion(p);
+  const photos = useProductImages(p);
   return (
     <div className="mk-layer" role="dialog" aria-modal="true" aria-label={p.name}>
       <button className="mk-scrim" aria-label="Close" onClick={onClose} />
       <div className="mk-dialog">
         <button className="mk-x" aria-label="Close" onClick={onClose}><X size={18} /></button>
-        <div className="mk-dmedia">{p.image_url ? <img src={p.image_url} alt={p.name} /> : <span className="ph"><IconFor name={ind?.icon} size={44} /></span>}</div>
+        <div className={`mk-dmedia${photos.length > 1 ? " gal" : ""}`}><ProductGallery urls={photos} name={p.name} fallback={<span className="ph"><IconFor name={ind?.icon} size={44} /></span>} /></div>
         <div className="mk-dbody">
           <small className="mk-cat">{[ind?.name, shelf.catName(p)].filter(Boolean).join(" · ")}</small>
           <h3>{p.name}</h3>

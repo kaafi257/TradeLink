@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { ImagePlus, Plus, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ImagePlus, Plus, X } from "lucide-react";
 import { requireSupabase, type ProductImage, type ProductOption } from "../lib/supabase";
 import { IMAGE_ACCEPT, checkImage, removeProductImage, uploadProductImage } from "../lib/upload";
 
+const MAX_EXTRA = 7; // the main image plus up to 7 more = 8 photos in the gallery
 type Photo = { key: string; id?: string; url: string; file?: File };
 type Color = { label: string; hex: string };
 
@@ -47,9 +48,10 @@ export function useFashionEditor(productId: string | null, notify: (m: string) =
       if (problem) { notify(problem); continue; }
       next.push({ key: crypto.randomUUID(), url: URL.createObjectURL(f), file: f });
     }
-    setPhotos(p => [...p, ...next].slice(0, 8));
+    setPhotos(p => [...p, ...next].slice(0, MAX_EXTRA));
   };
   const removePhoto = (key: string) => setPhotos(p => p.filter(x => x.key !== key));
+  const movePhoto = (key: string, d: number) => setPhotos(p => { const i = p.findIndex(x => x.key === key), j = i + d; if (i < 0 || j < 0 || j >= p.length) return p; const c = [...p]; [c[i], c[j]] = [c[j]!, c[i]!]; return c; });
 
   /** Saves photos and options for a product that already exists. Throws on failure. */
   const save = async (id: string) => {
@@ -78,7 +80,7 @@ export function useFashionEditor(productId: string | null, notify: (m: string) =
     if (rows.length) { const ins = await s.from("product_options").insert(rows); if (ins.error) throw ins.error; }
   };
 
-  return { ready, photos, addPhotos, removePhoto, sizes, setSizes, colors, setColors, save };
+  return { ready, photos, addPhotos, removePhoto, movePhoto, sizes, setSizes, colors, setColors, save };
 }
 
 export function FashionFields({ ed }: { ed: ReturnType<typeof useFashionEditor> }) {
@@ -106,18 +108,22 @@ export function FashionFields({ ed }: { ed: ReturnType<typeof useFashionEditor> 
   return (
     <>
       <div className="full image-field">
-        <span className="image-label">More photos (shown in the gallery, up to 8)</span>
+        <span className="image-label">More photos (gallery: main image plus up to 7 more)</span>
         <div className="gallery-edit">
-          {ed.photos.map(p => (
+          {ed.photos.map((p, i) => (
             <span className="gallery-thumb" key={p.key}>
               <img src={p.url} alt="" />
               <button type="button" aria-label="Remove photo" onClick={() => ed.removePhoto(p.key)}><X size={14} /></button>
+              <span className="gallery-move">
+                <button type="button" aria-label="Move earlier" disabled={i === 0} onClick={() => ed.movePhoto(p.key, -1)}><ArrowLeft size={13} /></button>
+                <button type="button" aria-label="Move later" disabled={i === ed.photos.length - 1} onClick={() => ed.movePhoto(p.key, 1)}><ArrowRight size={13} /></button>
+              </span>
             </span>
           ))}
-          {ed.photos.length < 8 && <button type="button" className="gallery-add" onClick={() => fileRef.current?.click()}><ImagePlus /><small>Add photos</small></button>}
+          {ed.photos.length < MAX_EXTRA && <button type="button" className="gallery-add" onClick={() => fileRef.current?.click()}><ImagePlus /><small>Add photos</small></button>}
           <input ref={fileRef} type="file" accept={IMAGE_ACCEPT} multiple onChange={pick} hidden />
         </div>
-        <small>The first extra photo appears when customers hover the product card.</small>
+        <small>Customers see the main image first, then these in this order. Use the arrows to reorder.</small>
       </div>
       <div className="full opt-field">
         <span className="image-label">Sizes</span>
