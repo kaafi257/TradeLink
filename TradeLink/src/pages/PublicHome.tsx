@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Briefcase, Check, ClipboardList, Package, Plus, Search, Tag, Trash2, User, X, Layers } from "lucide-react";
+import { ArrowRight, Briefcase, Check, ClipboardList, Package, Percent, Plus, Search, ShoppingBag, Sparkles, Tag, Trash2, User, X, Layers } from "lucide-react";
 
 import { ContactIcons, ContactPills, FloatingContact } from "../components/ContactActions";
 import { TURNSTILE_SITE_KEY, Turnstile } from "../components/Turnstile";
@@ -9,7 +9,8 @@ import { IconFor } from "../lib/icons";
 import { useInstall } from "../lib/install";
 import { useAuth } from "../lib/auth";
 import { useWishlist } from "../lib/wishlist";
-import { Featured, IndustryGrid, MarketFooter, MarketHeader, MarketHero, MarketShop, Popular, Steps, ProductDialog, SupplierDialog, Suppliers, WishlistDrawer, type Shelf } from "./market/Market";
+import { AnnouncementBar, BottomNav, RfqSection, TradeHeader, TradeHero, TradeNav, TradeRow, TrustStrip } from "./market/Trade";
+import { Featured, IndustryGrid, MarketFooter, MarketShop, Popular, ProductDialog, SupplierDialog, Suppliers, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
 import "./home.css";
@@ -187,7 +188,7 @@ export default function PublicHome() {
     const el = document.getElementById(id);
     if (!el) return;
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const header = document.querySelector<HTMLElement>(".hm-header")?.offsetHeight ?? 72;
+    const header = document.querySelector<HTMLElement>(".tl-head")?.offsetHeight ?? 72;
     const y = id === "top" ? 0 : el.getBoundingClientRect().top + window.scrollY - header + 1;
     window.scrollTo({ top: y, behavior: reduce ? "auto" : "smooth" });
     history.replaceState(null, "", `#${id}`);
@@ -299,6 +300,17 @@ export default function PublicHome() {
     inRequest: inCart, addToRequest, wished: wish.has, toggleWish: wish.toggle, open: setQuick,
   };
 
+  const byNew = (a: PublicProduct, b: PublicProduct) => (b.created_at ?? "").localeCompare(a.created_at ?? "");
+  const wholesaleList = useMemo(() => products.filter(p => allows(p, "business")).sort((a, b) => Number(b.min_order_quantity) - Number(a.min_order_quantity)).slice(0, 12), [products]);
+  const retailList = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0).slice(0, 12), [products]);
+  const newest = useMemo(() => [...products].filter(p => allows(p, mode)).sort(byNew).slice(0, 12), [products, mode]);
+  const offers = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0 && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price)).slice(0, 12), [products]);
+  const slides = useMemo(() => mInds.map(ind => {
+    const ps = visible.filter(p => catById.get(catKey(p))?.industry_id === ind.id);
+    const img = ps.find(p => p.image_url)?.image_url ?? cats.find(c => c.industry_id === ind.id && c.image_url)?.image_url ?? null;
+    return { ind, img, count: ps.length };
+  }).filter(s => s.count > 0).slice(0, 5), [mInds, visible, catById, cats]);
+
   const emptyMessage =
     status === "loading" ? "Loading our products…"
     : status === "offline" ? "The product catalogue is not connected yet."
@@ -309,22 +321,25 @@ export default function PublicHome() {
 
   return (
     <div className={`public-site${hasCart ? " has-cart" : ""}`}>
-      <MarketHeader
-        industries={headerInds} wishCount={wishCount} requestCount={cart.length} signedIn={!!session} canInstall={app.canInstall}
-        onInstall={() => { setMenuOpen(false); void app.install(); }}
-        onIndustry={i => (i ? openIndustry(i) : (setIndustryId("all"), setCategoryId("all"), go("public-products")))}
-        onNav={go} onWishlist={() => setWishOpen(true)} onRequest={() => setQuoteOpen(true)} onAccount={() => navigate(session ? "/admin" : "/login")}
-        onSearch={() => { go("top"); window.setTimeout(() => searchRef.current?.focus(), 350); }}
-        menuOpen={menuOpen} setMenuOpen={setMenuOpen}
-      />
-      <MarketHero shelf={shelf} onMode={changeMode} query={heroQuery} setQuery={setHeroQuery} searchRef={searchRef}
-        onSubmit={() => { setSearch(heroQuery); setIndustryId("all"); setCategoryId("all"); go("public-products"); }}
-        onPickIndustry={openIndustry} onPickCategory={openCategory} />
+      <AnnouncementBar products={products.length} industries={mInds.filter(i => (indCount.get(i.id) ?? 0) > 0).length} />
+      <TradeHeader shelf={shelf} suppliers={suppliers} wishCount={wishCount} requestCount={cart.length} signedIn={!!session}
+        onWishlist={() => setWishOpen(true)} onRequest={() => setQuoteOpen(true)} onAccount={() => navigate(session ? "/admin" : "/login")}
+        onSearch={(text, ind) => { setSearch(text); setIndustryId(ind); setCategoryId("all"); go("public-products"); }}
+        onPickIndustry={openIndustry} onPickCategory={openCategory} onSupplier={setSupplier} searchRef={searchRef}
+        openMenu={() => setMenuOpen(v => !v)} menuOpen={menuOpen} />
+      <TradeNav industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} />
+      <TradeHero shelf={shelf} slides={slides} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory}
+        onRfq={() => go("rfq")} onAccount={() => navigate(session ? "/admin" : "/login")} signedIn={!!session} />
       <IndustryGrid items={gridInds} onPick={i => (document.getElementById(`ind-${i.id}`) ? go(`ind-${i.id}`) : openIndustry(i))} />
-      <Steps />
+      <TradeRow id="wholesale" icon={<Briefcase size={17} />} title="Wholesale deals" note="Minimum order shown on each product" shelf={{ ...shelf, mode: "business" }} items={wholesaleList} more={{ label: "View all", onClick: () => { changeMode("business"); go("public-products"); } }} />
+      <TradeRow id="retail" icon={<ShoppingBag size={17} />} title="Shop retail" note="Unit prices for individual buyers" shelf={{ ...shelf, mode: "individual" }} items={retailList} more={{ label: "View all", onClick: () => { changeMode("individual"); go("public-products"); } }} />
+      <TradeRow id="new-arrivals" icon={<Sparkles size={17} />} title="New arrivals" shelf={shelf} items={newest} />
+      <TradeRow id="offers" icon={<Percent size={17} />} title="Special offers" note="Active discounts" shelf={{ ...shelf, mode: "individual" }} items={offers} />
       <Featured shelf={shelf} status={status} emptyText={emptyMessage} onViewAll={openIndustry} />
       <Popular shelf={shelf} />
       <Suppliers items={suppliers} industries={inds} catNames={supCatNames} onOpen={setSupplier} />
+      <RfqSection products={products} industries={mInds} categories={cats} catOf={p => catById.get(catKey(p))} />
+      <TrustStrip />
 
       <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
         industry={effIndustry} category={effCategory} setIndustry={setIndustryId} setCategory={setCategoryId}
@@ -338,6 +353,7 @@ export default function PublicHome() {
           <button className="btn gold" onClick={() => setQuoteOpen(true)}>Send <ArrowRight size={15} /></button>
         </div>
       )}
+      <BottomNav wishCount={wishCount} requestCount={cart.length} onHome={() => go("top")} onCategories={() => setMenuOpen(true)} onSearch={() => { go("top"); window.setTimeout(() => searchRef.current?.focus(), 300); }} onWishlist={() => setWishOpen(true)} onRequest={() => setQuoteOpen(true)} />
       <FloatingContact />
       {supplier && <SupplierDialog s={supplier} industries={inds} cats={supCatNames(supplier.id)} onClose={() => setSupplier(null)} />}
       {quick && <ProductDialog p={quick} shelf={shelf} onClose={() => setQuick(null)} onStore={() => setQuick(null)} />}

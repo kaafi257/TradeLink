@@ -537,7 +537,7 @@ export function Popular({ shelf }: { shelf: Shelf }) {
   if (ranked.list.length === 0) return null;
   return (
     <Reveal className="mk-block" as="section">
-      <div className="mk-wrap">
+      <div className="mk-wrap" id="best-sellers">
         <div className="mk-head"><h2 style={tone("Popular")}><span className="ic">{ranked.hasBest ? <Flame size={17} /> : <Sparkles size={17} />}</span><span className="sr-only">{ranked.hasBest ? "Popular products" : "Latest products"}</span></h2></div>
         {chips.length > 1 && (
           <div className="mk-chips" role="group" aria-label="Filter by industry">
