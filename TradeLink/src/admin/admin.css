@@ -699,3 +699,115 @@
 .gallery-thumb .gallery-move{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;padding:3px;background:linear-gradient(transparent,#0008)}
 .gallery-thumb .gallery-move button{position:static;width:22px;height:22px}
 .gallery-thumb .gallery-move button:disabled{opacity:.3;cursor:default}
+
+/* =====================================================================
+   Admin redesign: light and clean. White workspace, deep navy sidebar,
+   soft blue accents, flat rounded cards. Behaviour is unchanged.
+   ===================================================================== */
+.admin-layout{--bg:#f5f7fb;--surface:#fff;--ink:#0b1f3a;--muted:#6b7a90;--line:#e3e9f3;--deep:#0b1f3a;--teal:#2f6df6;--tint:#eef3fd;--radius:16px;--ease:cubic-bezier(.22,.8,.3,1);font-family:'Inter','DM Sans',system-ui,sans-serif}
+.admin-layout .dash-glass,.admin-layout{--glass:#fff;--glass-edge:var(--line);--glass-shadow:0 1px 2px rgba(11,31,58,.04),0 10px 28px -20px rgba(11,31,58,.22)}
+.admin-layout .dash-glass::before,.admin-layout .dash-glass::after{display:none}
+.admin-layout .glass,.admin-layout .table-panel,.admin-layout .setting-card,.admin-layout .report-cards>div,.admin-layout .inline-form,.admin-layout .activity-page,.admin-layout .info-banner,.admin-layout .summary-strip>.metric,.admin-layout .panel{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--glass-shadow);-webkit-backdrop-filter:none;backdrop-filter:none}
+
+/* sidebar */
+.admin-layout .sidebar{background:linear-gradient(180deg,#0d2547 0%,#0b1f3a 55%,#08172d 100%);border-right:1px solid #ffffff0f}
+.admin-layout .sidebar-brand{border-bottom:1px solid #ffffff12}
+.admin-layout .side-nav{gap:2px}
+.admin-layout .side-nav a{height:42px;border-radius:12px;padding:0 14px;gap:13px;color:#b4c3da;font-size:14px;font-weight:500;transition:background .2s,color .2s,transform .25s var(--ease)}
+.admin-layout .side-nav a svg{width:18px;height:18px;opacity:.85}
+.admin-layout .side-nav a:hover{background:#ffffff0f;color:#fff}
+.admin-layout .side-nav a.selected{background:#ffffff17;color:#fff;font-weight:600;box-shadow:none}
+.admin-layout .side-nav a.selected svg{opacity:1;color:#8fb2ff}
+.admin-layout .side-nav a.selected:before{background:#5b8cff;left:-10px;width:3px}
+.admin-layout .sidebar-user,.admin-layout .logout-button{color:#b4c3da}
+.admin-layout .logout-button{border-radius:12px;transition:background .2s,color .2s}.admin-layout .logout-button:hover{background:#ffffff0f;color:#fff}
+
+/* top bar */
+.admin-layout .admin-topbar{background:rgba(255,255,255,.9);-webkit-backdrop-filter:saturate(1.4) blur(14px);backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line);min-height:64px}
+.admin-layout .topbar-title{font:700 17px 'Inter',sans-serif;letter-spacing:-.01em;color:var(--ink)}
+.admin-layout .global-search{height:42px;border-radius:999px;background:var(--bg);border:1px solid var(--line);padding-inline:14px;transition:border-color .2s,box-shadow .2s,background .2s}
+.admin-layout .global-search:focus-within{background:#fff;border-color:var(--teal);box-shadow:0 0 0 4px #2f6df61c}
+.admin-layout .notification-button{border-radius:50%;border:1px solid var(--line)}
+.admin-layout .notification-button:hover{background:var(--tint);color:var(--teal)}
+.admin-layout .avatar{border-radius:50%;background:linear-gradient(135deg,#2f6df6,#0b1f3a)}
+
+/* page background: calm, no colour blobs */
+.admin-layout .admin-main{background:var(--bg)}
+.admin-layout .admin-content{max-width:1360px}
+
+/* headings: flat tinted icon tile instead of a glossy gradient */
+.admin-layout .ph-ico,.admin-layout .sc-ico,.admin-layout .report-cards>div svg{background:var(--tint);color:var(--teal);box-shadow:none;border-radius:14px}
+.admin-layout .ph-title h1,.admin-layout .page-heading h1{font:700 clamp(1.35rem,1.1rem + .9vw,1.75rem)/1.15 'Inter',sans-serif;letter-spacing:-.02em;color:var(--ink)}
+.admin-layout .dash-head h1{font:700 clamp(1.5rem,1.1rem + 1.4vw,2rem)/1.1 'Inter',sans-serif;letter-spacing:-.025em}
+
+/* buttons: navy primary, outline secondary, blue replaces gold */
+.admin-layout .btn{border-radius:999px;font-weight:600;letter-spacing:.005em;transition:background .2s,transform .25s var(--ease),box-shadow .25s}
+.admin-layout .btn:active{transform:scale(.97)}
+.admin-layout .btn.green,.admin-layout .btn.gold{background:var(--deep);color:#fff}
+.admin-layout .btn.green:hover,.admin-layout .btn.gold:hover{background:#17335d;box-shadow:0 10px 22px -12px #0b1f3acc;transform:translateY(-1px)}
+.admin-layout .btn.outline{border:1px solid var(--line);background:#fff;color:var(--ink)}
+.admin-layout .btn.outline:hover{background:var(--tint);border-color:#cfdcf5}
+.admin-layout .icon-action,.admin-layout .ibtn{border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);transition:background .2s,color .2s,transform .2s var(--ease)}
+.admin-layout .icon-action:hover,.admin-layout .ibtn:hover{background:var(--tint);color:var(--teal);transform:translateY(-1px)}
+.admin-layout .link-btn,.admin-layout .text-action{color:var(--teal)}
+
+/* count tiles + dashboard stats */
+.admin-layout .metric-ico,.admin-layout .stat-icon{background:var(--tint)!important;color:var(--teal);box-shadow:none}
+.admin-layout .metric.gold .metric-ico,.admin-layout .stat-card.gold .stat-icon{background:#fff4dc!important;color:#b27200}
+.admin-layout .metric.red .metric-ico{background:#fdecea!important;color:#c0392b}
+.admin-layout .metric.mint .metric-ico{background:#e5f6f2!important;color:#12806f}
+.admin-layout .metric b,.admin-layout .stat-card b{font-family:'Inter',sans-serif;font-weight:700;letter-spacing:-.03em}
+.admin-layout .dash-glass .stats-grid .stat-card,.admin-layout .stat-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--glass-shadow);transition:transform .3s var(--ease),box-shadow .3s}
+.admin-layout .stat-card:hover,.admin-layout .summary-strip>.metric:hover{transform:translateY(-2px);box-shadow:0 14px 30px -18px rgba(11,31,58,.35)}
+.admin-layout .panel-head{border-bottom:1px solid var(--line)}
+.admin-layout .panel-head b{font:700 15px 'Inter',sans-serif}
+.admin-layout .panel-head svg{color:var(--teal)}
+.admin-layout .range-tabs{background:var(--bg);border-radius:999px}.admin-layout .range-tabs button{border-radius:999px}
+.admin-layout .range-tabs button.on{background:var(--deep);color:#fff;box-shadow:none}
+.admin-layout .dash-glass .range-tabs{background:var(--bg)}.admin-layout .dash-glass .range-tabs button.on{background:var(--deep);color:#fff}
+
+/* tables and record rows */
+.admin-layout table thead th{background:#f8fafd;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid var(--line)}
+.admin-layout table td{border-bottom:1px solid #eef2f8}
+.admin-layout table tbody tr:hover{background:#f8fafd}
+.admin-layout .table-toolbar{border-bottom:1px solid var(--line)}
+.admin-layout .table-toolbar>span{background:var(--bg);border:1px solid var(--line);border-radius:999px}
+.admin-layout .inline-form input,.admin-layout .inline-form select,.admin-layout .table-panel input,.admin-layout .table-panel select{background:#fff}
+.admin-layout .rec{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:none;transition:transform .3s var(--ease),box-shadow .3s,border-color .3s}
+.admin-layout .rec:hover{transform:translateY(-1px);border-color:#cfdcf5;box-shadow:0 14px 28px -20px rgba(11,31,58,.35)}
+.admin-layout .rec::before{background:#bcd0fb}
+.admin-layout .status{font-weight:700;letter-spacing:.01em}
+.admin-layout .status-tabs button.on{background:var(--deep)}
+
+/* forms and modals */
+.admin-layout input,.admin-layout select,.admin-layout textarea{border-radius:12px;border-color:var(--line);transition:border-color .2s,box-shadow .2s}
+.admin-layout input:focus,.admin-layout select:focus,.admin-layout textarea:focus{border-color:var(--teal);box-shadow:0 0 0 4px #2f6df61c;outline:0}
+.admin-layout .modal{border-radius:22px;border:1px solid var(--line);box-shadow:0 40px 80px -30px rgba(11,31,58,.5)}
+.admin-layout .modal-backdrop,.modal-backdrop{background:rgba(7,20,39,.5)}
+.admin-layout .toast{border-radius:999px;background:var(--deep)}
+
+/* gentle entrance for each page */
+.admin-layout .admin-content>*{animation:ad-in .45s var(--ease) both}
+@keyframes ad-in{from{opacity:0;transform:translateY(8px)}}
+@media(prefers-reduced-motion:reduce){.admin-layout .admin-content>*{animation:none}.admin-layout *{transition:none!important}}
+@media(max-width:900px){.admin-layout .admin-topbar{padding-inline:14px}.admin-layout .mobile-menu{border-radius:50%;border:1px solid var(--line)}}
+/* dashboard tiles: flat, tinted icon, no colour glow */
+.admin-layout .gs::after{display:none}
+.admin-layout .gs-icon{background:var(--tint);color:var(--teal);box-shadow:none}
+.admin-layout .gs.gold .gs-icon{background:#fff4dc;color:#b27200}
+.admin-layout .gs.mint .gs-icon{background:#e5f6f2;color:#12806f}
+.admin-layout .gs-value{font-family:'Inter',sans-serif;font-weight:700;letter-spacing:-.03em}
+.admin-layout .gs.link:hover{box-shadow:0 14px 30px -18px rgba(11,31,58,.35)}
+.admin-layout .thumb-icon,.admin-layout .industry-icon{background:var(--tint);color:var(--teal)}
+.admin-layout .page-heading .btn{white-space:nowrap}
+.admin-layout .rec-lead img,.admin-layout .rec-lead .thumb,.admin-layout .rec-lead>span:first-child{border-radius:12px}
+.admin-layout .rec-lead{background:var(--tint);color:var(--teal);box-shadow:none;border-radius:14px}
+.admin-layout .rec-lead b{font-family:'Inter',sans-serif;font-weight:700}
+.admin-layout .rec-lead img{border-radius:14px}
+.admin-layout .rec .btn{min-height:36px;height:36px;padding:0 16px;font-size:13.5px;white-space:nowrap}
+/* dialogs must cover the top bar too (the old glow layer isolated them beneath it) */
+.admin-layout .dash-glass{isolation:auto}
+.admin-layout .modal-backdrop{z-index:100}
+.admin-layout .modal h2,.admin-layout .modal h3{font-family:'Inter',sans-serif;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
+.admin-layout .modal .kicker,.admin-layout .modal small.kicker{color:var(--teal);letter-spacing:.14em}
+.admin-layout .modal{background:#fff}
