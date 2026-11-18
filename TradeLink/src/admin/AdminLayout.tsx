@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Bell, Check, LogOut, Menu, Search } from "lucide-react";
 import { Brand } from "../components/Brand";
@@ -15,7 +15,7 @@ import Orders from "./pages/Orders";
 import Deliveries from "./pages/Deliveries";
 import Staff from "./pages/Staff";
 import Inventory from "./pages/Inventory";
-import Reports from "./pages/Reports";
+const Reports = lazy(() => import("./pages/Reports"));
 import Customers from "./pages/Customers";
 import Categories from "./pages/Categories";
 import Suppliers from "./pages/Suppliers";
@@ -102,7 +102,7 @@ function Shell() {
         </header>
 
         <main className="admin-content dash-glass">
-          <Routes>
+          <Suspense fallback={null}><Routes>
             <Route index element={<Dashboard />} />
             <Route path="products" element={g(["owner", "manager", "sales", "inventory", "delivery"], <Products />)} />
             <Route path="categories" element={g(["owner", "manager", "inventory"], <Categories />)} />
@@ -119,7 +119,7 @@ function Shell() {
             <Route path="activity" element={g(["owner", "manager"], <ActivityLog />)} />
             <Route path="settings" element={g(["owner", "manager"], <SettingsPage />)} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
-          </Routes>
+          </Routes></Suspense>
         </main>
         <footer className="admin-footer"><small>© {new Date().getFullYear()} TradeLink Food Wholesale</small></footer>
       </div>
