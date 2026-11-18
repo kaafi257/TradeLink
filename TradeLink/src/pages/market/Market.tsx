@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { ArrowRight, Building2, Check, MapPin, ChevronRight, ClipboardList, Clock, Download, Eye, Flame, Headphones, Heart, LogIn, Menu, Package, Plus, Search, ShoppingBag, Store, Sparkles, Tag, Trash2, User, Briefcase, X, Layers, MessageCircle, ArrowUpDown, ChevronDown, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, Building2, Check, MapPin, ChevronRight, ClipboardList, Clock, Download, Eye, Flame, Headphones, Heart, LogIn, Menu, Package, Plus, Search, ShoppingBag, Store, Sparkles, Tag, Trash2, User, Briefcase, X, Layers, MessageCircle, ArrowUpDown, ChevronDown, ChevronUp, SlidersHorizontal } from "lucide-react";
 import { Brand, LogoMark } from "../../components/Brand";
 import { ContactIcons } from "../../components/ContactActions";
 import { money } from "../../lib/format";
@@ -679,26 +679,38 @@ export function Steps() {
 export function MarketFooter({ industries, onIndustry, onRequest, onAccount, signedIn }: {
   industries: PublicIndustry[]; onIndustry: (i: PublicIndustry) => void; onRequest: () => void; onAccount: () => void; signedIn: boolean;
 }) {
+  const go = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   return (
     <footer className="mk-footer" id="contact">
       <div className="mk-wrap mk-fgrid">
         <div className="mk-fbrand">
           <Brand light />
+          <p>Wholesale and retail, one marketplace.</p>
           <ContactIcons />
         </div>
         {industries.length > 0 && (
-          <nav aria-label="Industries"><h4 title="Industries"><Layers size={18} /></h4>
-            <ul>{industries.slice(0, 8).map(i => <li key={i.id}><button onClick={() => onIndustry(i)}>{i.name}</button></li>)}</ul>
+          <nav aria-label="Shop by industry"><h4>Shop</h4>
+            <ul>{industries.slice(0, 6).map(i => <li key={i.id}><button onClick={() => onIndustry(i)}>{i.name}</button></li>)}</ul>
           </nav>
         )}
-        <nav aria-label="Support" className="mk-fico"><h4 title="Support"><Headphones size={18} /></h4>
-          <button aria-label="Request a price" title="Request a price" onClick={onRequest}><ClipboardList size={19} /></button>
-          <a href="#public-products" aria-label="Shop" title="Shop" onClick={e => { e.preventDefault(); document.getElementById("public-products")?.scrollIntoView({ behavior: "smooth" }); }}><Store size={19} /></a>
-          <a href="/supplier/register" aria-label="Become a supplier" title="Become a supplier"><Building2 size={19} /></a>
-          <button aria-label={signedIn ? "Admin" : "Staff sign in"} title={signedIn ? "Admin" : "Staff sign in"} onClick={onAccount}><LogIn size={19} /></button>
+        <nav aria-label="Marketplace"><h4>Marketplace</h4>
+          <ul>
+            <li><button onClick={() => go("public-products")}>All products</button></li>
+            <li><button onClick={() => go("suppliers")}>Suppliers</button></li>
+            <li><button onClick={onRequest}>Request a quote</button></li>
+          </ul>
+        </nav>
+        <nav aria-label="Sellers and staff"><h4>Sell on TradeLink</h4>
+          <ul>
+            <li><a href="/supplier/register">Become a supplier</a></li>
+            <li><a href="/login" onClick={e => { e.preventDefault(); onAccount(); }}>{signedIn ? "Admin" : "Sign in"}</a></li>
+          </ul>
         </nav>
       </div>
-      <div className="mk-wrap mk-copy"><small>© {new Date().getFullYear()} TradeLink</small></div>
+      <div className="mk-wrap mk-copy">
+        <small>© {new Date().getFullYear()} TradeLink</small>
+        <button type="button" className="mk-top" onClick={() => go("top")} aria-label="Back to top"><ChevronUp size={16} />Top</button>
+      </div>
     </footer>
   );
 }
