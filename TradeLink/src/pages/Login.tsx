@@ -21,6 +21,7 @@ export default function Login() {
     try {
       const { error: authError } = await requireSupabase().auth.signInWithPassword({ email, password });
       if (authError) throw authError;
+      void Promise.resolve(requireSupabase().rpc("log_login")).catch(() => {}); // sign-in history for the audit report
       // The effect above sends the user to the right place once their profile has loaded.
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to sign in");

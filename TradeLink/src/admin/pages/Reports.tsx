@@ -6,19 +6,20 @@ import { fmtDate, fmtDateTime, fmtMoney, fmtN, iso, num, rangeFor, TZ, useRpc, t
 import { Donut, HBars, LineChart, PALETTE } from "../reports/charts";
 import { Badge, Box, Cards, DataTable, DateBar, Err, Note, Select, Spin, type Card } from "../reports/parts";
 import { requireSupabase } from "../../lib/supabase";
+import { Audit, Market, Products, Suppliers } from "../reports/more";
 
 type Tab = { key: string; label: string; icon: ReactNode; soon?: boolean };
 const TABS: Tab[] = [
   { key: "overview", label: "Overview", icon: <LayoutDashboard /> },
   { key: "customers", label: "Customers", icon: <Users /> },
-  { key: "suppliers", label: "Suppliers", icon: <Building2 />, soon: true },
-  { key: "products", label: "Products", icon: <Package />, soon: true },
+  { key: "suppliers", label: "Suppliers", icon: <Building2 /> },
+  { key: "products", label: "Products", icon: <Package /> },
   { key: "orders", label: "Orders", icon: <ShoppingCart /> },
   { key: "inquiries", label: "Inquiries & RFQ", icon: <FileQuestion /> },
   { key: "inventory", label: "Inventory", icon: <Boxes /> },
   { key: "financial", label: "Financial", icon: <Banknote /> },
-  { key: "audit", label: "User Activity", icon: <ShieldCheck />, soon: true },
-  { key: "market", label: "Marketplace", icon: <Store />, soon: true },
+  { key: "audit", label: "User Activity", icon: <ShieldCheck /> },
+  { key: "market", label: "Marketplace", icon: <Store /> },
 ];
 
 type Ctx = { r: Range; args: { p_from: string; p_to: string }; go: (t: string) => void };
@@ -233,7 +234,7 @@ export default function Reports() {
   const args = useMemo(() => ({ p_from: iso(r.from), p_to: iso(r.to) }), [r]);
   const c: Ctx = { r, args, go: setTab };
   const cur = TABS.find(t => t.key === tab)!;
-  const body = cur.soon ? <Soon t={cur} /> : tab === "overview" ? <Overview c={c} /> : tab === "customers" ? <Customers c={c} /> : tab === "orders" ? <Orders c={c} /> : tab === "inquiries" ? <Inquiries c={c} /> : tab === "inventory" ? <Inventory c={c} /> : <Financial c={c} />;
+  const body = cur.soon ? <Soon t={cur} /> : tab === "overview" ? <Overview c={c} /> : tab === "customers" ? <Customers c={c} /> : tab === "suppliers" ? <Suppliers c={c} /> : tab === "products" ? <Products c={c} /> : tab === "audit" ? <Audit c={c} /> : tab === "market" ? <Market c={c} /> : tab === "orders" ? <Orders c={c} /> : tab === "inquiries" ? <Inquiries c={c} /> : tab === "inventory" ? <Inventory c={c} /> : <Financial c={c} />;
   return (
     <>
       <PageHeading title="Reports & Analytics" sub="Business reports from your real TradeLink records." />
