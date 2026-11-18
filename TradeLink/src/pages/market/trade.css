@@ -449,3 +449,34 @@ body:has(.public-site),.public-site{background:var(--tl-bg)!important}
 @media(hover:none){.public-site .tl-banner .arr{display:none}}
 .public-site .tl-acts .tl-act:first-child{display:flex}
 .public-site .tl-side li button{min-width:0}.public-site .tl-side li b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.public-site .tl-side li svg{flex:none}
+
+/* ===== Footer: deep navy, three quiet link columns, one tagline ===== */
+.public-site .mk-footer{background:linear-gradient(180deg,#0b1f3a,#071427);color:#b9c7dc;margin-top:clamp(36px,5vw,64px);padding-top:clamp(40px,5vw,64px);position:relative}
+.public-site .mk-footer::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,#2f6df680,transparent)}
+.public-site .mk-fgrid{display:grid;grid-template-columns:minmax(220px,1.5fr) repeat(3,minmax(140px,1fr));gap:clamp(28px,4vw,56px);align-items:start;padding-bottom:clamp(28px,4vw,44px)}
+.public-site .mk-fbrand{display:grid;gap:16px;justify-items:start;align-content:start}
+.public-site .mk-fbrand p{margin:0;font-size:14px;line-height:1.5;color:#90a3bf;max-width:26ch}
+.public-site .mk-footer h4{margin:0 0 14px;font:700 11px 'Inter',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#6f86a8}
+.public-site .mk-footer ul{display:grid;gap:2px;margin:0;padding:0;list-style:none}
+.public-site .mk-footer li button,.public-site .mk-footer li a{display:inline-flex;align-items:center;min-height:34px;padding:0;border:0;background:none;color:#d6e0ef;font:500 14.5px 'Inter',sans-serif;text-decoration:none;cursor:pointer;position:relative;transition:color .2s,transform .3s cubic-bezier(.22,.8,.3,1)}
+.public-site .mk-footer li button:hover,.public-site .mk-footer li a:hover{color:#fff;transform:translateX(4px)}
+.public-site .mk-footer li button::before,.public-site .mk-footer li a::before{content:"";position:absolute;left:-14px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:#2f6df6;opacity:0;transform:scale(.4);transition:opacity .25s,transform .25s}
+.public-site .mk-footer li button:hover::before,.public-site .mk-footer li a:hover::before{opacity:1;transform:scale(1)}
+.public-site .mk-footer .mk-copy{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:18px;border-top:1px solid #ffffff14}
+.public-site .mk-footer .mk-copy small{color:#7f93b0;font-size:13px}
+.public-site .mk-top{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:1px solid #ffffff26;border-radius:999px;background:transparent;color:#d6e0ef;font:600 13px 'Inter',sans-serif;cursor:pointer;transition:background .25s,transform .3s cubic-bezier(.22,.8,.3,1),border-color .25s}
+.public-site .mk-top:hover{background:#2f6df6;border-color:#2f6df6;color:#fff;transform:translateY(-2px)}
+@media(max-width:900px){.public-site .mk-fgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.public-site .mk-fbrand{grid-column:1/-1}}
+@media(max-width:560px){.public-site .mk-fgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 20px}.public-site .mk-fbrand{grid-column:1/-1}.public-site .mk-fgrid nav:nth-of-type(3){grid-column:1/-1}.public-site .mk-footer li button::before,.public-site .mk-footer li a::before{display:none}}
+/* leave room for the phone bottom bar */
+@media(max-width:760px){.public-site .mk-footer{padding-bottom:70px}}
+/* compact footer */
+.public-site .mk-footer{margin-top:clamp(24px,3vw,36px);padding-top:clamp(22px,2.6vw,30px)}
+.public-site .mk-fgrid{gap:clamp(18px,3vw,36px);padding-bottom:clamp(16px,2.4vw,24px)}
+.public-site .mk-fbrand{gap:10px}
+.public-site .mk-fbrand p{font-size:13px;max-width:none}
+.public-site .mk-footer h4{margin-bottom:8px;font-size:10.5px}
+.public-site .mk-footer li button,.public-site .mk-footer li a{min-height:26px;font-size:13.5px}
+.public-site .mk-footer .mk-copy{padding-block:12px}
+.public-site .mk-top{height:30px;padding:0 12px;font-size:12.5px}
+@media(max-width:560px){.public-site .mk-fgrid{gap:16px 18px}.public-site .mk-footer li button,.public-site .mk-footer li a{min-height:30px}}
