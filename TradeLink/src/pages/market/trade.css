@@ -303,3 +303,26 @@ body:has(.public-site),.public-site{background:var(--tl-bg)!important}
 .public-site .tl-slide h1,.public-site .tl-slide h2{font-family:'Inter',system-ui,sans-serif}
 .tl-card .price{flex-wrap:wrap;column-gap:6px;row-gap:0}.tl-card .price b,.tl-card .price s{white-space:nowrap}.tl-card .price small{display:none}
 @media(min-width:1000px){.tl-card .price small{display:inline}}
+
+/* ===== Fit every screen ===== */
+/* Contact buttons: one toggle on phones/tablets, lifted above the bottom bar, never covering products. */
+.fab-stack .fab-toggle{display:none;border:2px solid #fff;cursor:pointer;background:var(--deep,#0a3a5c)}
+@media(max-width:900px){
+  .public-site .fab-stack{bottom:calc(76px + env(safe-area-inset-bottom,0px));gap:10px;align-items:end;justify-items:end}
+  .public-site .fab-stack .fab-toggle{display:grid}
+  .public-site .fab-stack:not(.open) .fab:not(.fab-toggle){display:none}
+  .public-site .fab-stack{flex-direction:column-reverse}
+  .public-site .fab-stack .fab::after{display:none}
+}
+@media(min-width:761px) and (max-width:900px){.public-site .fab-stack{bottom:24px}}
+/* Industry tiles fill the row instead of leaving a lone card on the last line. */
+.mk-inds{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+@media(max-width:440px){.mk-inds{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Very small phones: keep the search and tabs inside the screen. */
+@media(max-width:360px){.tl-ann{font-size:12px}}
+/* Large monitors and TVs: use the space instead of a narrow strip in the middle. */
+@media(min-width:1700px){.tl-wrap,.public-site .mk-wrap{max-width:1560px}.mk-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(min-width:2200px){.tl-wrap,.public-site .mk-wrap{max-width:1840px}html{font-size:112.5%}}
+/* Landscape phones: the bottom bar and floating button take less room. */
+@media(max-height:480px) and (orientation:landscape){.public-site .fab-stack{bottom:12px}.tl-bottom{position:static}.public-site{padding-bottom:0}}
+@media(min-width:761px){.tl-inds{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}}
