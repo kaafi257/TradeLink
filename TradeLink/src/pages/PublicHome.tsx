@@ -9,8 +9,8 @@ import { IconFor } from "../lib/icons";
 import { useInstall } from "../lib/install";
 import { useAuth } from "../lib/auth";
 import { useWishlist } from "../lib/wishlist";
-import { AnnouncementBar, BottomNav, RfqSection, TradeHeader, TradeHero, TradeNav, TradeRow, TrustStrip } from "./market/Trade";
-import { Featured, IndustryGrid, MarketFooter, MarketShop, Popular, ProductDialog, SupplierDialog, Suppliers, WishlistDrawer, type Shelf } from "./market/Market";
+import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, ShopByIndustry, SupplierStrip, TradeHeader, TradeHero, TradeNav, TradeRow } from "./market/Trade";
+import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
 import "./home.css";
@@ -172,6 +172,7 @@ export default function PublicHome() {
   const [categoryId, setCategoryId] = useState("all");
   const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [rfqOpen, setRfqOpen] = useState(false);
   const { session } = useAuth();
   const wish = useWishlist();
   const [bestIds, setBestIds] = useState<string[]>([]);
@@ -301,10 +302,18 @@ export default function PublicHome() {
   };
 
   const byNew = (a: PublicProduct, b: PublicProduct) => (b.created_at ?? "").localeCompare(a.created_at ?? "");
-  const wholesaleList = useMemo(() => products.filter(p => allows(p, "business")).sort((a, b) => Number(b.min_order_quantity) - Number(a.min_order_quantity)).slice(0, 12), [products]);
-  const retailList = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0).slice(0, 12), [products]);
-  const newest = useMemo(() => [...products].filter(p => allows(p, mode)).sort(byNew).slice(0, 12), [products, mode]);
-  const offers = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0 && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price)).slice(0, 12), [products]);
+  // Each product appears in one section only (offers are the one honest exception: a discount is a reason to show it again).
+  const { featured, wholesaleList, newest } = useMemo(() => {
+    const used = new Set<string>();
+    const take = (list: PublicProduct[], n: number) => { const out = list.filter(p => !used.has(p.id)).slice(0, n); out.forEach(p => used.add(p.id)); return out; };
+    const ok = products.filter(p => allows(p, mode));
+    const ranked = [...bestIds.map(id => ok.find(p => p.id === id)).filter((p): p is PublicProduct => !!p), ...[...ok].sort(byNew)];
+    const featured = take(ranked, 6);
+    const wholesaleList = take(products.filter(p => audienceOf(p) !== "b2c").sort((a, b) => Number(b.min_order_quantity) - Number(a.min_order_quantity)), 6);
+    const newest = take([...ok].sort(byNew), 6);
+    return { featured, wholesaleList, newest };
+  }, [products, bestIds, mode]);
+  const offers = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0 && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price)).slice(0, 6), [products]);
   const slides = useMemo(() => mInds.map(ind => {
     const ps = visible.filter(p => catById.get(catKey(p))?.industry_id === ind.id);
     const img = ps.find(p => p.image_url)?.image_url ?? cats.find(c => c.industry_id === ind.id && c.image_url)?.image_url ?? null;
@@ -327,24 +336,20 @@ export default function PublicHome() {
         onSearch={(text, ind) => { setSearch(text); setIndustryId(ind); setCategoryId("all"); go("public-products"); }}
         onPickIndustry={openIndustry} onPickCategory={openCategory} onSupplier={setSupplier} searchRef={searchRef}
         openMenu={() => setMenuOpen(v => !v)} menuOpen={menuOpen} />
-      <TradeNav industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} />
-      <TradeHero shelf={shelf} slides={slides} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory}
-        onRfq={() => go("rfq")} onAccount={() => navigate(session ? "/admin" : "/login")} signedIn={!!session} />
-      <IndustryGrid items={gridInds} onPick={i => (document.getElementById(`ind-${i.id}`) ? go(`ind-${i.id}`) : openIndustry(i))} />
-      <TradeRow id="wholesale" icon={<Briefcase size={17} />} title="Wholesale deals" note="Minimum order shown on each product" shelf={{ ...shelf, mode: "business" }} items={wholesaleList} more={{ label: "View all", onClick: () => { changeMode("business"); go("public-products"); } }} />
-      <TradeRow id="retail" icon={<ShoppingBag size={17} />} title="Shop retail" note="Unit prices for individual buyers" shelf={{ ...shelf, mode: "individual" }} items={retailList} more={{ label: "View all", onClick: () => { changeMode("individual"); go("public-products"); } }} />
-      <TradeRow id="new-arrivals" icon={<Sparkles size={17} />} title="New arrivals" shelf={shelf} items={newest} />
-      <TradeRow id="offers" icon={<Percent size={17} />} title="Special offers" note="Active discounts" shelf={{ ...shelf, mode: "individual" }} items={offers} />
-      <Featured shelf={shelf} status={status} emptyText={emptyMessage} onViewAll={openIndustry} />
-      <Popular shelf={shelf} />
-      <Suppliers items={suppliers} industries={inds} catNames={supCatNames} onOpen={setSupplier} />
-      <RfqSection products={products} industries={mInds} categories={cats} catOf={p => catById.get(catKey(p))} />
-      <TrustStrip />
-
+      <TradeNav mode={mode} industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} onRfq={() => setRfqOpen(true)} />
+      <ModeToggle mode={mode} onMode={changeMode} className="mobile" />
+      <TradeHero shelf={shelf} slides={slides} counts={counts} onPickIndustry={openIndustry} onPickCategory={openCategory} />
+      <ShopByIndustry items={gridInds} onPick={i => openIndustry(i)} />
+      <TradeRow id="featured" title="Featured products" sub="Best sellers and popular picks" shelf={shelf} items={featured} onAll={() => go("public-products")} />
+      <TradeRow id="wholesale" title="Wholesale sourcing" sub="Buy in bulk. Minimum order shown." shelf={shelf} mode="business" items={wholesaleList} onAll={() => { changeMode("business"); go("public-products"); }} />
+      <SupplierStrip items={suppliers} industries={inds} onOpen={setSupplier} />
+      <TradeRow id="new-arrivals" title="New arrivals" shelf={shelf} items={newest} onAll={() => go("public-products")} />
+      <TradeRow id="offers" title="Special offers" sub="Active discounts" shelf={shelf} mode="individual" items={offers} />
       <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
         industry={effIndustry} category={effCategory} setIndustry={setIndustryId} setCategory={setCategoryId}
         search={search} setSearch={setSearch} items={shown} emptyText={emptyMessage} />
 
+      <RfqBanner onOpen={() => setRfqOpen(true)} />
       <MarketFooter industries={headerInds} onIndustry={openIndustry} onRequest={() => setQuoteOpen(true)} signedIn={!!session} onAccount={() => navigate(session ? "/admin" : "/login")} />
 
       {cart.length > 0 && !quoteOpen && (
@@ -353,6 +358,7 @@ export default function PublicHome() {
           <button className="btn gold" onClick={() => setQuoteOpen(true)}>Send <ArrowRight size={15} /></button>
         </div>
       )}
+      {rfqOpen && <RfqModal products={products} industries={mInds} categories={cats} catOf={p => catById.get(catKey(p))} onClose={() => setRfqOpen(false)} />}
       <BottomNav wishCount={wishCount} requestCount={cart.length} onHome={() => go("top")} onCategories={() => setMenuOpen(true)} onSearch={() => { go("top"); window.setTimeout(() => searchRef.current?.focus(), 300); }} onWishlist={() => setWishOpen(true)} onRequest={() => setQuoteOpen(true)} />
       <FloatingContact />
       {supplier && <SupplierDialog s={supplier} industries={inds} cats={supCatNames(supplier.id)} onClose={() => setSupplier(null)} />}
