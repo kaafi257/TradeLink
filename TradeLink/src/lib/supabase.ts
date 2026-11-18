@@ -12,7 +12,7 @@ export const supabase = isSupabaseConfigured
   ? createClient(url!, key!, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } })
   : null;
 
-export type Role = "owner" | "manager" | "sales" | "inventory" | "delivery" | "staff";
+export type Role = "owner" | "manager" | "sales" | "inventory" | "delivery" | "staff" | "supplier";
 export type Profile = { id: string; full_name: string; email: string; role: Role; active: boolean };
 export type Product = {
   id: string; name: string; category: string; sku: string | null; description: string | null;
@@ -38,8 +38,18 @@ export type PublicProduct = {
   stock_status?: "in" | "low" | "out"; stock_left?: number | null;
 };
 /** Suppliers directory (migration 0007). Only the harmless public fields are ever read by the website. */
-export type Supplier = { id: string; name: string; industry_id: string; location: string | null; about: string | null; active: boolean; created_at: string };
-export type PublicSupplier = Pick<Supplier, "id" | "name" | "industry_id" | "location" | "about">;
+export type SupplierStatus = "pending" | "approved" | "rejected" | "suspended";
+export type BusinessType = "manufacturer" | "wholesaler" | "distributor" | "importer" | "retailer" | "farmer" | "service" | "other";
+export type SupplierDocument = { path: string; name: string; uploaded_at: string };
+export type Supplier = {
+  id: string; name: string; industry_id: string; location: string | null; about: string | null; active: boolean; created_at: string;
+  /** Supplier-account fields (migration 0009). */
+  profile_id?: string | null; status?: SupplierStatus; owner_name?: string | null; phone?: string | null; email?: string | null;
+  address?: string | null; business_type?: BusinessType | null; logo_path?: string | null; documents?: SupplierDocument[];
+  status_note?: string | null; reviewed_at?: string | null; fee_rate?: number;
+};
+export type AppNotification = { id: string; user_id: string; kind: string; title: string; body: string | null; link: string | null; read_at: string | null; created_at: string };
+export type PublicSupplier = Pick<Supplier, "id" | "name" | "industry_id" | "location" | "about"> & { logo_path?: string | null };
 export type ProductImage = { id: string; product_id: string; url: string; sort_order: number };
 export type ProductOption = { id: string; product_id: string; kind: "size" | "color"; label: string; color_hex: string | null; sort_order: number };
 export type QuoteItem = { id: string; product_name: string; quantity: number; unit: string; unit_price: number };

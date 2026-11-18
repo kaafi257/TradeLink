@@ -133,6 +133,7 @@ export default function AdminLayout() {
   const { loading, session, profile, profileError, signOut } = useAuth();
   if (loading) return <div className="loading-screen"><Brand /><p>Loading TradeLink…</p></div>;
   if (!supabase || !session) return <Navigate to="/login" replace />;
+  if (profile?.role === "supplier") return <Navigate to="/supplier" replace />;   // suppliers have their own portal
   if (!profile || !profile.active) {
     return (
       <Screen title="No access yet" text="Your account is signed in, but it has not been activated for the TradeLink workspace. Ask the owner to give you access.">
