@@ -4,7 +4,12 @@
 // Secrets: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (set automatically); optional TURNSTILE_SECRET_KEY to require a CAPTCHA.
 // The service-role key lives only here, never in the browser.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+// Kept inline so the file can be pasted into the Supabase dashboard as a single file.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
