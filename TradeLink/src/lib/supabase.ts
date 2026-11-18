@@ -79,6 +79,8 @@ export const PERMISSIONS: { key: string; label: string }[] = [
   { key: "stock.adjust", label: "Adjust stock" },
   { key: "products.edit", label: "Add and edit products" },
   { key: "catalogue.manage", label: "Manage industries and categories" },
+  { key: "reports.view", label: "View business reports" },
+  { key: "reports.sensitive", label: "See full customer phone and email in reports" },
 ];
 /** Daily sales total from the sales_by_day() database function. */
 export type SalesPoint = { sold_at: string; total_amount: number };
