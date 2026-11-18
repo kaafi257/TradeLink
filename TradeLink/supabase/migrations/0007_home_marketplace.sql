@@ -67,6 +67,7 @@ using (public.has_permission('catalogue.manage')) with check (public.has_permiss
 grant select, insert, update, delete on public.suppliers, public.supplier_categories to authenticated;
 
 -- Public views (what the website reads).
+drop view if exists public.public_supplier_categories;
 drop view if exists public.public_suppliers;
 create view public.public_suppliers as
 select s.id, s.name, s.industry_id, s.location, s.about
