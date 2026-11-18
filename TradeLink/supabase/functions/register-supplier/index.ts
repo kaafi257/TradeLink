@@ -48,10 +48,11 @@ Deno.serve(async (req) => {
     if (location.length < 2) throw new Error("Please enter the business location.");
     if (about.length < 10) throw new Error("Please describe the business in a sentence or two.");
     if (!BUSINESS_TYPES.includes(type)) throw new Error("Please choose a business type.");
-    if (!/^[0-9a-f-]{36}$/i.test(industryId)) throw new Error("Please choose an industry.");
+    if (!industryId) throw new Error("Please choose an industry.");
 
-    const { data: industry } = await admin.from("industries").select("id").eq("id", industryId).eq("active", true).maybeSingle();
-    if (!industry) throw new Error("Please choose an industry.");
+    const { data: industry, error: industryError } = await admin.from("industries").select("id").eq("id", industryId).maybeSingle();
+    if (industryError) throw new Error(`Could not check the industry (${industryError.message}). Check that the function has the service role key.`);
+    if (!industry) throw new Error("That industry is no longer available. Please reload the page and choose again.");
 
     // At most 3 applications per connection per hour.
     const hash = ip ? await sha256(`supplier:${ip}`) : null;
