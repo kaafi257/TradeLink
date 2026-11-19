@@ -50,7 +50,12 @@ function Guard({ role, roles, children }: { role: Role; roles: Role[]; children:
   return roles.includes(role) ? <>{children}</> : <Navigate to="/admin" replace />;
 }
 
-function FeatureGate({ permission, children }: { permission: string; children: ReactNode }) {\n  const { can } = useAdmin();\n  return can(permission) ? <>{children}</> : <div className="empty-state"><h3>Access restricted</h3><p>Your role has not been granted permission for this section. Ask the owner to enable it in Settings → Permissions.</p></div>;\n}\n\nfunction Shell() {
+function FeatureGate({ permission, children }: { permission: string; children: ReactNode }) {
+  const { can } = useAdmin();
+  return can(permission) ? <>{children}</> : <div className="empty-state"><h3>Access restricted</h3><p>Your role has not been granted permission for this section. Ask the owner to enable it in Settings → Permissions.</p></div>;
+}
+
+function Shell() {
   const { profile, search, setSearch, newQuoteCount, notice } = useAdmin();
   const { signOut } = useAuth();
   const navigate = useNavigate();
