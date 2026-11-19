@@ -8,6 +8,8 @@ type SupRow = { id: string; name: string };
 type PRow = SProduct & { suppliers: { name: string } | null };
 type PORow = PO & { suppliers: { name: string } | null };
 
+type Listing = { supplier_product_id: string; listed: boolean; retail_price: number; sale_price: number | null; audience: string; stock_quantity: number };
+
 function NewOrder({ suppliers, onClose, onDone }: { suppliers: SupRow[]; onClose: () => void; onDone: () => void }) {
   const [sup, setSup] = useState(suppliers[0]?.id ?? "");
   const [store, setStore] = useState(""), [phone, setPhone] = useState(""), [addr, setAddr] = useState(""), [note, setNote] = useState("");
@@ -63,13 +65,16 @@ export default function SupplierOps() {
   const [show, setShow] = useState(false), [msg, setMsg] = useState("");
   const { data, error, loading, reload } = useLoad(async () => {
     const db = requireSupabase();
-    const [p, o, s] = await Promise.all([
+    const [p, o, s, l] = await Promise.all([
       db.from("supplier_products").select("*, suppliers(name)").order("created_at", { ascending: false }).limit(300),
       db.from("purchase_orders").select("*, suppliers(name)").order("created_at", { ascending: false }).limit(300),
       db.from("suppliers").select("id,name").eq("status", "approved").eq("active", true).order("name"),
+      db.from("supplier_listing_status").select("*"),
     ]);
     for (const r of [p, o, s]) if (r.error) throw r.error;
-    return { products: (p.data ?? []) as PRow[], orders: (o.data ?? []) as PORow[], suppliers: (s.data ?? []) as SupRow[] };
+    // Before migration 0015 the view does not exist; the approval list still works without the marketplace column.
+    const listings = new Map(((l.error ? [] : l.data ?? []) as Listing[]).map(x => [x.supplier_product_id, x]));
+    return { products: (p.data ?? []) as PRow[], orders: (o.data ?? []) as PORow[], suppliers: (s.data ?? []) as SupRow[], listings };
   });
   const run = async (fn: string, args: Record<string, unknown>, ask?: string) => {
     let note: string | null = null;
@@ -77,6 +82,15 @@ export default function SupplierOps() {
     setMsg("");
     const { error } = await requireSupabase().rpc(fn, { ...args, p_note: note });
     if (error) setMsg(errorText(error, "Could not save")); else void reload();
+  };
+  const setPrice = async (p: PRow, cur: Listing | undefined) => {
+    const v = window.prompt(`Your retail price for "${p.name}" (ETB per ${p.unit}). Use 0 to sell to businesses only.`, cur && cur.retail_price > 0 ? String(cur.retail_price) : "");
+    if (v === null) return;
+    const n = Number(v.replace(/,/g, ""));
+    if (!Number.isFinite(n) || n < 0) { setMsg("Enter a price of 0 or more."); return; }
+    setMsg("");
+    const { error } = await requireSupabase().rpc("set_listing_price", { p_supplier_product: p.id, p_retail: n });
+    if (error) setMsg(errorText(error, "Could not save the price")); else void reload();
   };
   const pending = (data?.products ?? []).filter(p => p.status === "pending");
   return (
@@ -89,10 +103,12 @@ export default function SupplierOps() {
       {msg && <p className="form-error" role="alert">{msg}</p>}
       {loading ? <p className="muted">Loading…</p> : !data ? <p className="form-error" role="alert">{error}</p> : tab === "products" ? (
         <div className="table-panel"><div className="table-scroll"><table className="rt rt-s">
-          <thead><tr><th>Product</th><th>Supplier</th><th>Price</th><th>Status</th><th /></tr></thead>
-          <tbody>{data.products.length === 0 ? <tr><td colSpan={5}>No supplier products yet.</td></tr> : data.products.map(p => (
+          <thead><tr><th>Product</th><th>Supplier</th><th>Supplier price</th><th>Status</th><th>Marketplace</th><th /></tr></thead>
+          <tbody>{data.products.length === 0 ? <tr><td colSpan={6}>No supplier products yet.</td></tr> : data.products.map(p => (
             <tr key={p.id}><td><b>{p.name}</b><br /><small>{p.brand || p.sku || ""}</small></td><td>{p.suppliers?.name}</td><td>{money(p.price)} / {p.unit}</td><td>{p.status}{!p.active && " · inactive"}</td>
+              <td>{(() => { const l = data.listings.get(p.id); return !l ? "Not listed" : !l.listed ? "Hidden" : l.retail_price > 0 ? `Live · ${money(l.retail_price)}` : "Live · wholesale only"; })()}</td>
               <td className="row-actions">
+                {p.status === "approved" && data.listings.has(p.id) && <button className="btn" onClick={() => void setPrice(p, data.listings.get(p.id))}>Retail price</button>}
                 {p.status !== "approved" && <button className="btn green" onClick={() => void run("review_supplier_product", { p_id: p.id, p_action: "approve" })}>Approve</button>}
                 {p.status === "pending" && <button className="btn danger" onClick={() => void run("review_supplier_product", { p_id: p.id, p_action: "reject" }, "Why is this product rejected? The supplier will see this.")}>Reject</button>}
               </td></tr>))}</tbody></table></div></div>

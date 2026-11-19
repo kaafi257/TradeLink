@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { supabase, type ProductImage, type ProductOption, type PublicCategory, type PublicIndustry, type PublicProduct } from "../../lib/supabase";
+import { photoUrl, supabase, withPhoto, type ProductImage, type ProductOption, type PublicCategory, type PublicIndustry, type PublicProduct } from "../../lib/supabase";
 
 export type Status = "loading" | "ready" | "error" | "offline" | "empty";
 export type CartLine = { productId: string; qty: number; size?: string; color?: string };
@@ -80,7 +80,7 @@ export function FashionProvider({ children }: { children: ReactNode }) {
       setIndustry(fashion[0] ?? null);
       const cats = ((cat.data ?? []) as PublicCategory[]).filter(c => fashionIds.has(c.industry_id));
       const catIds = new Set(cats.map(c => c.id));
-      const prods = ((prod.data ?? []) as PublicProduct[]).filter(p => p.category_id && catIds.has(p.category_id) && forIndividuals(p));
+      const prods = ((prod.data ?? []) as PublicProduct[]).map(withPhoto).filter(p => p.category_id && catIds.has(p.category_id) && forIndividuals(p));
       setCategories(cats);
       setProducts(prods);
       setStatus(prods.length ? "ready" : "empty");
@@ -92,7 +92,7 @@ export function FashionProvider({ children }: { children: ReactNode }) {
         supabase.from("public_best_sellers").select("*").order("rank"),
       ]);
       if (!live) return;
-      if (!im.error) setImages((im.data ?? []) as ProductImage[]);
+      if (!im.error) setImages(((im.data ?? []) as ProductImage[]).map(x => ({ ...x, url: photoUrl(x.url) ?? x.url })));
       if (!op.error) setOptions((op.data ?? []) as ProductOption[]);
       if (!best.error) setBestIds(((best.data ?? []) as { product_id: string }[]).map(b => b.product_id));
     })();

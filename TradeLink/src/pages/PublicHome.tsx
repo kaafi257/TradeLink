@@ -13,7 +13,7 @@ import { useWishlist } from "../lib/wishlist";
 import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, ShopByIndustry, SupplierStrip, TradeHeader, TradeHero, TradeNav, TradeRow } from "./market/Trade";
 import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
-import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
+import { supabase, withPhoto, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
 import "./home.css";
 
 export type Mode = "business" | "individual";
@@ -225,7 +225,7 @@ export default function PublicHome() {
       supabase.from("public_categories").select("*").order("sort_order").order("name"),
     ]).then(([p, i, c]) => {
       if (p.error) { setStatus("error"); return; }
-      setProducts((p.data ?? []) as PublicProduct[]);
+      setProducts(((p.data ?? []) as PublicProduct[]).map(withPhoto));
       setIndustries(i.error ? [] : ((i.data ?? []) as PublicIndustry[]));
       setCategories(c.error ? [] : ((c.data ?? []) as PublicCategory[]));
       setStatus("ready");
@@ -309,6 +309,7 @@ export default function PublicHome() {
     mode, products: visible, industries: mInds, categories: cats, bestIds,
     indOf: indOfP, catName: p => catById.get(catKey(p))?.name ?? p.category, isFashion: () => false,
     inRequest: inCart, addToRequest, wished: wish.has, toggleWish: wish.toggle, open: setQuick,
+    supplierOf: p => (p.supplier_id ? suppliers.find(s => s.id === p.supplier_id) : undefined), openSupplier: setSupplier,
   };
 
   const byNew = (a: PublicProduct, b: PublicProduct) => (b.created_at ?? "").localeCompare(a.created_at ?? "");
