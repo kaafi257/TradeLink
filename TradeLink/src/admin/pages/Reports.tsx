@@ -200,14 +200,21 @@ function Financial({ c }: { c: Ctx }) {
   const { data: s, error } = useRpc<Record<string, any>>("report_financial_summary", c.args);
   const { data: per } = useRpc<{ bucket: string; revenue: number; collected: number }[]>("report_financial_periods", { ...c.args, p_bucket: c.r.bucket, p_tz: TZ });
   const lbl = (b: string) => (c.r.bucket === "month" ? new Date(b + "T00:00").toLocaleString([], { month: "short" }) : new Date(b + "T00:00").toLocaleDateString([], { month: "short", day: "numeric" }));
+  const hasComm = s != null && s.commissions != null;
+  const commRef = useRef<HTMLDivElement>(null);
+  const { data: bySup } = useRpc<{ supplier_id: string; supplier_name: string; rate: number; units: number; supplier_amount: number; commission: number; supplier_earning: number }[]>("report_commission_suppliers", c.args, hasComm);
   const cards: Card[] = s ? [
     { key: "r", icon: <Banknote />, label: "Revenue", value: fmtMoney(s.revenue), cur: num(s.revenue), prev: num(s.revenue_prev), onClick: () => drill({}) },
     { key: "c", icon: <Wallet />, label: "Collected", value: fmtMoney(s.collected) },
     { key: "o", icon: <Hourglass />, label: "Outstanding", value: fmtMoney(s.outstanding) },
     { key: "n", icon: <Receipt />, label: "Sales", value: fmtN(s.sales), note: `${fmtMoney(s.average)} average` },
-    { key: "m", icon: <Percent />, label: "Commissions", value: "—", note: "Starts with supplier orders", muted: true },
-    { key: "e", icon: <Store />, label: "Supplier earnings", value: "—", note: "Starts with supplier orders", muted: true },
-    { key: "f", icon: <Undo2 />, label: "Refunds", value: "—", note: "Starts with supplier orders", muted: true },
+    hasComm
+      ? { key: "m", icon: <Percent />, label: "Commissions", value: fmtMoney(s.commissions), note: "On supplier products", onClick: () => commRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }) }
+      : { key: "m", icon: <Percent />, label: "Commissions", value: "—", note: "Run the commissions update", muted: true },
+    hasComm
+      ? { key: "e", icon: <Store />, label: "Supplier earnings", value: fmtMoney(s.supplier_earnings), note: "After commission" }
+      : { key: "e", icon: <Store />, label: "Supplier earnings", value: "—", note: "Run the commissions update", muted: true },
+    { key: "f", icon: <Undo2 />, label: "Refunds", value: "—", note: "Sales cannot be reversed yet", muted: true },
   ] : [];
   const methods = (s?.by_method || []) as { method: string; count: number; amount: number }[];
   return (
@@ -218,12 +225,31 @@ function Financial({ c }: { c: Ctx }) {
         <Box title="Collected" icon={<Wallet />}><LineChart bars data={(Array.isArray(per) ? per : []).map(p => ({ label: lbl(p.bucket), value: num(p.collected) }))} fmt={fmtMoney} /></Box>
         <Box title="Payment methods" icon={<Banknote />} wide>{methods.length ? <HBars data={methods.map((m, i) => ({ label: cap(m.method), value: num(m.amount), color: PALETTE[i % PALETTE.length] }))} fmt={fmtMoney} /> : <p className="rp-empty">No sales in this period.</p>}</Box>
       </div>
-      <Note>Commission, supplier earnings and refunds are not estimated. They start filling in once supplier orders go live.</Note>
+      {hasComm && Array.isArray(bySup) && (
+        <Box title="Commission by supplier" icon={<Percent />} wide>
+          {bySup.length ? <HBars data={bySup.filter(x => num(x.commission) > 0).map((x, i) => ({ label: `${x.supplier_name} · ${num(x.rate)}%`, value: num(x.commission), color: PALETTE[i % PALETTE.length] }))} fmt={fmtMoney} /> : <p className="rp-empty">No approved suppliers yet.</p>}
+          {bySup.every(x => num(x.commission) === 0) && <p className="rp-empty">No commission earned in this period. Set a supplier's rate in Admin → Suppliers.</p>}
+        </Box>
+      )}
+      <Note>Commission is the supplier's rate applied to the supplier's price on each recorded sale of a supplier product. Refunds are not estimated.</Note>
       <DataTable anchor={ref} title="Sales & payments" fn="report_sales" subtitle={sub(c)} searchHint="Receipt or customer" args={{ ...c.args, p_method: f.method || null }}
         filters={<Select label="Payment" value={f.method} onChange={v => set("method", v)} options={[["", "All payments"], ...methods.map(m => [m.method, cap(m.method)] as [string, string])]} />}
         cols={[{ key: "receipt_number", label: "Receipt" }, { key: "customer_name", label: "Customer" }, { key: "payment_method", label: "Payment", get: r => cap(String(r.payment_method || "other")) }, { key: "total", label: "Total (ETB)", get: r => num(r.total) }, { key: "paid", label: "Paid (ETB)", get: r => num(r.paid) }, { key: "outstanding", label: "Balance (ETB)", get: r => Math.max(0, num(r.total) - num(r.paid)) }, { key: "sold_at", label: "Date", get: r => fmtDateTime(r.sold_at) }]}
         render={{ payment_method: r => <Badge v={String(r.payment_method || "other")} />, total: r => fmtMoney(r.total), paid: r => fmtMoney(r.paid), outstanding: r => fmtMoney(Math.max(0, num(r.total) - num(r.paid))), sold_at: r => fmtDateTime(r.sold_at) }} />
+      {hasComm && <Commissions c={c} bySup={Array.isArray(bySup) ? bySup : []} anchor={commRef} />}
     </>
+  );
+}
+
+function Commissions({ c, bySup, anchor }: { c: Ctx; bySup: { supplier_id: string; supplier_name: string }[]; anchor: React.Ref<HTMLDivElement> }) {
+  const [sup, setSup] = useState("");
+  return (
+    <DataTable anchor={anchor} title="Commissions" fn="report_commissions" subtitle={sub(c)} searchHint="Supplier, product or order" args={{ ...c.args, p_supplier: sup || null }}
+      filters={<Select label="Supplier" value={sup} onChange={setSup} options={[["", "All suppliers"], ...bySup.map(x => [x.supplier_id, x.supplier_name] as [string, string])]} />}
+      cols={[{ key: "created_at", label: "Date", get: r => fmtDateTime(r.created_at) }, { key: "supplier_name", label: "Supplier" }, { key: "order_number", label: "Order", get: r => String(r.order_number || "") }, { key: "product_name", label: "Product" }, { key: "quantity", label: "Qty", get: r => num(r.quantity) },
+        { key: "supplier_unit_price", label: "Supplier price (ETB)", get: r => num(r.supplier_unit_price) }, { key: "rate", label: "Rate %", get: r => num(r.rate) }, { key: "supplier_amount", label: "Supplier amount (ETB)", get: r => num(r.supplier_amount) },
+        { key: "commission", label: "Commission (ETB)", get: r => num(r.commission) }, { key: "supplier_earning", label: "Supplier earns (ETB)", get: r => num(r.supplier_earning) }]}
+      render={{ created_at: r => fmtDateTime(r.created_at), quantity: r => fmtN(r.quantity), supplier_unit_price: r => fmtMoney(r.supplier_unit_price), rate: r => `${num(r.rate)}%`, supplier_amount: r => fmtMoney(r.supplier_amount), commission: r => fmtMoney(r.commission), supplier_earning: r => fmtMoney(r.supplier_earning), order_number: r => String(r.order_number || "—") }} />
   );
 }
 

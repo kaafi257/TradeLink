@@ -17,6 +17,7 @@ function ReviewModal({ row, onClose, onDone }: { row: Row; onClose: () => void; 
   const { industries, notify } = useAdmin();
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [rate, setRate] = useState(String(row.fee_rate ?? 0));
   const status = row.status ?? "approved";
   const ind = industries.find(i => i.id === row.industry_id);
   const type = BUSINESS_TYPES.find(t => t.id === row.business_type)?.label;
@@ -33,6 +34,16 @@ function ReviewModal({ row, onClose, onDone }: { row: Row; onClose: () => void; 
       notify(action === "approve" ? "Supplier approved." : action === "reject" ? "Application sent back with your note." : action === "suspend" ? "Supplier suspended." : "Supplier reactivated.");
       onDone(); onClose();
     } catch (e) { notify(errorText(e, "Could not update the supplier")); } finally { setBusy(false); }
+  };
+  const saveRate = async () => {
+    const n = Number(rate);
+    if (!Number.isFinite(n) || n < 0 || n > 100) { notify("Enter a commission between 0 and 100."); return; }
+    setBusy(true);
+    try {
+      const { error } = await requireSupabase().rpc("set_supplier_fee_rate", { p_supplier: row.id, p_rate: n });
+      if (error) throw error;
+      notify("Commission saved."); onDone();
+    } catch (e) { notify(errorText(e, "Could not save the commission")); } finally { setBusy(false); }
   };
   const open = async (path: string) => { try { window.open(await documentLink(path), "_blank", "noopener,noreferrer"); } catch (e) { notify((e as Error).message); } };
 
@@ -52,6 +63,11 @@ function ReviewModal({ row, onClose, onDone }: { row: Row; onClose: () => void; 
               <dt>Location</dt><dd>{[row.location, row.address].filter(Boolean).join(", ") || "—"}</dd>
               <dt>Registered</dt><dd>{dateOf(row.created_at)}</dd>
             </dl>
+            {status === "approved" && (
+              <div className="rate-row"><label htmlFor="fee-rate">Commission %</label>
+                <input id="fee-rate" type="number" min="0" max="100" step="0.5" inputMode="decimal" value={rate} onChange={e => setRate(e.target.value)} />
+                <button className="btn" disabled={busy} onClick={() => void saveRate()}>Save</button></div>
+            )}
             {row.about && <p className="review-about">{row.about}</p>}
           </div>
           <div className="review-block">

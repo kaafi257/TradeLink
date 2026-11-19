@@ -977,3 +977,6 @@
   .admin-layout *,.admin-layout *::before,.admin-layout *::after{animation:none!important;transition:none!important}
   .admin-layout .page-skel i{background:#eef2f9}
 }
+.admin-layout .rate-row{display:flex;align-items:center;gap:8px;margin:10px 0 2px;flex-wrap:wrap}
+.admin-layout .rate-row label{font-weight:700;font-size:13px;color:var(--ink)}
+.admin-layout .rate-row input{width:90px;border:1px solid var(--line);border-radius:10px;padding:7px 10px;font:inherit}
