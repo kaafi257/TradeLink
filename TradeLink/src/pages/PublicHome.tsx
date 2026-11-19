@@ -10,9 +10,8 @@ import { useInstall } from "../lib/install";
 import { useAuth } from "../lib/auth";
 import { track, trackState } from "../lib/track";
 import { useWishlist } from "../lib/wishlist";
-import { BottomNav, RfqModal } from "./market/Trade";
-import { MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, priceOf, type Shelf } from "./market/Market";
-import { RefBenefits, RefCard, RefCircles, RefFooter, RefHead, RefHeader, RefHero, RefNav, RefPromo, RefQuoteBand, RefSection, RefSellPanel, RefSuppliers, RefTiles, RefTopBar, isFresh, type Circle } from "./market/Ref";
+import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, ShopByIndustry, SupplierStrip, TradeHeader, TradeHero, TradeNav, TradeRow } from "./market/Trade";
+import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
 import { supabase, withPhoto, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
 import "./home.css";
@@ -190,7 +189,7 @@ export default function PublicHome() {
   const [supplier, setSupplier] = useState<PublicSupplier | null>(null);
   const [quick, setQuick] = useState<PublicProduct | null>(null);
   const [wishOpen, setWishOpen] = useState(false);
-  const [saleOnly, setSaleOnly] = useState(false);
+  const [heroQuery, setHeroQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
   const hasCart = cart.length > 0 && !quoteOpen;
 
@@ -198,7 +197,7 @@ export default function PublicHome() {
     const el = document.getElementById(id);
     if (!el) return;
     const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const header = document.querySelector<HTMLElement>(".rf-head")?.offsetHeight ?? 72;
+    const header = document.querySelector<HTMLElement>(".tl-head")?.offsetHeight ?? 72;
     const y = id === "top" ? 0 : el.getBoundingClientRect().top + window.scrollY - header + 1;
     window.scrollTo({ top: y, behavior: reduce ? "auto" : "smooth" });
     history.replaceState(null, "", `#${id}`);
@@ -266,11 +265,9 @@ export default function PublicHome() {
   const envLook = activeLook ?? MODE_LOOK[mode];
   const styleOf = (catId: string) => styleFor(indById.get(catById.get(catId)?.industry_id ?? "")?.name);
   const shopStyle: ShopStyle = effIndustry !== "all" ? styleFor(indById.get(effIndustry)?.name) : effCategory !== "all" ? styleOf(effCategory) : "food";
-  const onSaleNow = (p: PublicProduct) => { const pr = priceOf(p); return pr.was !== null; };
   const shown = visible.filter(p =>
     (effCategory === "all" || catKey(p) === effCategory) &&
     (effIndustry === "all" || catById.get(catKey(p))?.industry_id === effIndustry) &&
-    (!saleOnly || onSaleNow(p)) &&
     (!q || `${p.name} ${p.category} ${p.package_size ?? ""}`.toLowerCase().includes(q)));
 
   const indOfP = (p: PublicProduct) => indById.get(catById.get(catKey(p))?.industry_id ?? "");
@@ -289,15 +286,11 @@ export default function PublicHome() {
   const openIndustry = (i: PublicIndustry) => {
     if ((indCount.get(i.id) ?? 0) === 0 && (allCount.get(i.id) ?? 0) > 0) changeMode(mode === "individual" ? "business" : "individual");
     track("industry_view", { ref: i.id });
-    setSearch(""); setSaleOnly(false); setIndustryId(i.id); setCategoryId("all"); setMenuOpen(false); go("public-products");
+    setSearch(""); setIndustryId(i.id); setCategoryId("all"); setMenuOpen(false); go("public-products");
   };
   const openCategory = (c: PublicCategory) => {
     track("category_view", { ref: c.id });
-    setSearch(""); setSaleOnly(false); setIndustryId(c.industry_id); setCategoryId(c.id); go("public-products");
-  };
-  const openSale = () => {
-    if (mode !== "individual") changeMode("individual");
-    setSearch(""); setIndustryId("all"); setCategoryId("all"); setSaleOnly(true); setMenuOpen(false); go("public-products");
+    setSearch(""); setIndustryId(c.industry_id); setCategoryId(c.id); go("public-products");
   };
 
   const changeMode = (m: Mode) => {
@@ -320,44 +313,23 @@ export default function PublicHome() {
   };
 
   const byNew = (a: PublicProduct, b: PublicProduct) => (b.created_at ?? "").localeCompare(a.created_at ?? "");
-  // Each product appears in one block only: best sellers first (real sales ranking when it exists), then the newest, then personal picks.
-  const { best, bestRanked, news, jfy, jfyFromWishlist } = useMemo(() => {
+  // Each product appears in one section only (offers are the one honest exception: a discount is a reason to show it again).
+  const { featured, wholesaleList, newest } = useMemo(() => {
     const used = new Set<string>();
     const take = (list: PublicProduct[], n: number) => { const out = list.filter(p => !used.has(p.id)).slice(0, n); out.forEach(p => used.add(p.id)); return out; };
     const ok = products.filter(p => allows(p, mode));
-    const ranked = bestIds.map(id => ok.find(p => p.id === id)).filter((p): p is PublicProduct => !!p);
-    // Before any sales exist, "featured" takes one product from each category in turn so one department does not fill the row.
-    const groups = new Map<string, PublicProduct[]>();
-    for (const p of [...ok].sort(byNew)) groups.set(catKey(p), [...(groups.get(catKey(p)) ?? []), p]);
-    const lists = [...groups.values()];
-    const spread: PublicProduct[] = [];
-    for (let i = 0; lists.some(l => i < l.length); i++) for (const l of lists) if (i < l.length) spread.push(l[i]);
-    const best = take(ranked.length ? ranked : spread, 5);
-    const news = take([...ok].sort(byNew), 5);
-    const saved = new Set(products.filter(p => wish.ids.includes(p.id)).map(catKey));
-    const rest = [...ok].sort(byNew).filter(p => !used.has(p.id));
-    const liked = saved.size ? rest.filter(p => saved.has(catKey(p)) && !wish.ids.includes(p.id)) : [];
-    const jfy = take([...liked, ...rest], 4);
-    return { best, bestRanked: ranked.length > 0, news, jfy, jfyFromWishlist: liked.length > 0 };
-  }, [products, bestIds, mode, wish.ids]);
-  const offers = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0 && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price)), [products]);
-  const maxOff = offers.reduce((m, p) => Math.max(m, Math.round((1 - Number(p.sale_price) / Number(p.retail_price)) * 100)), 0);
+    const ranked = [...bestIds.map(id => ok.find(p => p.id === id)).filter((p): p is PublicProduct => !!p), ...[...ok].sort(byNew)];
+    const featured = take(ranked, 6);
+    const wholesaleList = take(products.filter(p => audienceOf(p) !== "b2c").sort((a, b) => Number(b.min_order_quantity) - Number(a.min_order_quantity)), 6);
+    const newest = take([...ok].sort(byNew), 6);
+    return { featured, wholesaleList, newest };
+  }, [products, bestIds, mode]);
+  const offers = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0 && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price)).slice(0, 6), [products]);
   const slides = useMemo(() => mInds.map(ind => {
     const ps = visible.filter(p => catById.get(catKey(p))?.industry_id === ind.id);
     const img = ps.find(p => p.image_url)?.image_url ?? cats.find(c => c.industry_id === ind.id && c.image_url)?.image_url ?? null;
     return { ind, img, count: ps.length };
   }).filter(s => s.count > 0).slice(0, 5), [mInds, visible, catById, cats]);
-
-  const indImg = (id: string) => visible.find(p => catById.get(catKey(p))?.industry_id === id && p.image_url)?.image_url ?? cats.find(c => c.industry_id === id && c.image_url)?.image_url ?? null;
-  const catImg = (c: PublicCategory) => c.image_url ?? visible.find(p => catKey(p) === c.id && p.image_url)?.image_url ?? null;
-  const circles: Circle[] = [...cats].filter(c => (counts.get(c.id) ?? 0) > 0).sort((a, b) => (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0)).slice(0, 9)
-    .map(c => ({ key: c.id, label: c.name, img: catImg(c), icon: indById.get(c.industry_id)?.icon, onClick: () => openCategory(c) }));
-  const byCount = gridInds.filter(g => g.count > 0).sort((a, b) => b.count - a.count);
-  const indTiles = byCount.slice(0, 4).map(g => ({ key: g.ind.id, label: g.ind.name, img: indImg(g.ind.id), icon: g.ind.icon, onClick: () => openIndustry(g.ind) }));
-  const topInd = byCount[0];
-  const shopWholesale = () => { changeMode("business"); setSaleOnly(false); setSearch(""); setIndustryId("all"); setCategoryId("all"); go("public-products"); };
-  const wholesaleImg = products.find(p => audienceOf(p) !== "b2c" && p.image_url)?.image_url ?? null;
-  const thumbs = products.filter(p => p.image_url).slice(0, 3).map(p => p.image_url!);
 
   const emptyMessage =
     status === "loading" ? "Loading our products…"
@@ -369,71 +341,31 @@ export default function PublicHome() {
 
   return (
     <div className={`public-site${hasCart ? " has-cart" : ""}`}>
-      <div className="rf">
-      <RefTopBar products={products.length} mode={mode} onMode={changeMode} onRfq={() => setRfqOpen(true)} />
-      <RefHeader shelf={shelf} suppliers={suppliers} counts={counts} wishCount={wishCount} requestCount={cart.length} signedIn={!!session}
+      <AnnouncementBar products={products.length} industries={mInds.filter(i => (indCount.get(i.id) ?? 0) > 0).length} />
+      <TradeHeader shelf={shelf} suppliers={suppliers} wishCount={wishCount} requestCount={cart.length} signedIn={!!session}
         onWishlist={() => setWishOpen(true)} onRequest={() => setQuoteOpen(true)} onAccount={() => navigate(session ? "/admin" : "/login")}
-        onSearch={text => {
+        onSearch={(text, ind) => {
           const t = text.trim().toLowerCase();
-          if (t.length >= 2) track("search", { term: t, mode, results: products.filter(p => `${p.name} ${p.brand ?? ""} ${p.category}`.toLowerCase().includes(t)).length });
-          setSearch(text); setSaleOnly(false); setIndustryId("all"); setCategoryId("all"); go("public-products");
+          if (t.length >= 2) track("search", { term: t, mode, results: products.filter(p => (ind === "all" || shelf.indOf(p)?.id === ind) && `${p.name} ${p.brand ?? ""} ${p.category}`.toLowerCase().includes(t)).length });
+          setSearch(text); setIndustryId(ind); setCategoryId("all"); go("public-products");
         }}
         onPickIndustry={openIndustry} onPickCategory={openCategory} onSupplier={setSupplier} searchRef={searchRef}
-        menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
-      <RefNav industries={headerInds} hasSale={offers.length > 0} onPickIndustry={openIndustry} onSale={openSale} />
-      <RefHero slides={slides} emptyText={emptyMessage} onPickIndustry={openIndustry} />
-      <RefCircles items={circles} />
-
-      {news.length > 0 && (
-        <RefSection id="new-arrivals" title="New arrivals" onAll={() => go("public-products")}>
-          <div className="rf-grid5">{news.map(p => <RefCard key={p.id} p={p} shelf={shelf} size="lg" fresh={isFresh(p)} />)}</div>
-        </RefSection>
-      )}
-
-      {topInd && (
-        <section className="rf-wrap"><div className="rf-promos">
-          <RefPromo kind="dark" kicker="Shop the range" title={topInd.ind.name} sub={`${topInd.count} ${topInd.count === 1 ? "product" : "products"} ready to order`} cta={`Shop ${topInd.ind.name}`} img={indImg(topInd.ind.id)} onClick={() => openIndustry(topInd.ind)} />
-          {offers.length > 0
-            ? <RefPromo kind="light" kicker="Special offers" title={maxOff > 0 ? `Up to ${maxOff}% off` : "Special offers"} sub="Active discounts on selected products" cta="Shop offers" img={offers.find(p => p.image_url)?.image_url ?? null} onClick={openSale} />
-            : <RefPromo kind="light" kicker="Wholesale sourcing" title="Buy in bulk" sub="Minimum order shown on every product" cta="Shop wholesale" img={wholesaleImg} onClick={shopWholesale} />}
-        </div></section>
-      )}
-
-      {best.length > 0 && (
-        <section className={`rf-wrap rf-split${indTiles.length === 0 ? " solo" : ""}`} id="best-sellers">
-          <div>
-            <RefHead title={bestRanked ? "Best sellers" : "Featured products"} onAll={() => go("public-products")} />
-            <div className="rf-best">{best.map(p => <RefCard key={p.id} p={p} shelf={shelf} size="sm" />)}</div>
-          </div>
-          {indTiles.length > 0 && (
-            <div id="industries">
-              <RefHead title="Shop by industry" />
-              <RefTiles items={indTiles} />
-            </div>
-          )}
-        </section>
-      )}
-
-      <section className={`rf-wrap rf-split${jfy.length === 0 ? " solo" : ""}`}>
-        {jfy.length > 0 && (
-          <div>
-            <RefHead title="Just for you" sub={jfyFromWishlist ? "Based on products you saved" : "More to explore"} onAll={() => go("public-products")} />
-            <div className="rf-jfy">{jfy.map(p => <RefCard key={p.id} p={p} shelf={shelf} size="md" />)}</div>
-          </div>
-        )}
-        <RefSellPanel />
-      </section>
-
+        openMenu={() => setMenuOpen(v => !v)} menuOpen={menuOpen} />
+      <TradeNav mode={mode} industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} onRfq={() => setRfqOpen(true)} />
+      <ModeToggle mode={mode} onMode={changeMode} className="mobile" />
+      <TradeHero shelf={shelf} slides={slides} counts={counts} onPickIndustry={openIndustry} onPickCategory={openCategory} />
+      <ShopByIndustry items={gridInds} onPick={i => openIndustry(i)} />
+      <TradeRow id="featured" title="Featured products" sub="Best sellers and popular picks" shelf={shelf} items={featured} onAll={() => go("public-products")} />
+      <TradeRow id="wholesale" title="Wholesale sourcing" sub="Buy in bulk. Minimum order shown." shelf={shelf} mode="business" items={wholesaleList} onAll={() => { changeMode("business"); go("public-products"); }} />
+      <SupplierStrip items={suppliers} industries={inds} onOpen={setSupplier} />
+      <TradeRow id="new-arrivals" title="New arrivals" shelf={shelf} items={newest} onAll={() => go("public-products")} />
+      <TradeRow id="offers" title="Special offers" sub="Active discounts" shelf={shelf} mode="individual" items={offers} />
       <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
         industry={effIndustry} category={effCategory} setIndustry={setIndustryId} setCategory={setCategoryId}
-        search={search} setSearch={setSearch} items={shown} emptyText={emptyMessage} saleOnly={saleOnly} onClearSale={() => setSaleOnly(false)} />
+        search={search} setSearch={setSearch} items={shown} emptyText={emptyMessage} />
 
-      <RefSuppliers items={suppliers} industries={inds} onOpen={setSupplier} />
-      <RefBenefits />
-      <RefQuoteBand onOpen={() => setRfqOpen(true)} thumbs={thumbs} />
-      <RefFooter industries={headerInds} onIndustry={openIndustry} onRequest={() => setQuoteOpen(true)} signedIn={!!session} onAccount={() => navigate(session ? "/admin" : "/login")}
-        go={go} canInstall={app.canInstall} onInstall={() => void app.install()} onWholesale={shopWholesale} />
-      </div>
+      <RfqBanner onOpen={() => setRfqOpen(true)} />
+      <MarketFooter industries={headerInds} onIndustry={openIndustry} onRequest={() => setQuoteOpen(true)} signedIn={!!session} onAccount={() => navigate(session ? "/admin" : "/login")} />
 
       {cart.length > 0 && !quoteOpen && (
         <div className="hm-cartbar" role="status">
