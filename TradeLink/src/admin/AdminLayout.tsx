@@ -23,7 +23,7 @@ import Suppliers from "./pages/Suppliers";
 import SupplierOps from "./pages/SupplierOps";
 import Communication from "./pages/Communication";
 import ActivityLog from "./pages/ActivityLog";
-import SettingsPage from "./pages/Settings";
+import SettingsPage from "./pages/Settings";\nimport MarketplaceOperations from "./pages/MarketplaceOperations";
 
 function Screen({ title, text, children }: { title: string; text: string; children?: ReactNode }) {
   return (
@@ -170,7 +170,7 @@ function Shell() {
             <Route path="communication" element={g(["owner", "manager", "sales"], <Communication />)} />
             <Route path="customers" element={g(["owner", "manager", "sales"], <Customers />)} />
             <Route path="activity" element={g(["owner", "manager"], <ActivityLog />)} />
-            <Route path="settings" element={g(["owner", "manager"], <SettingsPage />)} />
+            <Route path="settings" element={g(["owner", "manager"], <SettingsPage />)} />\n            <Route path="payments" element={g(["owner", "manager"], <MarketplaceOperations />)} />\n            <Route path="commissions" element={g(["owner", "manager"], <MarketplaceOperations />)} />\n            <Route path="returns" element={g(["owner", "manager"], <MarketplaceOperations />)} />\n            <Route path="verification" element={g(["owner", "manager"], <MarketplaceOperations />)} />\n            <Route path="promotions" element={g(["owner", "manager"], <MarketplaceOperations />)} />\n            <Route path="reviews" element={g(["owner", "manager"], <MarketplaceOperations />)} />\n            <Route path="website" element={g(["owner", "manager"], <MarketplaceOperations />)} />\n            <Route path="support" element={g(["owner", "manager"], <MarketplaceOperations />)} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes></Suspense></PageBoundary>
         </main>
