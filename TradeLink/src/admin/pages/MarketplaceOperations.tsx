@@ -16,7 +16,7 @@ const MODULES: Record<string, { title: string; description: string; table: strin
   support: { title: "Customer Support", description: "Customer enquiries and replies are available in the existing Communication page.", table: "quotations" },
 };
 
-function label(v: string) { return v.replaceAll("_", " ").replace(/\b\w/g, x => x.toUpperCase()); }
+function label(v: string) { return v.replace(/_/g, " ").replace(/\b\w/g, (x: string) => x.toUpperCase()); }
 function display(v: unknown) {
   if (v === null || v === undefined || v === "") return "—";
   if (typeof v === "object") return JSON.stringify(v);
@@ -26,7 +26,7 @@ function display(v: unknown) {
 export default function MarketplaceOperations() {
   const { pathname } = useLocation();
   const { notify } = useAdmin();
-  const key = pathname.split("/").filter(Boolean).at(-1) ?? "payments";
+  const pathParts = pathname.split("/").filter(Boolean);\n  const key = pathParts[pathParts.length - 1] ?? "payments";
   const module = MODULES[key] ?? MODULES.payments;
   const [rows, setRows] = useState<Record<string, unknown>[] | null>(null);
   const [busy, setBusy] = useState(false);
