@@ -25,7 +25,7 @@ function useLoad<T extends Row>(table: string, order = "created_at") {
     setLoading(false);
   },[table,order,notify]);
   useEffect(()=>{void load();},[load]);
-  return {rows,setRows,loading,failed,load};
+  return {rows,loading,load};
 }
 function ActionButton({ children, onClick, disabled=false }: { children: ReactNode; onClick:()=>void; disabled?:boolean }) {
   return <button type="button" className="btn outline" disabled={disabled} onClick={onClick}>{children}</button>;
@@ -132,7 +132,7 @@ export function CommissionsPage() {
 }
 
 export function ReturnsDisputesPage() {
-  const {notify}=useAdmin();
+  const {notify,profile}=useAdmin();
   const returns=useLoad<Row>("marketplace_returns");
   const disputes=useLoad<Row>("marketplace_disputes");
   const [tab,setTab]=useState<"returns"|"disputes">("returns");
@@ -191,7 +191,7 @@ export function MarketingPage() {
 }
 
 export function ReviewsPage() {
-  const {notify}=useAdmin();
+  const {notify,profile}=useAdmin();
   const reviews=useLoad<Row>("marketplace_reviews");
   const moderate=async(r:Row,status:string)=>{
     const {error}=await db().from("marketplace_reviews").update({status,moderated_by:profile.id,moderated_at:new Date().toISOString()}).eq("id",r.id);
