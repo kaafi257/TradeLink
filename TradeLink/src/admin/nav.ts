@@ -1,5 +1,5 @@
 import {
-  Activity as ActivityIcon, Boxes, Box, Building2, ChartNoAxesCombined, ClipboardList, FileText, Layers, MessageCircle, Home, Settings, Truck, Users, Receipt, PackageCheck,
+  Activity as ActivityIcon, Boxes, Box, Building2, ChartNoAxesCombined, ClipboardList, FileText, Layers, MessageCircle, Home, Settings, Truck, Users, Receipt, PackageCheck, Wallet, Percent, RotateCcw, BadgeCheck, Megaphone, Star, Globe, Headset,
 } from "lucide-react";
 import type { Role } from "../lib/supabase";
 
@@ -22,7 +22,7 @@ export const NAV: NavItem[] = [
   { path: "/admin/communication", label: "Communication", icon: MessageCircle, roles: ["owner", "manager", "sales"] },
   { path: "/admin/customers", label: "Customers", icon: Users, roles: ["owner", "manager", "sales"] },
   { path: "/admin/activity", label: "Activity Log", icon: ActivityIcon, roles: ["owner", "manager"] },
-  { path: "/admin/settings", label: "Settings", icon: Settings, roles: ["owner", "manager"] },
+  { path: "/admin/settings", label: "Settings", icon: Settings, roles: ["owner", "manager"] },\n  { path: "/admin/payments", label: "Payments & Payouts", icon: Wallet, roles: ["owner", "manager"] },\n  { path: "/admin/commissions", label: "Commissions", icon: Percent, roles: ["owner", "manager"] },\n  { path: "/admin/returns", label: "Returns & Disputes", icon: RotateCcw, roles: ["owner", "manager"] },\n  { path: "/admin/verification", label: "Supplier Verification", icon: BadgeCheck, roles: ["owner", "manager"] },\n  { path: "/admin/promotions", label: "Marketing & Promotions", icon: Megaphone, roles: ["owner", "manager"] },\n  { path: "/admin/reviews", label: "Reviews & Ratings", icon: Star, roles: ["owner", "manager"] },\n  { path: "/admin/website", label: "Website Management", icon: Globe, roles: ["owner", "manager"] },\n  { path: "/admin/support", label: "Customer Support", icon: Headset, roles: ["owner", "manager"] },
 ];
 
 export const allowed = (item: NavItem, role: Role) => item.roles === "all" || item.roles.includes(role);
