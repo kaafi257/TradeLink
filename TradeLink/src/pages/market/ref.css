@@ -313,3 +313,7 @@
   .rf .rf-slide,.rf .rf-slide>img,.rf .rf-slide.on .rf-hero-copy>*{animation:none!important;transition:none!important}
   .rf .rf-card .m img,.rf .rf-cur .i img{transition:none}
 }
+
+/* official logo in the header */
+.rf .rf-logo .brand-full{height:56px}
+@media(max-width:760px){.rf .rf-logo .brand-full{height:42px}}
