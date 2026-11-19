@@ -1181,3 +1181,76 @@
 @media(prefers-reduced-motion:reduce){
  .admin-layout .dash-page .gs,.admin-layout .dash-page .gs.link:hover{transition:none;transform:none}
 }
+
+
+/* ===== TradeLink palette correction: no gold; navy, blue and neutral only ===== */
+.admin-layout{
+  --teal:#315f8f;
+  --tint:#edf2f7;
+  --gold:#315f8f;
+  --amber:#52677f;
+}
+.admin-layout :focus-visible{outline-color:#315f8f}
+.admin-layout .side-nav a.selected:before,
+.admin-layout .nav-marker:before{background:#7fa7d2}
+.admin-layout .side-nav a.selected svg,
+.admin-layout .side-nav a:hover svg{color:#c4d8ec}
+.admin-layout .nav-marker{background:#ffffff16}
+.admin-layout .global-search:focus-within,
+.admin-layout input:focus,.admin-layout select:focus,.admin-layout textarea:focus{
+  border-color:#6f94bb;
+  box-shadow:0 0 0 3px #6f94bb20;
+}
+.admin-layout .btn.gold{
+  background:#0b1f3a;color:#fff;border-color:#0b1f3a;
+}
+.admin-layout .btn.gold:hover{
+  background:#17365d;color:#fff;border-color:#17365d;
+}
+.admin-layout .link-btn,.admin-layout .text-action{color:#315f8f}
+.admin-layout .panel-head svg,
+.admin-layout .ph-ico,.admin-layout .sc-ico,
+.admin-layout .report-cards>div svg{color:#426b96}
+.admin-layout .ph-ico,.admin-layout .sc-ico,
+.admin-layout .metric-ico,.admin-layout .stat-icon,
+.admin-layout .gs-icon,.admin-layout .rp-card-ic{
+  background:#edf2f7!important;color:#426b96!important;
+}
+.admin-layout .rp-card.click:hover{
+  border-color:#9bb4ce;box-shadow:0 8px 22px #315f8f18;
+}
+.admin-layout .rp-line{stroke:#527da9}
+.admin-layout .rp-area{fill:rgba(82,125,169,.13)}
+.admin-layout .rp-dot{stroke:#527da9}
+.admin-layout .rp-bar{fill:#7899bb}
+.admin-layout .rp-bar.on{fill:#0b1f3a}
+.admin-layout .rp-menu button:hover{background:#edf2f7}
+.admin-layout .status-tabs i{background:#7fa7d2}
+.admin-layout .dash-page .gs.link:hover{
+  border-color:#9bb4ce;box-shadow:0 12px 26px -18px #315f8f55;
+}
+.admin-layout .dash-page .gs-icon,
+.admin-layout .dash-page .gs.gold .gs-icon,
+.admin-layout .dash-page .avatar-dot,
+.admin-layout .dash-page .count-badge{
+  background:#edf2f7!important;color:#426b96!important;
+}
+.admin-layout .dash-page .gs .spark{color:#7899bb}
+.admin-layout .dash-page .panel-head>svg{color:#426b96}
+.admin-layout .dash-page .text-action,
+.admin-layout .dash-page .chart-foot button{color:#315f8f}
+.admin-layout .dash-page .all-clear{color:#7899bb}
+.admin-layout .dash-page .stock-row .progress i{background:#7899bb}
+.admin-layout .dash-page .stock-row.low .progress i{background:#9aafc5}
+.admin-layout .attention{border-color:var(--line)}
+.admin-layout .attention .panel-head{background:#f5f7fa;border-bottom-color:var(--line)}
+.admin-layout .attention .panel-head svg{color:#52677f}
+.admin-layout .stock-row.low .progress i{background:#9aafc5}
+.admin-layout .stock-row.low em{color:#52677f}
+.admin-layout .stat-card.gold .stat-icon{background:#edf2f7!important;color:#426b96}
+.admin-layout .stock-row.low .progress i{background:#9aafc5}
+.admin-layout .status.warn{background:#edf2f7;color:#52677f}
+.admin-layout .rp-badge.s-pending,
+.admin-layout .rp-badge.s-low,
+.admin-layout .rp-badge.s-new,
+.admin-layout .rp-badge.s-reviewing{background:#edf2f7;color:#52677f}
