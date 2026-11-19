@@ -91,6 +91,15 @@ export const PERMISSIONS: { key: string; label: string }[] = [
   { key: "catalogue.manage", label: "Manage industries and categories" },
   { key: "reports.view", label: "View business reports" },
   { key: "reports.sensitive", label: "See full customer phone and email in reports" },
+  { key: "suppliers.verify", label: "Review and verify supplier applications" },
+  { key: "marketplace.payments", label: "View marketplace payment records and providers" },
+  { key: "marketplace.payouts", label: "Manage supplier payout queue" },
+  { key: "marketplace.commissions", label: "Manage category commissions" },
+  { key: "marketplace.cases", label: "Manage returns and disputes" },
+  { key: "marketplace.marketing", label: "Manage promotions and campaigns" },
+  { key: "marketplace.reviews", label: "Moderate customer reviews" },
+  { key: "marketplace.website", label: "View website analytics" },
+  { key: "support.manage", label: "Manage customer support tickets" },
 ];
 /** Daily sales total from the sales_by_day() database function. */
 export type SalesPoint = { sold_at: string; total_amount: number };

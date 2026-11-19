@@ -6,7 +6,9 @@ import { useAuth } from "../lib/auth";
 import { supabase, type Role } from "../lib/supabase";
 import "./admin.css";
 import { AdminDataProvider, useAdmin } from "./AdminData";
-import { NAV, allowed } from "./nav";
+import { NAV, NAV_GROUPS, allowed } from "./nav";
+import { PaymentsPage, CommissionsPage, ReturnsDisputesPage, MarketingPage, ReviewsPage, WebsiteManagementPage, CustomerSupportPage } from "./pages/MarketplaceAdmin";
+import SupplierVerification from "./pages/SupplierVerification";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Quotations from "./pages/Quotations";
@@ -46,6 +48,11 @@ class PageBoundary extends Component<{ children: ReactNode }, { failed: boolean 
 
 function Guard({ role, roles, children }: { role: Role; roles: Role[]; children: ReactNode }) {
   return roles.includes(role) ? <>{children}</> : <Navigate to="/admin" replace />;
+}
+
+function FeatureGate({ permission, children }: { permission: string; children: ReactNode }) {
+  const { can } = useAdmin();
+  return can(permission) ? <>{children}</> : <div className="empty-state"><h3>Access restricted</h3><p>Your role has not been granted permission for this section. Ask the owner to enable it in Settings → Permissions.</p></div>;
 }
 
 function Shell() {
@@ -114,14 +121,21 @@ function Shell() {
         <div className="sidebar-brand"><Brand light /></div>
         <nav className="side-nav" aria-label="Admin navigation" ref={navRef}>
           <i className="nav-marker" aria-hidden="true" />
-          {NAV.filter(item => allowed(item, role)).map(item => {
-            const Icon = item.icon;
-            return (
-              <NavLink key={item.path} to={item.path} end={item.end} className={({ isActive }) => (isActive ? "selected" : "")} title={collapsed && wide ? item.label : undefined}
-                onClick={() => setMobileNav(false)} onMouseEnter={item.path === "/admin/reports" ? () => void loadReports() : undefined} onFocus={item.path === "/admin/reports" ? () => void loadReports() : undefined}>
-                <Icon size={18} /><span>{item.label}</span>
-              </NavLink>
-            );
+          {NAV_GROUPS.map(group => {
+            const items = NAV.filter(item => item.group === group && allowed(item, role));
+            if (!items.length) return null;
+            return <section className="nav-group" key={group}>
+              <div className="nav-group-label">{group}</div>
+              {items.map(item => {
+                const Icon = item.icon;
+                return (
+                  <NavLink key={item.path} to={item.path} end={item.end} className={({ isActive }) => (isActive ? "selected" : "")} title={collapsed && wide ? item.label : undefined}
+                    onClick={() => setMobileNav(false)} onMouseEnter={item.path === "/admin/reports" ? () => void loadReports() : undefined} onFocus={item.path === "/admin/reports" ? () => void loadReports() : undefined}>
+                    <Icon size={18} /><span>{item.label}</span>
+                  </NavLink>
+                );
+              })}
+            </section>;
           })}
         </nav>
         <div className="sidebar-user">
@@ -160,6 +174,14 @@ function Shell() {
             <Route path="categories" element={g(["owner", "manager", "inventory"], <Categories />)} />
             <Route path="suppliers" element={g(["owner", "manager", "inventory"], <Suppliers />)} />
             <Route path="supplier-ops" element={g(["owner", "manager"], <SupplierOps />)} />
+            <Route path="supplier-verification" element={g(["owner", "manager"], <FeatureGate permission="suppliers.verify"><SupplierVerification /></FeatureGate>)} />
+            <Route path="payments" element={g(["owner", "manager"], <FeatureGate permission="marketplace.payments"><PaymentsPage /></FeatureGate>)} />
+            <Route path="commissions" element={g(["owner", "manager"], <FeatureGate permission="marketplace.commissions"><CommissionsPage /></FeatureGate>)} />
+            <Route path="returns-disputes" element={g(["owner", "manager"], <FeatureGate permission="marketplace.cases"><ReturnsDisputesPage /></FeatureGate>)} />
+            <Route path="marketing" element={g(["owner", "manager"], <FeatureGate permission="marketplace.marketing"><MarketingPage /></FeatureGate>)} />
+            <Route path="reviews" element={g(["owner", "manager"], <FeatureGate permission="marketplace.reviews"><ReviewsPage /></FeatureGate>)} />
+            <Route path="website" element={g(["owner", "manager"], <FeatureGate permission="marketplace.website"><WebsiteManagementPage /></FeatureGate>)} />
+            <Route path="support" element={g(["owner", "manager"], <FeatureGate permission="support.manage"><CustomerSupportPage /></FeatureGate>)} />
             <Route path="quotations" element={g(["owner", "manager", "sales"], <Quotations />)} />
             <Route path="orders" element={g(["owner", "manager", "sales"], <Orders />)} />
             <Route path="deliveries" element={g(["owner", "manager", "sales", "delivery"], <Deliveries />)} />
