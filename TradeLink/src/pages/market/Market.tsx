@@ -368,12 +368,10 @@ export function CleanCard({ p, shelf, mode }: { p: PublicProduct; shelf: Shelf; 
 type SortKey = "new" | "az" | "low" | "high";
 const PAGE = 20;
 
-export function MarketShop({ shelf, onMode, industries, categories, counts, industry, category, setIndustry, setCategory, search, setSearch, items, emptyText, saleOnly, onClearSale }: {
+export function MarketShop({ shelf, onMode, industries, categories, counts, industry, category, setIndustry, setCategory, search, setSearch, items, emptyText }: {
   shelf: Shelf; onMode: (m: Mode) => void; industries: PublicIndustry[]; categories: PublicCategory[]; counts: Map<string, number>;
   industry: string; category: string; setIndustry: (id: string) => void; setCategory: (id: string) => void;
   search: string; setSearch: (s: string) => void; items: PublicProduct[]; emptyText: string;
-  /** Optional "products on sale" filter, set from the homepage Sale links. */
-  saleOnly?: boolean; onClearSale?: () => void;
 }) {
   const [sort, setSort] = useState<SortKey>("new");
   const [limit, setLimit] = useState(PAGE);
@@ -441,7 +439,6 @@ export function MarketShop({ shelf, onMode, industries, categories, counts, indu
             <span className="n"><Package size={16} />{items.length}</span>
             {activeInd && <button className="chip" onClick={() => choose("all")}><IconFor name={activeInd.icon} size={14} />{activeInd.name}<X size={13} /></button>}
             {activeCat && <button className="chip" onClick={() => choose(industry)}>{activeCat.name}<X size={13} /></button>}
-            {saleOnly && <button className="chip" onClick={() => onClearSale?.()}><Tag size={13} />Sale<X size={13} /></button>}
             {search && <button className="chip" onClick={() => setSearch("")}><Search size={13} />{search}<X size={13} /></button>}
           </div>
           {sorted.length === 0 ? <p className="mk-empty">{emptyText}</p> : (
