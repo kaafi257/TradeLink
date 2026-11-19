@@ -6,7 +6,7 @@ import { ContactIcons } from "../../components/ContactActions";
 import { money } from "../../lib/format";
 import { IconFor } from "../../lib/icons";
 import { variantFor, type StoreVariant } from "../../lib/storefront";
-import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct } from "../../lib/supabase";
+import { supabase, withPhoto, type PublicCategory, type PublicIndustry, type PublicProduct } from "../../lib/supabase";
 import { lookFor } from "../../lib/theme";
 import { useWishlist } from "../../lib/wishlist";
 import { newKey, RequestModal, type Line, type Mode } from "../PublicHome";
@@ -44,7 +44,7 @@ function useIndustry(id: string | undefined) {
       if (!industry) { setState({ status: "missing", industry: null, categories: [], products: [] }); return; }
       const categories = ((cat.data ?? []) as PublicCategory[]).filter(c => c.industry_id === industry.id);
       const ids = new Set(categories.map(c => c.id));
-      const products = ((prod.data ?? []) as PublicProduct[]).filter(p => p.category_id && ids.has(p.category_id));
+      const products = ((prod.data ?? []) as PublicProduct[]).map(withPhoto).filter(p => p.category_id && ids.has(p.category_id));
       setState({ status: products.length ? "ready" : "empty", industry, categories, products });
     })();
     return () => { live = false; };

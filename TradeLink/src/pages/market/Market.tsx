@@ -28,6 +28,9 @@ export type Shelf = {
   wished: (id: string) => boolean;
   toggleWish: (id: string) => void;
   open: (p: PublicProduct) => void;
+  /** The publicly listed supplier a product comes from, and a way to open its page. */
+  supplierOf?: (p: PublicProduct) => PublicSupplier | undefined;
+  openSupplier?: (s: PublicSupplier) => void;
 };
 
 /** Fades a block in the first time it scrolls into view. */
@@ -603,6 +606,7 @@ export function ProductDialog({ p, shelf, onClose, onStore }: { p: PublicProduct
   const added = shelf.inRequest(p.id);
   const fashion = shelf.isFashion(p);
   const photos = useProductImages(p);
+  const sup = shelf.supplierOf?.(p);
   return (
     <div className="mk-layer" role="dialog" aria-modal="true" aria-label={p.name}>
       <button className="mk-scrim" aria-label="Close" onClick={onClose} />
@@ -616,6 +620,7 @@ export function ProductDialog({ p, shelf, onClose, onStore }: { p: PublicProduct
           <div className="mk-row"><Price p={p} mode={shelf.mode} /><Stock p={p} /></div>
           {p.description && <p className="mk-desc">{p.description}</p>}
           <div className="mk-facts">
+            {sup && <button type="button" className="mk-sup" title="Supplier" onClick={() => { onClose(); shelf.openSupplier?.(sup); }}><Building2 size={14} />{sup.name}</button>}
             <span><Package size={14} />{p.package_size || p.unit}</span>
             {shelf.mode === "business" && <span title={`Minimum order ${Number(p.min_order_quantity)} ${p.unit}`}><Layers size={14} />{Number(p.min_order_quantity)}</span>}
           </div>

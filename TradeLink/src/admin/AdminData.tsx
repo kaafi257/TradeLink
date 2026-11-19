@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
-import { supabase, type Activity, type Category, type DeliveryRow, type Industry, type OrderRow, type Product, type Profile, type Quote, type SaleRow, type SalesPoint } from "../lib/supabase";
+import { supabase, withPhoto, type Activity, type Category, type DeliveryRow, type Industry, type OrderRow, type Product, type Profile, type Quote, type SaleRow, type SalesPoint } from "../lib/supabase";
 
 type AdminData = {
   profile: Profile;
@@ -81,7 +81,7 @@ export function AdminDataProvider({ profile, children }: { profile: Profile; chi
       supabase.from("industries").select("*").order("sort_order").order("name"),
       supabase.from("categories").select("*").order("sort_order").order("name"),
     ]);
-    setProducts((prod.data ?? []) as Product[]);
+    setProducts(((prod.data ?? []) as Product[]).map(withPhoto));
     setQuotes((q.data ?? []) as Quote[]);
     setQuoteCount(qAll.count ?? 0);
     setNewQuoteCount(qNew.count ?? 0);

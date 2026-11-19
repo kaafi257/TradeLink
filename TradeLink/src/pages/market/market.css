@@ -493,3 +493,5 @@ a.mk-add{display:inline-grid}
 .tl-viewer .vthumbs img{width:100%;height:100%;object-fit:cover;display:block}
 @media(max-width:640px){.tl-viewer .vnav{width:40px;height:40px}.tl-viewer .vnav.prev{left:6px}.tl-viewer .vnav.next{right:6px}.tl-viewer .vthumbs{justify-content:flex-start}.tl-viewer .vthumbs button{width:52px;height:52px}}
 @media(prefers-reduced-motion:reduce){.tl-gal .main img,.tl-viewer{animation:none}.tl-viewer .vstage img{transition:none!important}}
+.mk-facts .mk-sup{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--mk-line,#e3e9f3);background:#fff;border-radius:8px;padding:6px 10px;font:inherit;font-size:12.5px;font-weight:700;color:var(--mk-ink);cursor:pointer;transition:.18s}
+.mk-facts .mk-sup:hover{border-color:#2f6df6;color:#2f6df6}

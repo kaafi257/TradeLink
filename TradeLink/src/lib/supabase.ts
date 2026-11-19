@@ -21,6 +21,8 @@ export type Product = {
   category_id: string | null; retail_price: number; audience: Audience;
   /** Fashion fields (migration 0006); missing until that migration has been run. */
   brand?: string | null; sale_price?: number | null;
+  /** Migration 0015: the product comes from this supplier and its stock is the supplier's. */
+  supplier_id?: string | null; supplier_product_id?: string | null;
 };
 export type Audience = "b2b" | "b2c" | "both";
 export type Storefront = "standard" | "fashion";
@@ -28,6 +30,12 @@ export type Industry = { id: string; name: string; description: string | null; i
 export type Category = { id: string; industry_id: string; name: string; description: string | null; image_url: string | null; sort_order: number; active: boolean };
 export type PublicIndustry = Pick<Industry, "id" | "name" | "description" | "icon" | "sort_order" | "storefront">;
 export type PublicCategory = Pick<Category, "id" | "industry_id" | "name" | "description" | "image_url" | "sort_order">;
+/** Supplier photos are stored as "storage:<bucket>/<path>" so the database never needs to know the project address. */
+export function photoUrl(u: string | null | undefined): string | null {
+  if (!u) return null;
+  return u.startsWith("storage:") && url ? `${url}/storage/v1/object/public/${u.slice(8)}` : u;
+}
+export const withPhoto = <T extends { image_url: string | null }>(p: T): T => (p.image_url?.startsWith("storage:") ? { ...p, image_url: photoUrl(p.image_url) } : p);
 /** What the public website may see (the public_products view): no price, stock or SKU. */
 export type PublicProduct = {
   id: string; name: string; category: string; description: string | null; image_url: string | null;
@@ -36,6 +44,8 @@ export type PublicProduct = {
   /** Added by migration 0006 (fashion storefront). */
   brand?: string | null; sale_price?: number | null; created_at?: string;
   stock_status?: "in" | "low" | "out"; stock_left?: number | null;
+  /** Set when the product comes from a publicly listed supplier (migration 0015). */
+  supplier_id?: string | null;
 };
 /** Suppliers directory (migration 0007). Only the harmless public fields are ever read by the website. */
 export type SupplierStatus = "pending" | "approved" | "rejected" | "suspended";

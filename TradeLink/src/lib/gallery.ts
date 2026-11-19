@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase, type PublicProduct } from "./supabase";
+import { photoUrl, supabase, type PublicProduct } from "./supabase";
 
 const cache = new Map<string, string[]>();
 
@@ -14,7 +14,7 @@ export function useProductImages(p: PublicProduct): string[] {
     let live = true;
     void supabase.from("public_product_images").select("url, sort_order").eq("product_id", p.id).order("sort_order").then(r => {
       if (r.error) return;
-      const urls = ((r.data ?? []) as { url: string }[]).map(x => x.url);
+      const urls = ((r.data ?? []) as { url: string }[]).map(x => photoUrl(x.url) ?? x.url);
       cache.set(p.id, urls);
       if (live) setExtra(urls);
     });
