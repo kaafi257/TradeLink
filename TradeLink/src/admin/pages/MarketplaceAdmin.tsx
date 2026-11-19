@@ -12,18 +12,19 @@ const stamp = (v?: string | null) => v ? new Date(v).toLocaleString() : "—";
 const tone = (s: string) => ["paid","verified","approved","published","resolved","received","active"].includes(s) ? "good" : ["failed","rejected","hidden","cancelled","suspended"].includes(s) ? "bad" : ["open","pending","queued","requested","submitted","under_review","investigating","processing"].includes(s) ? "warn" : "muted";
 function Status({ value }: { value?: string }) { const v = value || "unknown"; return <span className={"status " + tone(v)}>{v.replaceAll("_"," ")}</span>; }
 function PageError({ message }: { message: string }) { return <div className="table-panel"><div className="empty-state"><CircleAlert /><p>{message}</p></div></div>; }
-function useLoad<T extends Row>(table: string, order = "created_at") {
+function useLoad<T extends Row>(table: string, order = "created_at", enabled = true) {
   const { notify } = useAdmin();
   const [rows,setRows] = useState<T[]>([]);
   const [loading,setLoading] = useState(true);
   const [,setFailed] = useState(false);
   const load = useCallback(async () => {
+    if (!enabled) { setRows([]); setLoading(false); setFailed(false); return; }
     setLoading(true);
     const { data,error } = await db().from(table).select("*").order(order,{ascending:false}).limit(500);
     if(error){setFailed(true);notify(errorText(error,"Could not load " + table));}
     else {setFailed(false);setRows((data ?? []) as T[]);}
     setLoading(false);
-  },[table,order,notify]);
+  },[table,order,notify,enabled]);
   useEffect(()=>{void load();},[load]);
   return {rows,loading,load};
 }
@@ -32,10 +33,11 @@ function ActionButton({ children, onClick, disabled=false }: { children: ReactNo
 }
 
 export function PaymentsPage() {
-  const { notify, profile } = useAdmin();
+  const { notify, profile, can } = useAdmin();
   const [tab,setTab] = useState<"payments"|"payouts"|"providers">("payments");
   const payments = useLoad<Row>("marketplace_payment_records");
-  const payouts = useLoad<Row>("marketplace_payouts");
+  const canPayout = can("marketplace.payouts");
+  const payouts = useLoad<Row>("marketplace_payouts","created_at",canPayout);
   const providers = useLoad<Row>("marketplace_payment_providers","display_name");
   const [suppliers,setSuppliers] = useState<Row[]>([]);
   const [showCreate,setShowCreate] = useState(false);
@@ -59,14 +61,14 @@ export function PaymentsPage() {
   const payTotal=payments.rows.reduce((n,r)=>n+Number(r.amount||0),0);
   const queued=payouts.rows.filter(r=>["queued","approved","processing"].includes(r.status)).reduce((n,r)=>n+Number(r.amount||0),0);
   return <>
-    <PageHeading title="Payments & Payouts" sub="Track payment records and manage supplier payout queues." action={<button className="btn green" onClick={()=>setShowCreate(v=>!v)}><Wallet size={16}/> New payout</button>}/>
+    <PageHeading title="Payments & Payouts" sub="Track payment records and manage supplier payout queues." action={{canPayout&&<button className="btn green" onClick={()=>setShowCreate(v=>!v)}><Wallet size={16}/> New payout</button>}}/>
     <SummaryStrip items={[
       {icon:<Banknote/>,tone:"blue",value:money(payTotal),label:"Recorded payments"},
       {icon:<Wallet/>,tone:"mint",value:money(queued),label:"Payout queue"},
       {icon:<RefreshCw/>,tone:"red",value:payments.rows.filter(r=>["pending","submitted"].includes(r.status)).length,label:"Unverified"},
     ]}/>
     <div className="status-tabs" role="tablist">
-      {(["payments","payouts","providers"] as const).map(x=><button key={x} role="tab" aria-selected={tab===x} className={tab===x?"on":""} onClick={()=>setTab(x)}>{x==="payments"?"Payments":x==="payouts"?"Supplier payouts":"Payment providers"}</button>)}
+      {(["payments",...(canPayout?["payouts" as const]:[]),"providers"] as const).map(x=><button key={x} role="tab" aria-selected={tab===x} className={tab===x?"on":""} onClick={()=>setTab(x)}>{x==="payments"?"Payments":x==="payouts"?"Supplier payouts":"Payment providers"}</button>)}
       <button style={{marginLeft:"auto"}} onClick={()=>void refresh()}><RefreshCw size={14}/> Refresh</button>
     </div>
     {showCreate && <div className="table-panel" style={{padding:18,marginBottom:14}}>
@@ -82,7 +84,7 @@ export function PaymentsPage() {
     {tab==="payments" && <DataTable headers={["Date","Order","Supplier","Provider","Reference","Amount","Status"]} empty={payments.loading?"Loading payments…":"No payment records yet."} isEmpty={!payments.rows.length}>
       {payments.rows.map(r=><tr key={r.id}><td>{stamp(r.created_at)}</td><td>{r.order_id||"—"}</td><td>{r.supplier_id||"—"}</td><td>{r.provider_code}</td><td>{r.transaction_reference||"—"}</td><td>{money(r.amount)}</td><td><Status value={r.status}/></td></tr>)}
     </DataTable>}
-    {tab==="payouts" && <DataTable headers={["Created","Supplier","Amount","Rail","Destination","Status","Next action"]} empty={payouts.loading?"Loading payouts…":"No supplier payouts in the queue."} isEmpty={!payouts.rows.length}>
+    {tab==="payouts" && canPayout && <DataTable headers={["Created","Supplier","Amount","Rail","Destination","Status","Next action"]} empty={payouts.loading?"Loading payouts…":"No supplier payouts in the queue."} isEmpty={!payouts.rows.length}>
       {payouts.rows.map(r=><tr key={r.id}><td>{date(r.created_at)}</td><td>{suppliers.find(s=>s.id===r.supplier_id)?.name||r.supplier_id}</td><td>{money(r.amount)}</td><td>{r.provider_code}</td><td>{r.destination_reference||"—"}</td><td><Status value={r.status}/></td><td data-actions>{r.status==="queued"?<ActionButton onClick={()=>void advancePayout(r,"approved")}>Approve</ActionButton>:r.status==="approved"?<ActionButton onClick={()=>void advancePayout(r,"processing")}>Processing</ActionButton>:r.status==="processing"?<ActionButton onClick={()=>void advancePayout(r,"failed")}>Mark failed</ActionButton>:<span>—</span>}</td></tr>)}
     </DataTable>}
     {tab==="providers" && <DataTable headers={["Provider","Enabled","Integration","Credentials","Last tested"]} empty={providers.loading?"Loading providers…":"No payment providers configured."} isEmpty={!providers.rows.length}>
