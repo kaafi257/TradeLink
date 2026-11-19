@@ -71,3 +71,32 @@ function storageMessage(m: string) {
   if (/size|exceed|large/i.test(m)) return "That file is too large.";
   return m;
 }
+
+/* ---------------- product photos (public bucket, one folder per supplier) ---------------- */
+async function resizeTo(file: File, max: number): Promise<Blob> {
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bmp.width * scale); canvas.height = Math.round(bmp.height * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height); bmp.close();
+    const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/webp", 0.85));
+    return blob && blob.type === "image/webp" && blob.size <= 3 * 1024 * 1024 ? blob : file;
+  } catch { return file; }
+}
+export const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
+export async function uploadProductImage(supplierId: string, file: File): Promise<string> {
+  if (!IMAGE_ACCEPT.split(",").includes(file.type)) throw new Error("Photos must be JPG, PNG or WebP images.");
+  if (file.size > 15 * 1024 * 1024) throw new Error("That photo is larger than 15 MB. Choose a smaller one.");
+  const blob = await resizeTo(file, 1200);
+  if (blob.size > 3 * 1024 * 1024) throw new Error("That photo is too large after resizing. Choose a smaller one.");
+  const ext = blob.type === "image/webp" ? "webp" : blob.type === "image/png" ? "png" : "jpg";
+  const path = `${supplierId}/${Date.now()}-${crypto.randomUUID().slice(0, 6)}.${ext}`;
+  const { error } = await requireSupabase().storage.from("supplier-products").upload(path, blob, { contentType: blob.type || file.type, cacheControl: "31536000" });
+  if (error) throw new Error(/bucket not found/i.test(error.message) ? "Product photo storage is not set up yet. Run migration 0013 in Supabase." : storageMessage(error.message));
+  return path;
+}
+export const productImageUrl = (path: string) => requireSupabase().storage.from("supplier-products").getPublicUrl(path).data.publicUrl;
+export async function removeProductImage(path: string) { try { await requireSupabase().storage.from("supplier-products").remove([path]); } catch { /* best effort */ } }

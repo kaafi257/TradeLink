@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import { BadgeCheck, Bell, Building2, CheckCircle2, CircleDashed, Clock, Home, LayoutDashboard, LogOut, Menu, PauseCircle, X, XCircle } from "lucide-react";
+import { BadgeCheck, Bell, Boxes, Building2, CheckCircle2, CircleDashed, ClipboardList, Clock, Home, LayoutDashboard, LogOut, Menu, Package, PauseCircle, X, XCircle } from "lucide-react";
 import { Brand } from "../../components/Brand";
 import { useAuth } from "../../lib/auth";
 import { IconFor } from "../../lib/icons";
@@ -9,6 +9,10 @@ import { BUSINESS_TYPES } from "./Register";
 import { SupplierProvider, useSupplier } from "./context";
 import { logoUrl } from "./files";
 import Profile from "./Profile";
+import Dashboard from "./Dashboard";
+import Products from "./Products";
+import Inventory from "./Inventory";
+import Orders from "./Orders";
 import "./supplier.css";
 
 export const STATUS: Record<SupplierStatus, { label: string; tone: "wait" | "good" | "bad" | "hold"; Icon: typeof Clock }> = {
@@ -99,7 +103,6 @@ function Overview() {
         <h3>Complete your profile</h3>
         <ul className="sp-todo">{todo.map(t => <li key={t.text} className={t.done ? "done" : ""}>{t.done ? <CheckCircle2 size={17} /> : <CircleDashed size={17} />} {t.text}</li>)}</ul>
         {todo.some(t => !t.done) && <button className="sp-btn line sm" onClick={() => navigate("/supplier/profile")}>Open business profile</button>}
-        {status === "approved" && <p className="sp-muted">Product and order management are added to this portal in the next updates.</p>}
       </section>
     </div>
   );
@@ -134,7 +137,10 @@ function Notifications() {
 
 /* ------------------------------------------------------------------ shell */
 const NAV = [
-  { to: "/supplier", end: true, label: "Overview", Icon: LayoutDashboard },
+  { to: "/supplier", end: true, label: "Dashboard", Icon: LayoutDashboard },
+  { to: "/supplier/products", end: false, label: "Products", Icon: Package, ops: true },
+  { to: "/supplier/inventory", end: false, label: "Inventory", Icon: Boxes, ops: true },
+  { to: "/supplier/orders", end: false, label: "Purchase orders", Icon: ClipboardList, ops: true },
   { to: "/supplier/profile", end: false, label: "Business profile", Icon: Building2 },
   { to: "/supplier/notifications", end: false, label: "Notifications", Icon: Bell },
 ];
@@ -169,7 +175,7 @@ function Shell() {
       <aside className={`sp-side${drawer ? " open" : ""}`} aria-label="Supplier menu">
         <div className="sp-side-top"><Brand light /><button className="sp-icon sp-close" aria-label="Close menu" onClick={() => setDrawer(false)}><X size={20} /></button></div>
         <nav>
-          {NAV.map(({ to, end, label, Icon }) => (
+          {NAV.filter(n => !n.ops || supplier.status === "approved").map(({ to, end, label, Icon }) => (
             <NavLink key={to} to={to} end={end} className={({ isActive }) => (isActive ? "on" : "")}>
               <Icon size={18} /> {label}{label === "Notifications" && unread > 0 && <i>{unread}</i>}
             </NavLink>
@@ -204,7 +210,12 @@ function Shell() {
         </header>
         <main className="sp-content">
           <Routes>
-            <Route index element={<Overview />} />
+            <Route index element={supplier.status === "approved" ? <Dashboard /> : <Overview />} />
+            {supplier.status === "approved" && <>
+              <Route path="products" element={<Products />} />
+              <Route path="inventory" element={<Inventory />} />
+              <Route path="orders" element={<Orders />} />
+            </>}
             <Route path="profile" element={<Profile />} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="*" element={<Navigate to="/supplier" replace />} />
