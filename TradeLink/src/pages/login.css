@@ -68,6 +68,15 @@
 .lg-lang li button{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:0;border-radius:10px;background:none;color:var(--n1);font-size:15.5px;cursor:pointer;text-align:left}
 .lg-lang li button:hover{background:#eef5fd}.lg-lang li[aria-selected=true] button{color:var(--b);font-weight:700}
 
+/* desktop: scale the 1440x900 design to the window (--z is set from the window size) */
+@media(min-width:1001px){
+  .lg{height:100vh;height:100dvh;min-height:0}
+  .lg-side-in{zoom:var(--z,1);min-height:calc(100dvh / var(--z,1));height:calc(100dvh / var(--z,1))}
+  .lg-main{padding:0 20px;justify-content:center;gap:clamp(14px,3vh,34px)}
+  .lg-card,.lg-foot{zoom:var(--z,1)}
+  .lg-lang{zoom:var(--z,1)}
+}
+
 /* laptop */
 @media(max-width:1180px){.lg{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.lg-side-in{padding-right:110px}.lg-trust span{width:54px;height:54px}.lg-trust li{font-size:14px}}
 

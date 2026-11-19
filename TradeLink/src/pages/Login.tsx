@@ -7,6 +7,17 @@ import { LANGS, useLoginText, type Lang } from "./loginText";
 import LoginHero from "./LoginHero";
 import "./login.css";
 
+/** Desktop only: the screen is designed for a 1440x900 canvas and scaled to fit the real window, so nothing scrolls on short laptops and nothing floats lost on big monitors. */
+function useFit(): number {
+  const [z, setZ] = useState(1);
+  useEffect(() => {
+    const run = () => { const w = window.innerWidth, h = window.innerHeight; setZ(w > 1000 ? Math.min(1.5, Math.max(0.7, Math.min(w / 1440, h / 900))) : 1); };
+    run(); window.addEventListener("resize", run);
+    return () => window.removeEventListener("resize", run);
+  }, []);
+  return z;
+}
+
 const StoreIntro = lazy(() => import("./StoreIntro"));
 const EMAIL_KEY = "tl-remember-email";
 
@@ -37,6 +48,7 @@ export default function Login() {
   const navigate = useNavigate();
   const { session, loading, profile } = useAuth();
   const { t, lang, setLang } = useLoginText();
+  const fit = useFit();
   const [email, setEmail] = useState(() => { try { return localStorage.getItem(EMAIL_KEY) ?? ""; } catch { return ""; } });
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
@@ -84,7 +96,7 @@ export default function Login() {
   };
 
   return (
-    <div className="lg">
+    <div className="lg" style={{ "--z": fit } as React.CSSProperties}>
       <aside className="lg-side">
         <svg className="lg-shape" viewBox="0 0 700 900" preserveAspectRatio="none" aria-hidden="true">
           <path d="M-40 560 C140 470 330 560 440 690 S640 900 740 880 V900 H-40Z" fill="#0d4aa3" opacity=".55" />
