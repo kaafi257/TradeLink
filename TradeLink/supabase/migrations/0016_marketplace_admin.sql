@@ -35,7 +35,7 @@ grant select, insert, update on public.marketplace_support_tickets to authentica
 
 -- Replace broad staff-only policies on marketplace admin tables with the existing
 -- database-backed role_permissions mechanism. The owner always passes has_permission().
-drop policy if exists "tl staff manage marketplace_payment_providers" on public.marketplace_payment_providers;
+drop policy if exists "tl staff manage payment providers" on public.marketplace_payment_providers;
 drop policy if exists "tl staff manage marketplace_payment_records" on public.marketplace_payment_records;
 drop policy if exists "tl staff manage marketplace_payouts" on public.marketplace_payouts;
 drop policy if exists "tl staff manage marketplace_category_commissions" on public.marketplace_category_commissions;
