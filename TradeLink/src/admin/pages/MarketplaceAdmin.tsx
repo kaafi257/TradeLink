@@ -138,7 +138,7 @@ export function ReturnsDisputesPage() {
   const [tab,setTab]=useState<"returns"|"disputes">("returns");
   const [notes,setNotes]=useState<Record<string,string>>({});
   const update=async(table:string,r:Row,status:string,note:string)=>{
-    const patch:Row=table==="marketplace_returns"?{status,resolution_note:note||null,reviewed_at:new Date().toISOString()}:{status,resolution:note||null,resolved_at:["resolved","closed"].includes(status)?new Date().toISOString():null};
+    const patch:Row=table==="marketplace_returns"?{status,resolution_note:note||null,reviewed_by:profile.id,reviewed_at:new Date().toISOString()}:{status,resolution:note||null,resolved_at:["resolved","closed"].includes(status)?new Date().toISOString():null};
     const {error}=await db().from(table).update(patch).eq("id",r.id);
     if(error)notify(errorText(error,"Could not update case"));else{notify("Case updated.");await (table==="marketplace_returns"?returns.load():disputes.load());}
   };
@@ -146,7 +146,7 @@ export function ReturnsDisputesPage() {
     <PageHeading title="Returns & Disputes" sub="Review customer return requests and resolve marketplace disputes."/>
     <div className="status-tabs">{(["returns","disputes"] as const).map(t=><button key={t} className={tab===t?"on":""} onClick={()=>setTab(t)}>{t==="returns"?"Returns":"Disputes"}</button>)}</div>
     {tab==="returns"?<DataTable headers={["Requested","Order","Reason","Details","Status","Resolution note","Update"]} empty={returns.loading?"Loading returns…":"No return requests."} isEmpty={!returns.rows.length}>
-      {returns.rows.map(r=><tr key={r.id}><td>{date(r.created_at)}</td><td>{r.order_id}</td><td>{r.reason}</td><td>{r.details||"—"}</td><td><Status value={r.status}/></td><td><input aria-label="Return resolution note" value={notes[r.id]??r.resolution_note??""} onChange={e=>setNotes(v=>({...v,[r.id]:e.target.value}))}/></td><td data-actions><select aria-label="Return status" defaultValue={r.status} onChange={e=>void update("marketplace_returns",r,e.target.value,notes[r.id]??r.resolution_note??"")}><option value="requested">Requested</option><option value="under_review">Under review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="received">Received</option><option value="refunded">Refunded</option><option value="closed">Closed</option></select></td></tr>)}
+      {returns.rows.map(r=><tr key={r.id}><td>{date(r.created_at)}</td><td>{r.order_id}</td><td>{r.reason}</td><td>{r.details||"—"}</td><td><Status value={r.status}/></td><td><input aria-label="Return resolution note" value={notes[r.id]??r.resolution_note??""} onChange={e=>setNotes(v=>({...v,[r.id]:e.target.value}))}/></td><td data-actions><select aria-label="Return status" defaultValue={r.status} onChange={e=>void update("marketplace_returns",r,e.target.value,notes[r.id]??r.resolution_note??"")}><option value="requested">Requested</option><option value="under_review">Under review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="received">Received</option><option value="closed">Closed</option></select></td></tr>)}
     </DataTable>:<DataTable headers={["Opened","Order","Subject","Description","Status","Resolution","Update"]} empty={disputes.loading?"Loading disputes…":"No disputes."} isEmpty={!disputes.rows.length}>
       {disputes.rows.map(r=><tr key={r.id}><td>{date(r.created_at)}</td><td>{r.order_id}</td><td>{r.subject}</td><td>{r.description}</td><td><Status value={r.status}/></td><td><input aria-label="Dispute resolution" value={notes[r.id]??r.resolution??""} onChange={e=>setNotes(v=>({...v,[r.id]:e.target.value}))}/></td><td data-actions><select aria-label="Dispute status" defaultValue={r.status} onChange={e=>void update("marketplace_disputes",r,e.target.value,notes[r.id]??r.resolution??"")}><option value="open">Open</option><option value="investigating">Investigating</option><option value="awaiting_customer">Awaiting customer</option><option value="awaiting_supplier">Awaiting supplier</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select></td></tr>)}
     </DataTable>}
@@ -194,7 +194,7 @@ export function ReviewsPage() {
   const {notify}=useAdmin();
   const reviews=useLoad<Row>("marketplace_reviews");
   const moderate=async(r:Row,status:string)=>{
-    const {error}=await db().from("marketplace_reviews").update({status,moderated_at:new Date().toISOString()}).eq("id",r.id);
+    const {error}=await db().from("marketplace_reviews").update({status,moderated_by:profile.id,moderated_at:new Date().toISOString()}).eq("id",r.id);
     if(error)notify(errorText(error,"Could not moderate review"));else{notify("Review " + status + ".");await reviews.load();}
   };
   const avg=reviews.rows.length?reviews.rows.reduce((n,r)=>n+Number(r.rating),0)/reviews.rows.length:0;
