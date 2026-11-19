@@ -26,7 +26,8 @@ function display(v: unknown) {
 export default function MarketplaceOperations() {
   const { pathname } = useLocation();
   const { notify } = useAdmin();
-  const pathParts = pathname.split("/").filter(Boolean);\n  const key = pathParts[pathParts.length - 1] ?? "payments";
+  const pathParts = pathname.split("/").filter(Boolean);
+  const key = pathParts[pathParts.length - 1] ?? "payments";
   const module = MODULES[key] ?? MODULES.payments;
   const [rows, setRows] = useState<Record<string, unknown>[] | null>(null);
   const [busy, setBusy] = useState(false);
