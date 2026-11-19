@@ -686,7 +686,7 @@ export function MarketFooter({ industries, onIndustry, onRequest, onAccount, sig
     <footer className="mk-footer" id="contact">
       <div className="mk-wrap mk-fgrid">
         <div className="mk-fbrand">
-          <Brand light />
+          <Brand />
           <p>Wholesale and retail, one marketplace.</p>
           <ContactIcons />
         </div>
