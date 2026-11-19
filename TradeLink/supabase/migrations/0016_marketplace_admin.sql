@@ -84,3 +84,46 @@ using (public.has_permission('marketplace.website'));
 
 -- Supplier applications continue to be reviewed through the existing review_supplier()
 -- RPC and supplier status columns; no duplicate verification table is introduced.
+
+
+-- Financial final states require trusted server-side provider confirmation.
+create or replace function public.guard_marketplace_financial_status()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  jwt_role text := current_setting('request.jwt.claim.role', true);
+begin
+  if tg_table_name = 'marketplace_payment_records'
+     and new.status in ('verified','refunded')
+     and old.status is distinct from new.status
+     and coalesce(jwt_role,'') <> 'service_role' then
+    raise exception 'Payment verification and refunds require trusted provider confirmation.' using errcode = '42501';
+  end if;
+  if tg_table_name = 'marketplace_payouts'
+     and new.status = 'paid'
+     and old.status is distinct from new.status
+     and coalesce(jwt_role,'') <> 'service_role' then
+    raise exception 'A payout can be marked paid only after trusted transfer confirmation.' using errcode = '42501';
+  end if;
+  if tg_table_name = 'marketplace_returns'
+     and new.status = 'refunded'
+     and old.status is distinct from new.status
+     and coalesce(jwt_role,'') <> 'service_role' then
+    raise exception 'A return can be marked refunded only after trusted refund confirmation.' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function public.guard_marketplace_financial_status() from public, anon, authenticated;
+drop trigger if exists guard_marketplace_payment_status on public.marketplace_payment_records;
+create trigger guard_marketplace_payment_status before update on public.marketplace_payment_records
+for each row execute function public.guard_marketplace_financial_status();
+drop trigger if exists guard_marketplace_payout_status on public.marketplace_payouts;
+create trigger guard_marketplace_payout_status before update on public.marketplace_payouts
+for each row execute function public.guard_marketplace_financial_status();
+drop trigger if exists guard_marketplace_return_status on public.marketplace_returns;
+create trigger guard_marketplace_return_status before update on public.marketplace_returns
+for each row execute function public.guard_marketplace_financial_status();
