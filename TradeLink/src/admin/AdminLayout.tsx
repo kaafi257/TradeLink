@@ -19,6 +19,7 @@ const Reports = lazy(() => import("./pages/Reports"));
 import Customers from "./pages/Customers";
 import Categories from "./pages/Categories";
 import Suppliers from "./pages/Suppliers";
+import SupplierOps from "./pages/SupplierOps";
 import Communication from "./pages/Communication";
 import ActivityLog from "./pages/ActivityLog";
 import SettingsPage from "./pages/Settings";
@@ -107,6 +108,7 @@ function Shell() {
             <Route path="products" element={g(["owner", "manager", "sales", "inventory", "delivery"], <Products />)} />
             <Route path="categories" element={g(["owner", "manager", "inventory"], <Categories />)} />
             <Route path="suppliers" element={g(["owner", "manager", "inventory"], <Suppliers />)} />
+            <Route path="supplier-ops" element={g(["owner", "manager"], <SupplierOps />)} />
             <Route path="quotations" element={g(["owner", "manager", "sales"], <Quotations />)} />
             <Route path="orders" element={g(["owner", "manager", "sales"], <Orders />)} />
             <Route path="deliveries" element={g(["owner", "manager", "sales", "delivery"], <Deliveries />)} />
