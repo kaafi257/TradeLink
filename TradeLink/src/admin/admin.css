@@ -1488,3 +1488,19 @@
 .admin-layout .icon-action,.admin-layout .ibtn{color:#2869a6}
 .admin-layout .icon-action:hover,.admin-layout .ibtn:hover{background:#eaf3fc;color:#174d7d}
 .admin-layout .table-panel tbody tr:hover td{background:#f2f7fc}
+
+
+/* Grouped marketplace navigation */
+.admin-layout .side-nav{display:flex;flex-direction:column;align-items:stretch;gap:12px}
+.admin-layout .nav-group{display:flex;flex-direction:column;gap:3px;min-width:0}
+.admin-layout .nav-group-label{padding:8px 12px 4px;color:#8fa8bd;font-size:10px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;white-space:nowrap}
+.admin-layout .nav-group+.nav-group{padding-top:7px;border-top:1px solid #ffffff17}
+.admin-layout .side-nav a{flex:0 0 40px}
+.admin-layout.collapsed .nav-group-label{display:none}
+.admin-layout.collapsed .nav-group+.nav-group{padding-top:7px}
+.admin-layout.collapsed .nav-group{gap:3px}
+.admin-layout .nav-group-label{transition:opacity .18s ease}
+@media(max-width:900px){
+  .admin-layout .side-nav{gap:8px;padding-bottom:24px}
+  .admin-layout .nav-group-label{padding-top:6px}
+}
