@@ -16,7 +16,7 @@ function useLoad<T extends Row>(table: string, order = "created_at") {
   const { notify } = useAdmin();
   const [rows,setRows] = useState<T[]>([]);
   const [loading,setLoading] = useState(true);
-  const [failed,setFailed] = useState(false);
+  const [,setFailed] = useState(false);
   const load = useCallback(async () => {
     setLoading(true);
     const { data,error } = await db().from(table).select("*").order(order,{ascending:false}).limit(500);
