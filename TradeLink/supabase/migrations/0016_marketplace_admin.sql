@@ -127,3 +127,38 @@ for each row execute function public.guard_marketplace_financial_status();
 drop trigger if exists guard_marketplace_return_status on public.marketplace_returns;
 create trigger guard_marketplace_return_status before update on public.marketplace_returns
 for each row execute function public.guard_marketplace_financial_status();
+
+
+-- Keep supplier verification permission-enforced inside the existing trusted RPC,
+-- not only in the admin route. Preserve its existing notifications and activity log.
+create or replace function public.review_supplier(p_id uuid, p_action text, p_note text default null)
+returns void language plpgsql security definer set search_path = public as $function$
+declare s public.suppliers; v_note text := nullif(btrim(coalesce(p_note, '')), '');
+begin
+  if auth.uid() is null or not public.has_permission('suppliers.verify') then
+    raise exception 'You do not have permission to verify suppliers.' using errcode = '42501';
+  end if;
+  select * into s from public.suppliers where id = p_id for update;
+  if not found then raise exception 'Supplier not found.'; end if;
+  if p_action = 'approve' then
+    if s.status not in ('pending','rejected') then raise exception 'Only a pending or rejected application can be approved.'; end if;
+    update public.suppliers set status='approved',active=true,status_note=null,reviewed_by=auth.uid(),reviewed_at=now() where id=p_id;
+    perform public.notify(s.profile_id,'supplier_approved','Your supplier account is approved','You can now sign in to the supplier portal and manage your business.','/supplier');
+  elsif p_action = 'reject' then
+    if s.status <> 'pending' then raise exception 'Only a pending application can be rejected.'; end if;
+    if v_note is null or char_length(v_note)<5 then raise exception 'Please give the reason, so the supplier can correct it.'; end if;
+    update public.suppliers set status='rejected',active=false,status_note=v_note,reviewed_by=auth.uid(),reviewed_at=now() where id=p_id;
+    perform public.notify(s.profile_id,'supplier_rejected','Your supplier application needs changes',v_note,'/supplier');
+  elsif p_action = 'suspend' then
+    if s.status <> 'approved' then raise exception 'Only an approved supplier can be suspended.'; end if;
+    if v_note is null or char_length(v_note)<5 then raise exception 'Please give the reason for the suspension.'; end if;
+    update public.suppliers set status='suspended',active=false,status_note=v_note,reviewed_by=auth.uid(),reviewed_at=now() where id=p_id;
+    perform public.notify(s.profile_id,'supplier_suspended','Your supplier account is suspended',v_note,'/supplier');
+  elsif p_action = 'reactivate' then
+    if s.status <> 'suspended' then raise exception 'Only a suspended supplier can be reactivated.'; end if;
+    update public.suppliers set status='approved',active=true,status_note=null,reviewed_by=auth.uid(),reviewed_at=now() where id=p_id;
+    perform public.notify(s.profile_id,'supplier_reactivated','Your supplier account is active again',null,'/supplier');
+  else raise exception 'Unknown action.';
+  end if;
+  perform public.write_activity('supplier_'||p_action,'suppliers',initcap(p_action)||' supplier '||s.name,jsonb_build_object('supplier_id',p_id,'note',v_note));
+end; $function$;
