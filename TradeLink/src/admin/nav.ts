@@ -1,5 +1,5 @@
 import {
-  Activity as ActivityIcon, BadgeCheck, Banknote, Boxes, Box, Building2, ChartNoAxesCombined, ClipboardList, FileText, Layers, MessageCircle, Home, Settings, Truck, Users, Receipt, PackageCheck, Wallet, Percent, RotateCcw, Megaphone, Star, Globe, Headset,
+  Activity as ActivityIcon, BadgeCheck, Boxes, Box, Building2, ChartNoAxesCombined, ClipboardList, FileText, Layers, MessageCircle, Home, Settings, Truck, Users, Receipt, PackageCheck, Wallet, Percent, RotateCcw, Megaphone, Star, Globe, Headset,
 } from "lucide-react";
 import type { Role } from "../lib/supabase";
 
