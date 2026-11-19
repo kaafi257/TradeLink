@@ -61,7 +61,7 @@ export function PaymentsPage() {
   const payTotal=payments.rows.reduce((n,r)=>n+Number(r.amount||0),0);
   const queued=payouts.rows.filter(r=>["queued","approved","processing"].includes(r.status)).reduce((n,r)=>n+Number(r.amount||0),0);
   return <>
-    <PageHeading title="Payments & Payouts" sub="Track payment records and manage supplier payout queues." action={{canPayout&&<button className="btn green" onClick={()=>setShowCreate(v=>!v)}><Wallet size={16}/> New payout</button>}}/>
+    <PageHeading title="Payments & Payouts" sub="Track payment records and manage supplier payout queues." action={canPayout ? <button className="btn green" onClick={()=>setShowCreate(v=>!v)}><Wallet size={16}/> New payout</button> : undefined}/>
     <SummaryStrip items={[
       {icon:<Banknote/>,tone:"blue",value:money(payTotal),label:"Recorded payments"},
       {icon:<Wallet/>,tone:"mint",value:money(queued),label:"Payout queue"},
