@@ -977,3 +977,116 @@
   .admin-layout *,.admin-layout *::before,.admin-layout *::after{animation:none!important;transition:none!important}
   .admin-layout .page-skel i{background:#eef2f9}
 }
+
+
+/* ===== TradeLink compact navy + gold visual pass (presentation only) ===== */
+.admin-layout{
+  --bg:#f5f6f8;
+  --surface:#ffffff;
+  --ink:#10233f;
+  --muted:#738096;
+  --line:#e5e8ee;
+  --deep:#0b1f3a;
+  --teal:#bd9137;
+  --tint:#f8f1e3;
+  --gold:#d6aa4b;
+  --ease:cubic-bezier(.22,.8,.3,1);
+  --glass-shadow:0 2px 8px rgba(11,31,58,.035),0 12px 28px -22px rgba(11,31,58,.2);
+}
+.admin-layout :focus-visible{outline-color:#d6aa4b}
+.admin-layout .admin-main{background:var(--bg)}
+.admin-layout .sidebar{
+  background:linear-gradient(180deg,#102846 0%,#0b1f3a 58%,#08172d 100%);
+}
+.admin-layout .side-nav a{height:40px;font-size:13px;gap:11px}
+.admin-layout .side-nav a.selected svg,
+.admin-layout .side-nav a:hover svg{color:#e3bd68}
+.admin-layout .nav-marker{background:linear-gradient(90deg,#d6aa4b22,#ffffff12)}
+.admin-layout .nav-marker:before{background:#d6aa4b}
+.admin-layout .global-search:focus-within,
+.admin-layout input:focus,.admin-layout select:focus,.admin-layout textarea:focus{
+  border-color:#d6aa4b;
+  box-shadow:0 0 0 3px #d6aa4b24;
+}
+.admin-layout .topbar-title{font-size:16px}
+.admin-layout .admin-topbar{min-height:62px;padding-inline:clamp(14px,2vw,24px)}
+.admin-layout .btn.green,.admin-layout .btn.gold{
+  background:#0b1f3a;color:#fff;border-color:#0b1f3a;
+}
+.admin-layout .btn.green:hover,.admin-layout .btn.gold:hover{
+  background:#17365d;border-color:#17365d;box-shadow:0 8px 20px -12px #0b1f3acc;
+}
+.admin-layout .btn.gold{background:#d6aa4b;color:#17243a;border-color:#d6aa4b}
+.admin-layout .btn.gold:hover{background:#e3bd68;border-color:#e3bd68;color:#17243a}
+.admin-layout .link-btn,.admin-layout .text-action{color:#9a7120}
+.admin-layout .panel-head svg,
+.admin-layout .ph-ico,.admin-layout .sc-ico,
+.admin-layout .report-cards>div svg{color:#a77b26}
+.admin-layout .ph-ico,.admin-layout .sc-ico,
+.admin-layout .metric-ico,.admin-layout .stat-icon,
+.admin-layout .gs-icon,.admin-layout .rp-card-ic{
+  background:#f8f1e3!important;color:#9a7120!important;
+}
+.admin-layout .range-tabs button.on,
+.admin-layout .rp-tabs button.on,
+.admin-layout .rp-tab-pill{background:#0b1f3a;color:#fff}
+.admin-layout .rp-card.click:hover{border-color:#d6aa4b;box-shadow:0 8px 22px #d6aa4b20}
+.admin-layout .rp-line{stroke:#c49a43}
+.admin-layout .rp-area{fill:rgba(196,154,67,.13)}
+.admin-layout .rp-dot{stroke:#c49a43}
+.admin-layout .rp-bar{fill:#d6aa4b}
+.admin-layout .rp-bar.on{fill:#0b1f3a}
+.admin-layout .rp-menu button:hover{background:#f8f1e3}
+.admin-layout .status-tabs button.on{background:#0b1f3a;border-color:#0b1f3a}
+.admin-layout .status-tabs i{background:#d6aa4b}
+
+/* Reduce visual noise without removing data, controls or navigation. */
+.admin-layout .page-heading{padding-bottom:14px}
+.admin-layout .page-heading p{font-size:12.5px;line-height:1.4;max-width:58ch}
+.admin-layout .dash-head{margin-bottom:16px;align-items:center}
+.admin-layout .dash-head h1{font-size:clamp(1.35rem,1rem + 1vw,1.8rem)}
+.admin-layout .dash-head p{font-size:12px;margin-top:4px}
+.admin-layout .panel-head{min-height:50px;padding:12px 16px}
+.admin-layout .panel-head b{font-size:14px}
+.admin-layout .stats-grid{gap:10px;background:transparent;border:0;overflow:visible}
+.admin-layout .stat-card{
+  border:1px solid var(--line)!important;border-radius:14px!important;
+  padding:15px 17px;box-shadow:var(--glass-shadow)!important;
+}
+.admin-layout .stat-card:nth-child(n){border-bottom:1px solid var(--line)}
+.admin-layout .stat-card:hover,.admin-layout .rec:hover,
+.admin-layout .rp-card.click:hover{transform:translateY(-2px)}
+.admin-layout .stock-row{padding:11px 16px}
+.admin-layout .attn-item{padding:9px 16px}
+.admin-layout .activity-list{padding-inline:16px}
+.admin-layout .table-panel,.admin-layout .panel,.admin-layout .setting-card,
+.admin-layout .report-cards>div,.admin-layout .inline-form{
+  border-radius:14px;
+}
+.admin-layout .table-panel th{padding:10px 13px}
+.admin-layout .table-panel td{padding:11px 13px}
+.admin-layout .side-nav a,.admin-layout .logout-button,
+.admin-layout .notification-button,.admin-layout .mobile-menu,
+.admin-layout .icon-action,.admin-layout .ibtn,.admin-layout .btn{
+  transition:background .2s,color .2s,border-color .2s,box-shadow .24s var(--ease),transform .24s var(--ease);
+}
+.admin-layout .side-nav a:active,.admin-layout .btn:active,
+.admin-layout .icon-action:active,.admin-layout .ibtn:active{transform:scale(.97)}
+.admin-layout .notification-button:hover,.admin-layout .mobile-menu:hover{
+  border-color:#d6aa4b;color:#9a7120;background:#fbf7ee;
+}
+.admin-layout .admin-content>*{animation:tl-admin-enter .3s var(--ease) both}
+@keyframes tl-admin-enter{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:640px){
+  .admin-layout .admin-topbar{min-height:58px}
+  .admin-layout .topbar-title{font-size:15px}
+  .admin-layout .admin-content{padding:14px}
+  .admin-layout .dash-head{gap:10px;margin-bottom:12px}
+  .admin-layout .dash-actions{gap:7px}
+  .admin-layout .panel-head{padding:11px 13px}
+  .admin-layout .stock-row{padding:10px 13px}
+}
+@media(prefers-reduced-motion:reduce){
+  .admin-layout .admin-content>*{animation:none!important}
+  .admin-layout *,.admin-layout *::before,.admin-layout *::after{transition:none!important}
+}
