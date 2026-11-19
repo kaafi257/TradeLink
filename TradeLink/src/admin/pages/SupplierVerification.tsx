@@ -9,7 +9,7 @@ import { useAdmin } from "../AdminData";
 type Application = Supplier;
 const label: Record<SupplierStatus,string> = {pending:"Pending",approved:"Approved",rejected:"Needs changes",suspended:"Suspended"};
 export default function SupplierVerification() {
-  const {notify,industries,profile}=useAdmin();
+  const {notify,industries}=useAdmin();
   const [rows,setRows]=useState<Application[]>([]);
   const [loading,setLoading]=useState(true);
   const [selected,setSelected]=useState<Application|null>(null);
