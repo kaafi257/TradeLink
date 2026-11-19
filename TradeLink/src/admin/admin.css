@@ -919,3 +919,61 @@
   .admin-layout .rp-tbl td::before{content:attr(data-label);color:#8593ab;font-weight:600;text-align:left}
   .admin-layout .rp-hbars>div{grid-template-columns:80px 1fr auto}
 }
+
+/* ===== Admin motion: sidebar, page and report transitions ===== */
+.admin-layout{--mo:cubic-bezier(.22,.8,.3,1);--mo-t:.26s}
+/* sidebar: one marker glides to the current page; rows never move */
+.admin-layout .side-nav{position:relative}
+.admin-layout .side-nav a{overflow:hidden;white-space:nowrap;transition:background .2s,color .2s}
+.admin-layout .side-nav a svg{flex:none;transition:transform .2s var(--mo),color .2s,opacity .2s}
+.admin-layout .side-nav a:hover svg{transform:scale(1.08)}
+.admin-layout .side-nav a:active{transform:scale(.985)}
+.admin-layout .side-nav a.selected{background:transparent;position:relative;z-index:1}
+.admin-layout .side-nav a.selected:before{display:none}
+.admin-layout .nav-marker{position:absolute;left:10px;right:10px;top:0;height:var(--mk-h,42px);border-radius:12px;background:#ffffff17;opacity:var(--mk-o,0);transform:translateY(var(--mk-y,0));transition:transform var(--mo-t) var(--mo),height var(--mo-t) var(--mo),opacity .2s;pointer-events:none}
+.admin-layout .nav-marker:before{content:"";position:absolute;left:-10px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:#5b8cff}
+.admin-layout .side-nav a span,.admin-layout .logout-button span{transition:opacity .18s var(--mo),transform .24s var(--mo)}
+.admin-layout .logout-button{overflow:hidden;white-space:nowrap}
+.admin-layout .logout-button svg{flex:none}
+.admin-layout .mobile-menu{transition:background .2s,transform .15s}
+.admin-layout .mobile-menu:active{transform:scale(.92)}
+@media(min-width:901px){
+  .admin-layout .mobile-menu{display:grid;place-items:center;flex:none;border:1px solid var(--line);background:#fff;color:var(--ink)}
+  .admin-layout .mobile-menu:hover{background:var(--tint)}
+  .admin-layout .sidebar{overflow:hidden;transition:width var(--mo-t) var(--mo),flex-basis var(--mo-t) var(--mo)}
+  .admin-layout .sidebar-brand{padding:0 14px;overflow:hidden;white-space:nowrap}
+  .admin-layout .sidebar-brand .brand>div{transition:opacity .18s var(--mo)}
+  .admin-layout .side-nav a{padding:0 15px}
+  .admin-layout .logout-button{padding:0 15px}
+  .admin-layout.collapsed .sidebar{width:72px;flex-basis:72px}
+  .admin-layout.collapsed .side-nav a span,.admin-layout.collapsed .logout-button span,.admin-layout.collapsed .sidebar-brand .brand>div{opacity:0;transform:translateX(-6px);pointer-events:none}
+  .admin-layout.collapsed .nav-marker:before{left:-10px}
+}
+/* page changes: short fade-and-slide, no blank flash while a lazy page loads */
+.admin-layout .admin-content>*{animation:ad-in .26s var(--mo) both}
+.admin-layout .page-skel{display:grid;gap:14px;animation:none}
+.admin-layout .page-skel i{display:block;height:96px;border-radius:16px;background:linear-gradient(90deg,#eef2f9 25%,#f7f9fd 50%,#eef2f9 75%);background-size:200% 100%;animation:skel 1.2s linear infinite}
+.admin-layout .page-skel i:first-child{height:44px;width:min(320px,60%)}
+.admin-layout .page-skel i:last-child{height:260px}
+@keyframes skel{to{background-position:-200% 0}}
+/* mobile drawer + scrim fade instead of popping */
+@media(max-width:900px){
+  .admin-layout .scrim{display:block;position:fixed;inset:0;z-index:20;background:#04243d99;border:0;opacity:0;visibility:hidden;pointer-events:none;animation:none;transition:opacity .24s var(--mo),visibility 0s linear .24s}
+  .admin-layout .scrim.on{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .24s var(--mo)}
+  .admin-layout .sidebar{transition:transform .28s var(--mo),visibility 0s linear .28s}
+  .admin-layout .sidebar.show{transition:transform .28s var(--mo)}
+  .admin-layout .side-nav a span{opacity:1}
+}
+/* reports: gliding tab highlight, stable body, soft entry */
+.admin-layout .rp-tabs{position:relative}
+.admin-layout .rp-tab-pill{position:absolute;left:0;top:4px;height:calc(100% - 14px);width:var(--tw,0);transform:translateX(var(--tx,0));background:#0b1f3a;border-radius:999px;transition:transform var(--mo-t) var(--mo),width var(--mo-t) var(--mo);pointer-events:none}
+.admin-layout .rp-tabs button{position:relative;z-index:1;background:transparent;transition:color .2s,border-color .2s}
+.admin-layout .rp-tabs button.on{background:transparent;border-color:transparent;color:#fff}
+.admin-layout .rp-tabs button:active{transform:scale(.97)}
+.admin-layout .rp-body{min-height:70vh;animation:ad-in .26s var(--mo) both}
+.admin-layout .rp-card.click:active,.admin-layout .rp-btn:active{transform:scale(.98)}
+.admin-layout .rp-menu{animation:ad-in .18s var(--mo) both}
+@media(prefers-reduced-motion:reduce){
+  .admin-layout *,.admin-layout *::before,.admin-layout *::after{animation:none!important;transition:none!important}
+  .admin-layout .page-skel i{background:#eef2f9}
+}

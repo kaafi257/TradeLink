@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Activity, Banknote, Boxes, Building2, ClipboardList, FileQuestion, LayoutDashboard, Package, ShieldCheck, ShoppingCart, Store, Truck, UserPlus, Users, Wallet, Receipt, Percent, Undo2, Hourglass } from "lucide-react";
 import { PageHeading } from "../../components/ui";
@@ -65,8 +65,13 @@ function Overview({ c }: { c: Ctx }) {
   );
 }
 
+/** Filters survive switching tabs and leaving Reports, so coming back never resets what you were looking at. */
+const kept = new Map<string, Record<string, string>>();
+const keep = { tab: "overview", preset: "month" as Preset, cf: "", ct: "" };
 function useDrill<T extends Record<string, string>>(init: T) {
-  const [f, setF] = useState<T>(init);
+  const id = JSON.stringify(Object.keys(init));
+  const [f, setFull] = useState<T>(() => ({ ...init, ...(kept.get(id) as Partial<T> | undefined) }));
+  const setF = (v: T | ((p: T) => T)) => setFull(p => { const n = typeof v === "function" ? (v as (p: T) => T)(p) : v; kept.set(id, n); return n; });
   const ref = useRef<HTMLDivElement>(null);
   const drill = (patch: Partial<T>) => { setF({ ...init, ...patch }); setTimeout(() => ref.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60); };
   return { f, set: (k: keyof T, v: string) => setF(p => ({ ...p, [k]: v })), drill, ref };
@@ -209,8 +214,8 @@ function Financial({ c }: { c: Ctx }) {
     <>
       <Err msg={error} /><Cards cards={cards} />
       <div className="rp-grid2">
-        <Box title="Revenue" icon={<Banknote />}><LineChart data={(per || []).map(p => ({ label: lbl(p.bucket), value: num(p.revenue) }))} fmt={fmtMoney} /></Box>
-        <Box title="Collected" icon={<Wallet />}><LineChart bars data={(per || []).map(p => ({ label: lbl(p.bucket), value: num(p.collected) }))} fmt={fmtMoney} /></Box>
+        <Box title="Revenue" icon={<Banknote />}><LineChart data={(Array.isArray(per) ? per : []).map(p => ({ label: lbl(p.bucket), value: num(p.revenue) }))} fmt={fmtMoney} /></Box>
+        <Box title="Collected" icon={<Wallet />}><LineChart bars data={(Array.isArray(per) ? per : []).map(p => ({ label: lbl(p.bucket), value: num(p.collected) }))} fmt={fmtMoney} /></Box>
         <Box title="Payment methods" icon={<Banknote />} wide>{methods.length ? <HBars data={methods.map((m, i) => ({ label: cap(m.method), value: num(m.amount), color: PALETTE[i % PALETTE.length] }))} fmt={fmtMoney} /> : <p className="rp-empty">No sales in this period.</p>}</Box>
       </div>
       <Note>Commission, supplier earnings and refunds are not estimated. They start filling in once supplier orders go live.</Note>
@@ -227,18 +232,32 @@ function Soon({ t }: { t: Tab }) {
 }
 
 export default function Reports() {
-  const [tab, setTab] = useState("overview");
-  const [preset, setPreset] = useState<Preset>("month");
-  const [cf, setCf] = useState(""), [ct, setCt] = useState("");
+  const [tab, setTabRaw] = useState(keep.tab);
+  const [preset, setPresetRaw] = useState<Preset>(keep.preset);
+  const [cf, setCfRaw] = useState(keep.cf), [ct, setCtRaw] = useState(keep.ct);
+  const setTab = (v: string) => { keep.tab = v; setTabRaw(v); };
+  const setPreset = (v: Preset) => { keep.preset = v; setPresetRaw(v); };
+  const setCf = (v: string) => { keep.cf = v; setCfRaw(v); };
+  const setCt = (v: string) => { keep.ct = v; setCtRaw(v); };
   const r = useMemo(() => rangeFor(preset, cf, ct), [preset, cf, ct]);
   const args = useMemo(() => ({ p_from: iso(r.from), p_to: iso(r.to) }), [r]);
   const c: Ctx = { r, args, go: setTab };
   const cur = TABS.find(t => t.key === tab)!;
+  const tabsRef = useRef<HTMLDivElement>(null);
+  // The highlight glides to the chosen tab; on phones the tab bar scrolls to keep it in view.
+  useLayoutEffect(() => {
+    const bar = tabsRef.current; const on = bar?.querySelector<HTMLElement>("button.on");
+    if (!bar || !on) return;
+    bar.style.setProperty("--tx", `${on.offsetLeft}px`); bar.style.setProperty("--tw", `${on.offsetWidth}px`);
+    const l = on.offsetLeft - 16, r = on.offsetLeft + on.offsetWidth + 16;
+    if (l < bar.scrollLeft) bar.scrollTo({ left: Math.max(0, l), behavior: "smooth" });
+    else if (r > bar.scrollLeft + bar.clientWidth) bar.scrollTo({ left: r - bar.clientWidth, behavior: "smooth" });
+  }, [tab]);
   const body = cur.soon ? <Soon t={cur} /> : tab === "overview" ? <Overview c={c} /> : tab === "customers" ? <Customers c={c} /> : tab === "suppliers" ? <Suppliers c={c} /> : tab === "products" ? <Products c={c} /> : tab === "audit" ? <Audit c={c} /> : tab === "market" ? <Market c={c} /> : tab === "orders" ? <Orders c={c} /> : tab === "inquiries" ? <Inquiries c={c} /> : tab === "inventory" ? <Inventory c={c} /> : <Financial c={c} />;
   return (
     <>
       <PageHeading title="Reports & Analytics" sub="Business reports from your real TradeLink records." />
-      <div className="rp-tabs" role="tablist">{TABS.map(t => <button key={t.key} role="tab" aria-selected={tab === t.key} className={tab === t.key ? "on" : ""} onClick={() => setTab(t.key)}>{t.icon}<span>{t.label}</span></button>)}</div>
+      <div className="rp-tabs" role="tablist" ref={tabsRef}><i className="rp-tab-pill" aria-hidden="true" />{TABS.map(t => <button key={t.key} role="tab" aria-selected={tab === t.key} className={tab === t.key ? "on" : ""} onClick={() => setTab(t.key)}>{t.icon}<span>{t.label}</span></button>)}</div>
       {!cur.soon && <DateBar preset={preset} setPreset={setPreset} cf={cf} ct={ct} setCf={setCf} setCt={setCt} label={r.label} />}
       <div key={tab} className="rp-body">{body}</div>
     </>
