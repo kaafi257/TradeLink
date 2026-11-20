@@ -977,6 +977,63 @@
   .admin-layout *,.admin-layout *::before,.admin-layout *::after{animation:none!important;transition:none!important}
   .admin-layout .page-skel i{background:#eef2f9}
 }
+.admin-layout .rate-row{display:flex;align-items:center;gap:8px;margin:10px 0 2px;flex-wrap:wrap}
+.admin-layout .rate-row label{font-weight:700;font-size:13px;color:var(--ink)}
+.admin-layout .rate-row input{width:90px;border:1px solid var(--line);border-radius:10px;padding:7px 10px;font:inherit}
+
+/* ---- Sidebar groups (Overview, Marketplace, Finance, Growth & Engagement, Administration) ---- */
+.admin-layout .nav-group{display:flex;flex-direction:column;gap:2px}
+.admin-layout .nav-group+.nav-group{margin-top:10px}
+.admin-layout .nav-group-title{margin:6px 14px 4px;font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#7f93b0;white-space:nowrap;overflow:hidden;transition:opacity .2s var(--mo,ease),max-height .25s var(--mo,ease),margin .25s var(--mo,ease)}
+@media (min-width:901px){
+  .admin-layout.collapsed .nav-group-title{opacity:0;max-height:0;margin:0}
+  .admin-layout.collapsed .nav-group+.nav-group{margin-top:8px;padding-top:8px;border-top:1px solid #ffffff14}
+}
+.admin-layout .side-nav{overflow-y:auto;scrollbar-width:thin;scrollbar-color:#ffffff30 transparent}
+
+/* ---- Admin suite pages ---- */
+.su-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;padding:4px;background:#eef3fa;border-radius:999px;width:max-content;max-width:100%;overflow-x:auto}
+.su-tabs button{border:0;background:transparent;color:#44587a;font:600 13px/1 inherit;padding:10px 16px;border-radius:999px;display:inline-flex;gap:7px;align-items:center;cursor:pointer;white-space:nowrap;transition:background .2s,color .2s,box-shadow .2s}
+.su-tabs button:hover{color:#10264d}
+.su-tabs button[aria-selected=true]{background:#fff;color:#10264d;box-shadow:0 1px 3px #0b1f3a22}
+.su-tabs svg{width:16px;height:16px}
+.su-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
+.su-bar select,.su-bar input{min-height:40px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fff;font:inherit;font-size:14px}
+.su-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.su-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--glass-shadow);transition:transform .25s var(--mo,ease),box-shadow .25s}
+.su-card:hover{transform:translateY(-2px)}
+.su-card h3{margin:0;font-size:15px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.su-card p{margin:0;color:#52627f;font-size:13px}
+.su-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.su-row.end{justify-content:flex-end}
+.su-muted{color:#6a7b96;font-size:12.5px}
+.su-check{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;font-size:14px;transition:border-color .2s,background .2s}
+.su-check:hover{border-color:#9db8e8}
+.su-check input{width:18px;height:18px;accent-color:#17428a;margin:0}
+.su-check.on{background:#edf4ff;border-color:#9db8e8}
+.su-form{display:grid;gap:12px}
+.su-form label{display:grid;gap:6px;font-size:13px;font-weight:600;color:#32456a}
+.su-form input,.su-form select,.su-form textarea{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;background:#fff;min-height:42px;width:100%}
+.su-form textarea{min-height:84px;resize:vertical}
+.su-form .two{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+@media (max-width:560px){.su-form .two{grid-template-columns:1fr}}
+.su-stars{display:inline-flex;gap:2px;color:#e0a100}
+.su-stars svg{width:15px;height:15px}
+.su-stars .off{color:#cdd6e6}
+.su-chart{display:flex;align-items:flex-end;gap:4px;height:90px}
+.su-chart i{flex:1;background:linear-gradient(#5b8cff,#17428a);border-radius:4px 4px 0 0;min-height:3px;transition:height .4s var(--mo,ease)}
+.su-thread{display:grid;gap:8px;max-height:260px;overflow:auto;padding:2px}
+.su-msg{padding:10px 12px;border-radius:12px;background:#f3f7fd;font-size:13.5px}
+.su-msg.note{background:#fff7e0}
+.su-msg small{display:block;color:#6a7b96;margin-bottom:3px}
+.su-ico-btn{border:0;background:#eef3fa;color:#17428a;border-radius:10px;min-height:36px;padding:0 12px;display:inline-flex;gap:6px;align-items:center;font:600 13px/1 inherit;cursor:pointer;transition:background .2s,transform .2s}
+.su-ico-btn:hover{background:#dce8fb}
+.su-ico-btn:active{transform:scale(.97)}
+.su-ico-btn.bad{background:#fdecea;color:#b42318}
+.su-ico-btn.good{background:#e1f4ec;color:#0b7a52}
+.su-ico-btn:disabled{opacity:.5;cursor:not-allowed}
+@media (prefers-reduced-motion:reduce){.su-card,.su-chart i,.su-ico-btn{transition:none}.su-card:hover{transform:none}}
+
 
 /* ——— Blue dashboard theme (TradeLink navy + marketplace blue; overrides the grey/black defaults above) ——— */
 .admin-layout{--bg:#e9f1fa;--line:#d3e2f1;--tint:#dcebfa;--muted:#4f6a85;--ink:#0b2a4a;--deep:#073256;--teal:#0b5d99;--brand:#0b5d99;--brand-2:#1479c2;

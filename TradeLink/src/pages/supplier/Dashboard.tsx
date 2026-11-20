@@ -33,6 +33,14 @@ export default function Dashboard() {
     const { data, error } = await requireSupabase().rpc("supplier_dashboard", { p_tz: TZ });
     if (error) throw error; return data as Dash;
   });
+  // Marketplace sales of this supplier's products, with TradeLink's commission taken off (rows are visible to this supplier only).
+  const { data: earn } = useLoad(async () => {
+    const since = new Date(Date.now() - 30 * 864e5).toISOString();
+    const { data, error } = await requireSupabase().from("sale_commissions").select("quantity, commission, supplier_earning").gte("created_at", since).limit(5000);
+    if (error) return null;   // before the commissions update the card is simply not shown
+    const rows = (data ?? []) as { quantity: number; commission: number; supplier_earning: number }[];
+    return { earning: rows.reduce((a, r) => a + Number(r.supplier_earning), 0), commission: rows.reduce((a, r) => a + Number(r.commission), 0), units: rows.reduce((a, r) => a + Number(r.quantity), 0) };
+  });
   const pts = useMemo(() => (d?.series ?? []).map(x => ({ label: new Date(x.day + "T00:00").toLocaleDateString([], { month: "short", day: "numeric" }), value: Number(x.value) })), [d]);
   if (loading) return <Spinner />;
   if (!d) return <p className="sp-note err" role="alert">{error}</p>;
@@ -43,6 +51,7 @@ export default function Dashboard() {
     { Icon: Truck, label: "Awaiting delivery", value: d.orders_awaiting_delivery, note: "Ready for pickup or dispatched", to: "/supplier/orders" },
     { Icon: PackageCheck, label: "Completed orders", value: d.orders_completed, note: "Delivered to stores", to: "/supplier/orders" },
     { Icon: Wallet, label: "Wholesale sales", value: money(d.sales_total), note: `${money(d.sales_open)} in open orders`, to: "/supplier/orders" },
+    ...(earn ? [{ Icon: Wallet, label: "Marketplace earnings", value: money(earn.earning), note: `${money(earn.commission)} commission · ${Math.round(earn.units)} sold, 30 days`, to: "/supplier" }] : []),
   ];
   return (
     <div className="sp-dash">

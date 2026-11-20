@@ -17,10 +17,20 @@ const nav = (id: string) => document.getElementById(id)?.scrollIntoView({ behavi
 /** Only facts we really have: catalogue size and the contact details saved in Admin. */
 export function AnnouncementBar({ products }: { products: number; industries: number }) {
   const c = useContact();
+  // Live banners written in Admin → Website Management. If none (or the table is not set up yet) the usual line is shown.
+  const [banners, setBanners] = useState<{ id: string; message: string; link: string | null }[]>([]);
+  useEffect(() => {
+    if (!supabase) return;
+    void supabase.from("site_banners").select("id, message, link").order("sort_order").order("created_at", { ascending: false }).limit(3)
+      .then(({ data, error }) => { if (!error && data) setBanners(data); });
+  }, []);
   return (
     <div className="tl-ann" role="region" aria-label="Marketplace information">
       <div className="tl-wrap">
-        <span>Wholesale and retail, one marketplace{products > 0 ? ` · ${products} products` : ""}</span>
+        {banners.map(b => b.link
+          ? <a key={b.id} href={b.link} style={{ color: "inherit", fontWeight: 700 }}>{b.message}</a>
+          : <span key={b.id} style={{ fontWeight: 700 }}>{b.message}</span>)}
+        {banners.length === 0 && <span>Wholesale and retail, one marketplace{products > 0 ? ` · ${products} products` : ""}</span>}
         {c.phone && <a className="hide-s" href={`tel:${c.phone.replace(/[^0-9+]/g, "")}`}>{c.phone}</a>}
       </div>
     </div>
