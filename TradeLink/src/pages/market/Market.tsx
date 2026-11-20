@@ -422,7 +422,7 @@ export function MarketShop({ shelf, onMode, industries, categories, counts, indu
 
         <div className="mk-shop-main">
           <div className="mk-shop-bar">
-            <label className="mk-shop-search"><Search size={18} /><input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search" aria-label="Search products" />{search && <button aria-label="Clear search" onClick={() => setSearch("")}><X size={15} /></button>}</label>
+            {search && <button type="button" className="mk-search-chip" onClick={() => setSearch("")} aria-label={`Clear search for ${search}`}><Search size={15} />Results for “{search}”<X size={14} /></button>}
             <label className="mk-sort" title="Sort"><ArrowUpDown size={17} />
               <select value={sort} onChange={e => setSort(e.target.value as SortKey)} aria-label="Sort products">
                 <option value="new">Newest</option><option value="az">A – Z</option>

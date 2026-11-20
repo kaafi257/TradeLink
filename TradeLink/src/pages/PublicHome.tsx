@@ -11,7 +11,8 @@ import { useAuth } from "../lib/auth";
 import { track, trackState } from "../lib/track";
 import { applyCoupon } from "../lib/coupon";
 import { useWishlist } from "../lib/wishlist";
-import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TradeHeader, TradeHero, TradeNav, TradeRow } from "./market/Trade";
+import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TradeHeader, TradeNav, TradeRow } from "./market/Trade";
+import { BrowseCategories, LandingHero, PromoBanners, TrustNewsletter } from "./market/Landing";
 import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
 import { supabase, withPhoto, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
@@ -330,11 +331,19 @@ export default function PublicHome() {
     return { featured, wholesaleList, newest };
   }, [products, bestIds, mode]);
   const offers = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0 && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price)).slice(0, 6), [products]);
-  const slides = useMemo(() => mInds.map(ind => {
+  // One card per industry that has products for this buyer type, with a real product photo when there is one.
+  const catCards = useMemo(() => mInds.map(ind => {
     const ps = visible.filter(p => catById.get(catKey(p))?.industry_id === ind.id);
     const img = ps.find(p => p.image_url)?.image_url ?? cats.find(c => c.industry_id === ind.id && c.image_url)?.image_url ?? null;
     return { ind, img, count: ps.length };
-  }).filter(s => s.count > 0).slice(0, 5), [mInds, visible, catById, cats]);
+  }).filter(c => c.count > 0), [mInds, visible, catById, cats]);
+  // Hero photos and the discount badge come from real products and live sale prices only.
+  const heroPhotos = useMemo(() => {
+    const pool = [...featured, ...newest, ...visible].filter(p => !!p.image_url);
+    return [...new Map(pool.map(p => [p.id, p])).values()].slice(0, 3).map(p => ({ id: p.id, src: p.image_url as string, name: p.name }));
+  }, [featured, newest, visible]);
+  const sale = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0 && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price)), [products]);
+  const offerPct = sale.length ? Math.max(...sale.map(p => Math.round((1 - Number(p.sale_price) / Number(p.retail_price)) * 100))) : 0;
 
   const emptyMessage =
     status === "loading" ? "Loading our products…"
@@ -358,8 +367,10 @@ export default function PublicHome() {
         openMenu={() => setMenuOpen(v => !v)} menuOpen={menuOpen} />
       <TradeNav mode={mode} industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} onRfq={() => setRfqOpen(true)} />
       <ModeToggle mode={mode} onMode={changeMode} className="mobile" />
-      <TradeHero shelf={shelf} slides={slides} counts={counts} onPickIndustry={openIndustry} onPickCategory={openCategory} />
-      <TradeRow id="featured" title="Featured products" sub="Best sellers and popular picks" shelf={shelf} items={featured} onAll={() => go("public-products")} />
+      <LandingHero photos={heroPhotos} offerPct={offerPct} onShop={() => go("public-products")} onQuote={() => setRfqOpen(true)} />
+      <BrowseCategories items={catCards} onPick={openIndustry} onMore={() => setMenuOpen(true)} />
+      <TradeRow id="trending" title="Trending products" shelf={shelf} items={featured} max={5} onAll={() => go("public-products")} />
+      <PromoBanners offerCount={sale.length} offerPct={offerPct} onOffers={() => go("offers")} onQuote={() => setRfqOpen(true)} onSupplier={() => navigate("/supplier/register")} />
       <TradeRow id="wholesale" title="Wholesale sourcing" sub="Buy in bulk. Minimum order shown." shelf={shelf} mode="business" items={wholesaleList} onAll={() => { changeMode("business"); go("public-products"); }} />
       <SupplierStrip items={suppliers} industries={inds} onOpen={setSupplier} />
       <TradeRow id="new-arrivals" title="New arrivals" shelf={shelf} items={newest} onAll={() => go("public-products")} />
@@ -369,6 +380,7 @@ export default function PublicHome() {
         search={search} setSearch={setSearch} items={shown} emptyText={emptyMessage} />
 
       <RfqBanner onOpen={() => setRfqOpen(true)} />
+      <TrustNewsletter products={products.length} suppliers={suppliers.length} industries={catCards.length} />
       <MarketFooter industries={headerInds} onIndustry={openIndustry} onRequest={() => setQuoteOpen(true)} signedIn={!!session} onAccount={() => navigate(session ? "/admin" : "/login")} />
 
       {cart.length > 0 && !quoteOpen && (
