@@ -649,3 +649,28 @@ body:has(.public-site),.public-site{background:var(--tl-bg)!important}
 }
 @media(min-width:901px){.public-site .mk-fgrid nav[aria-label="Shop by industry"] ul{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px}.public-site .mk-fgrid nav[aria-label="Shop by industry"]{grid-column:span 1}.public-site .mk-fgrid{grid-template-columns:minmax(200px,1.2fr) minmax(260px,1.8fr) repeat(2,minmax(120px,1fr))}}
 @media(max-width:760px){.public-site .mk-footer nav{grid-template-columns:124px minmax(0,1fr)}.public-site .mk-footer nav h4{white-space:nowrap}}
+
+/* ——— Categories panel now also carries "Shop by industry": icon, name and product count per industry ——— */
+@media(min-width:761px){
+  .public-site .tl-side{display:flex;flex-direction:column;contain:size}
+  .public-site .tl-side ul{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:2px}
+}
+.tl-side li .ic{width:30px;height:30px;border-radius:50%;background:var(--tl-bg,#eef3fa);color:var(--tl-navy,#0b1f3a)}
+.tl-side li:hover .ic,.tl-side li.on .ic{background:var(--tl-navy,#0b1f3a);color:#fff}
+.tl-side li small{color:var(--tl-mute,#667085);font-size:12px;font-weight:600}
+@media(max-width:760px){
+  /* phones and small tablets: the same panel becomes a swipeable row of industries under the banner */
+  .public-site .tl-side{display:block!important;order:2;contain:none;border:0;background:none;box-shadow:none;padding:0}
+  .public-site .tl-banner{order:1}
+  .public-site .tl-side h2{padding:14px 0 8px}
+  .public-site .tl-side ul{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;margin-inline:0;padding:2px 0 4px}
+  .public-site .tl-side ul::-webkit-scrollbar{display:none}
+  .public-site .tl-side li{flex:0 0 92px;scroll-snap-align:start}
+  .public-site .tl-side li button{flex-direction:column;justify-content:flex-start;gap:6px;padding:10px 6px 9px;border:1px solid var(--tl-line,#e4e9f2);border-radius:12px;background:#fff;text-align:center;height:100%}
+  .public-site .tl-side li button:hover,.public-site .tl-side li.on button{padding-left:6px}
+  .public-site .tl-side li .ic{width:38px;height:38px}
+  .public-site .tl-side li b{flex:none;white-space:normal;font-size:12px;line-height:1.2;overflow:visible}
+  .public-site .tl-side li button>svg:last-child,.public-site .tl-fly{display:none}
+}
+.public-site .tl-sups{grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+.public-site .tl-sups button{min-height:68px}

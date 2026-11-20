@@ -96,7 +96,7 @@ export default function Login() {
   };
 
   return (
-    <div className="lg" style={{ "--z": fit } as React.CSSProperties}>
+    <div className="tl-login" style={{ "--z": fit } as React.CSSProperties}>
       <aside className="lg-side">
         <svg className="lg-shape" viewBox="0 0 700 900" preserveAspectRatio="none" aria-hidden="true">
           <path d="M-40 560 C140 470 330 560 440 690 S640 900 740 880 V900 H-40Z" fill="#0d4aa3" opacity=".55" />

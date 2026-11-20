@@ -176,6 +176,7 @@ export function TradeHero({ shelf, slides, counts, onPickIndustry, onPickCategor
   }, [len, hold]);
   const cur = slides[Math.min(n, Math.max(0, len - 1))];
   const hov = shelf.industries.find(i => i.id === hover);
+  const indCount = (id: string) => shelf.categories.filter(c => c.industry_id === id).reduce((n, c) => n + (counts.get(c.id) ?? 0), 0);
   const hovCats = hov ? shelf.categories.filter(c => c.industry_id === hov.id && (counts.get(c.id) ?? 0) > 0) : [];
   return (
     <section className="tl-hero" id="top">
@@ -185,7 +186,10 @@ export function TradeHero({ shelf, slides, counts, onPickIndustry, onPickCategor
           <ul>
             {shelf.industries.map(i => (
               <li key={i.id} style={tone(i.name)} className={hover === i.id ? "on" : ""} onMouseEnter={() => setHover(i.id)}>
-                <button onClick={() => onPickIndustry(i)} onFocus={() => setHover(i.id)}><b>{i.name}</b><ChevronRight size={14} /></button>
+                <button onClick={() => onPickIndustry(i)} onFocus={() => setHover(i.id)}>
+                  <span className="ic"><IconFor name={i.icon} size={16} /></span><b>{i.name}</b>
+                  {indCount(i.id) > 0 && <small>{indCount(i.id)}</small>}<ChevronRight size={14} />
+                </button>
               </li>
             ))}
           </ul>
@@ -232,27 +236,6 @@ export function TradeRow({ id, title, sub, shelf, items, mode, onAll, max = 6 }:
       <div className="tl-wrap" id={id}>
         <div className="tl-sh"><div><h2>{title}</h2>{sub && <small>{sub}</small>}</div>{onAll && <button onClick={onAll}>View all<ArrowRight size={15} /></button>}</div>
         <div className="tl-prods">{[...new Map(items.map(p => [p.id, p])).values()].slice(0, max).map(p => <CleanCard key={p.id} p={p} shelf={shelf} mode={mode} />)}</div>
-      </div>
-    </Reveal>
-  );
-}
-
-/** Shop by industry: neutral tiles, name and product count. */
-export function ShopByIndustry({ items, onPick }: { items: { ind: PublicIndustry; count: number }[]; onPick: (i: PublicIndustry) => void }) {
-  if (items.length === 0) return null;
-  return (
-    <Reveal className="tl-sec" as="section">
-      <div className="tl-wrap" id="industries">
-        <div className="tl-sh"><div><h2>Shop by industry</h2></div></div>
-        <div className="tl-inds">
-          {items.map(({ ind, count }) => (
-            <button key={ind.id} onClick={() => onPick(ind)}>
-              <span className="ic"><IconFor name={ind.icon} size={24} /></span>
-              <b>{ind.name}</b>
-              {count > 0 && <small>{count}</small>}
-            </button>
-          ))}
-        </div>
       </div>
     </Reveal>
   );
