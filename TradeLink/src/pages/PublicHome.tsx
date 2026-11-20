@@ -12,7 +12,8 @@ import { track, trackState } from "../lib/track";
 import { applyCoupon } from "../lib/coupon";
 import { useWishlist } from "../lib/wishlist";
 import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TradeHeader, TradeNav, TradeRow } from "./market/Trade";
-import { BrowseCategories, LandingHero, PromoBanners, TrustNewsletter } from "./market/Landing";
+import { BrowseCategories, LivePromos, LandingHero, PromoBanners, TrustNewsletter } from "./market/Landing";
+import { offerText, type PublicPromo } from "../lib/promo";
 import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
 import { supabase, withPhoto, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
@@ -192,6 +193,9 @@ export default function PublicHome() {
   const [bestIds, setBestIds] = useState<string[]>([]);
   const [suppliers, setSuppliers] = useState<PublicSupplier[]>([]);
   const [supCats, setSupCats] = useState<{ supplier_id: string; category_id: string }[]>([]);
+  const [promos, setPromos] = useState<PublicPromo[]>([]);
+  const [promoProds, setPromoProds] = useState<{ promotion_id: string; product_id: string }[]>([]);
+  const [starred, setStarred] = useState<{ kind: string; ref_id: string }[]>([]);
   const [supplier, setSupplier] = useState<PublicSupplier | null>(null);
   const [quick, setQuick] = useState<PublicProduct | null>(null);
   const [wishOpen, setWishOpen] = useState(false);
@@ -239,6 +243,10 @@ export default function PublicHome() {
       // Suppliers directory (migration 0007). If it is not set up, the section is simply hidden.
       void supabase!.from("public_suppliers").select("*").order("name").then(r => { if (!r.error) setSuppliers((r.data ?? []) as PublicSupplier[]); });
       void supabase!.from("public_supplier_categories").select("*").then(r => { if (!r.error) setSupCats((r.data ?? []) as { supplier_id: string; category_id: string }[]); });
+      // Live campaigns and featured picks (migration 0020). Without it these sections are simply not shown.
+      void supabase!.from("public_promotions").select("*").then(r => { if (!r.error) setPromos((r.data ?? []) as PublicPromo[]); });
+      void supabase!.from("public_promo_products").select("*").then(r => { if (!r.error) setPromoProds((r.data ?? []) as { promotion_id: string; product_id: string }[]); });
+      void supabase!.from("featured_items").select("kind,ref_id").then(r => { if (!r.error) setStarred((r.data ?? []) as { kind: string; ref_id: string }[]); });
       void supabase!.from("public_best_sellers").select("*").order("rank").then(r => {
         if (!r.error) setBestIds(((r.data ?? []) as { product_id: string }[]).map(b => b.product_id));
       });
@@ -311,10 +319,29 @@ export default function PublicHome() {
   };
   const pickIndustry = (id: string) => { setIndustryId(id); setCategoryId("all"); };
 
+  // Buy X Get Y labels for product cards, and what each live campaign opens when its button is pressed.
+  const tagOf = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const pp of promoProds) { const c = promos.find(x => x.id === pp.promotion_id); if (c?.kind === "bogo") m.set(pp.product_id, `Buy ${c.buy_qty} Get ${c.get_qty}`); }
+    return m;
+  }, [promos, promoProds]);
+  const supplierName = (id: string | null) => suppliers.find(s => s.id === id)?.name;
+  const promoScope = (c: PublicPromo) => c.scope === "store" ? `All of ${supplierName(c.supplier_id) ?? "the store"}` : c.scope === "product" ? (products.find(x => x.id === c.product_id)?.name ?? "Selected product")
+    : c.scope === "category" ? (cats.find(x => x.id === c.category_id)?.name ?? "Selected category") : "All retail products";
+  const openPromo = (c: PublicPromo) => {
+    if (c.scope === "store") { const s = suppliers.find(x => x.id === c.supplier_id); if (s) { setSupplier(s); return; } }
+    if (c.scope === "product") { const pr = products.find(x => x.id === c.product_id); if (pr) { setQuick(pr); return; } }
+    if (c.scope === "category") { const ct = cats.find(x => x.id === c.category_id); if (ct) { openCategory(ct); return; } }
+    go(c.kind === "bogo" ? "public-products" : "offers");
+  };
+  const starIds = useMemo(() => new Set(starred.filter(x => x.kind === "product").map(x => x.ref_id)), [starred]);
+  const starSup = useMemo(() => new Set(starred.filter(x => x.kind === "supplier").map(x => x.ref_id)), [starred]);
+
   const shelf: Shelf = {
     mode, products: visible, industries: mInds, categories: cats, bestIds,
     indOf: indOfP, catName: p => catById.get(catKey(p))?.name ?? p.category, isFashion: () => false,
     inRequest: inCart, addToRequest, wished: wish.has, toggleWish: wish.toggle, open: setQuick,
+    tagOf: id => tagOf.get(id),
     supplierOf: p => (p.supplier_id ? suppliers.find(s => s.id === p.supplier_id) : undefined), openSupplier: setSupplier,
   };
 
@@ -330,6 +357,7 @@ export default function PublicHome() {
     const newest = take([...ok].sort(byNew), 6);
     return { featured, wholesaleList, newest };
   }, [products, bestIds, mode]);
+  const starList = useMemo(() => visible.filter(p => starIds.has(p.id)), [visible, starIds]);
   const offers = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0 && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price)).slice(0, 6), [products]);
   // One card per industry that has products for this buyer type, with a real product photo when there is one.
   const catCards = useMemo(() => mInds.map(ind => {
@@ -371,8 +399,10 @@ export default function PublicHome() {
       <BrowseCategories items={catCards} onPick={openIndustry} onMore={() => setMenuOpen(true)} />
       <TradeRow id="trending" title="Trending products" shelf={shelf} items={featured} max={5} onAll={() => go("public-products")} />
       <PromoBanners offerCount={sale.length} offerPct={offerPct} onOffers={() => go("offers")} onQuote={() => setRfqOpen(true)} onSupplier={() => navigate("/supplier/register")} />
+      <LivePromos items={promos} supplierName={supplierName} scopeText={promoScope} onOpen={openPromo} />
+      <TradeRow id="featured" title="Featured picks" sub="Chosen by TradeLink" shelf={shelf} items={starList} max={6} />
       <TradeRow id="wholesale" title="Wholesale sourcing" sub="Buy in bulk. Minimum order shown." shelf={shelf} mode="business" items={wholesaleList} onAll={() => { changeMode("business"); go("public-products"); }} />
-      <SupplierStrip items={suppliers} industries={inds} onOpen={setSupplier} />
+      <SupplierStrip items={suppliers} industries={inds} onOpen={setSupplier} starred={starSup} />
       <TradeRow id="new-arrivals" title="New arrivals" shelf={shelf} items={newest} onAll={() => go("public-products")} />
       <TradeRow id="offers" title="Special offers" sub="Active discounts" shelf={shelf} mode="individual" items={offers} />
       <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
@@ -392,7 +422,7 @@ export default function PublicHome() {
       {rfqOpen && <RfqModal products={products} industries={mInds} categories={cats} catOf={p => catById.get(catKey(p))} onClose={() => setRfqOpen(false)} />}
       <BottomNav wishCount={wishCount} requestCount={cart.length} onHome={() => go("top")} onCategories={() => setMenuOpen(true)} onSearch={() => { go("top"); window.setTimeout(() => searchRef.current?.focus(), 300); }} onWishlist={() => setWishOpen(true)} onRequest={() => setQuoteOpen(true)} />
       <FloatingContact />
-      {supplier && <SupplierDialog s={supplier} industries={inds} cats={supCatNames(supplier.id)} onClose={() => setSupplier(null)} />}
+      {supplier && <SupplierDialog s={supplier} industries={inds} cats={supCatNames(supplier.id)} promos={promos.filter(c => c.supplier_id === supplier.id).map(c => `${offerText(c)} · ${c.name}`)} onClose={() => setSupplier(null)} />}
       {quick && <ProductDialog p={quick} shelf={shelf} onClose={() => setQuick(null)} onStore={() => setQuick(null)} />}
       {wishOpen && <WishlistDrawer items={wishItems} shelf={shelf} onClose={() => setWishOpen(false)} />}
       {quoteOpen && <RequestModal products={products} mode={mode} onMode={changeMode} initial={cart} onLines={setCart} onClose={() => setQuoteOpen(false)} onSent={() => setCart([])} />}

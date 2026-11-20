@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from "react";
-import { ArrowRight, Briefcase, Building2, Check, ChevronDown, ChevronRight, ClipboardList, Clock, Flame, Grid3x3, Headphones, Heart, Home, LogIn, MapPin, Menu, MessageCircle, Package, Percent, Search, ShoppingBag, ShieldCheck, Sparkles, Store, Tag, Truck, User, X } from "lucide-react";
+import { ArrowRight, Briefcase, Building2, Check, ChevronDown, ChevronRight, ClipboardList, Clock, Flame, Grid3x3, Headphones, Heart, Home, LogIn, MapPin, Menu, MessageCircle, Package, Percent, Search, ShoppingBag, ShieldCheck, Sparkles, Star, Store, Tag, Truck, User, X } from "lucide-react";
 import { Brand } from "../../components/Brand";
 import { ContactIcons } from "../../components/ContactActions";
 import { useContact } from "../../lib/contact";
@@ -283,8 +283,9 @@ export function TradeRow({ id, title, sub, shelf, items, mode, onAll, max = 6 }:
 }
 
 /** Featured suppliers from the admin-managed directory. */
-export function SupplierStrip({ items, industries, onOpen }: { items: PublicSupplier[]; industries: PublicIndustry[]; onOpen: (s: PublicSupplier) => void }) {
+export function SupplierStrip({ items, industries, onOpen, starred }: { items: PublicSupplier[]; industries: PublicIndustry[]; onOpen: (s: PublicSupplier) => void; starred?: Set<string> }) {
   if (items.length === 0) return null;
+  items = [...items].sort((a, b) => Number(starred?.has(b.id) ?? false) - Number(starred?.has(a.id) ?? false));
   const initials = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]!.toUpperCase()).join("");
   return (
     <Reveal className="tl-sec" as="section">
@@ -295,7 +296,7 @@ export function SupplierStrip({ items, industries, onOpen }: { items: PublicSupp
             <button key={sp.id} onClick={() => onOpen(sp)}>
               <span className="lg">{initials(sp.name)}</span>
               <span className="tx"><b>{sp.name}</b><small>{[industries.find(i => i.id === sp.industry_id)?.name, sp.location].filter(Boolean).join(" · ")}</small></span>
-              <ChevronRight size={16} />
+              {starred?.has(sp.id) ? <span className="star" title="Featured"><Star size={15} fill="currentColor" /></span> : <ChevronRight size={16} />}
             </button>
           ))}
         </div>

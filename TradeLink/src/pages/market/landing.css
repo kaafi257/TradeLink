@@ -109,3 +109,23 @@
 @media(prefers-reduced-motion:reduce){.lp-cat,.lp-btn,.lp-promo button{transition:none}.lp-cat:hover{transform:none}}
 .mk-search-chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid #b9d2ea;border-radius:999px;background:#eaf2fb;color:#0e2a40;font:600 .88rem 'Inter',sans-serif;cursor:pointer}
 .mk-search-chip:hover{background:#dcebf9}
+
+/* Live promotions (approved campaigns from TradeLink and suppliers) */
+.lp-head{margin:0 0 clamp(16px,1.8vw,26px)}.lp-head h2{margin:0;font:800 clamp(1.25rem,1.1rem + .6vw,1.6rem)/1.2 'Inter',sans-serif;color:var(--lp-navy)}
+.lp-live{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(14px,1.6vw,24px)}
+.lp-live-card{display:flex;flex-direction:column;gap:16px;padding:clamp(20px,2vw,28px);border-radius:20px;color:#fff;position:relative;overflow:hidden;background:linear-gradient(135deg,#0b5d99,#2f8de0);transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s;box-shadow:0 14px 30px -20px #0b1f3a80}
+.lp-live-card:hover{transform:translateY(-4px);box-shadow:0 22px 40px -22px #0b1f3aa0}
+.lp-live-card.k-flash{background:linear-gradient(135deg,#0b1f3a,#2f6df6)}.lp-live-card.k-bogo{background:linear-gradient(135deg,#0d6b57,#2bb593)}
+.lp-live-card::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:#ffffff14}
+.lp-live-card .ico{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:#ffffff26;position:relative;z-index:1}
+.lp-live-card .tx{display:grid;gap:4px;position:relative;z-index:1;flex:1}.lp-live-card small{font:600 .78rem 'Inter',sans-serif;opacity:.85;text-transform:uppercase;letter-spacing:.06em}
+.lp-live-card b{font:800 clamp(1.7rem,1.4rem + 1vw,2.3rem)/1.05 'Inter',sans-serif;letter-spacing:-.02em}
+.lp-live-card h3{margin:4px 0 0;font:700 1.02rem/1.3 'Inter',sans-serif}.lp-live-card p{margin:0;font-size:.88rem;opacity:.88;line-height:1.5}
+.lp-live-card .ft{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;position:relative;z-index:1}
+.lp-live-card .left{font:700 .78rem 'Inter',sans-serif;padding:6px 11px;border-radius:999px;background:#ffffff26}.lp-live-card .left.hot{background:#f4bc42;color:#3a2600}
+.lp-live-card button{display:inline-flex;align-items:center;gap:6px;border:0;background:#fff;color:#0b2a4a;padding:9px 16px;border-radius:999px;font:700 .86rem 'Inter',sans-serif;cursor:pointer;transition:gap .2s,transform .2s}
+.lp-live-card button:hover{gap:10px;transform:translateX(2px)}
+.mk-tag{position:absolute;left:10px;top:10px;z-index:2;padding:4px 9px;border-radius:999px;background:#0d6b57;color:#fff;font:700 11px 'Inter',sans-serif}
+.mk-promos-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}.mk-promos-chips span{padding:5px 11px;border-radius:999px;background:#eaf3ff;color:#0b5d99;font:600 12px 'Inter',sans-serif}
+.tl-sups .star{margin-left:auto;color:#e0a100;display:inline-flex}
+@media(prefers-reduced-motion:reduce){.lp-live-card,.lp-live-card:hover{transition:none;transform:none}}

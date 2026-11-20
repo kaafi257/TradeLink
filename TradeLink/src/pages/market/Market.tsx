@@ -28,6 +28,8 @@ export type Shelf = {
   wished: (id: string) => boolean;
   toggleWish: (id: string) => void;
   open: (p: PublicProduct) => void;
+  /** A short label for a product that is in a Buy X Get Y campaign. */
+  tagOf?: (id: string) => string | undefined;
   /** The publicly listed supplier a product comes from, and a way to open its page. */
   supplierOf?: (p: PublicProduct) => PublicSupplier | undefined;
   openSupplier?: (s: PublicSupplier) => void;
@@ -348,6 +350,7 @@ export function CleanCard({ p, shelf, mode }: { p: PublicProduct; shelf: Shelf; 
       <div className="media">
         {p.image_url ? <img src={p.image_url} alt="" loading="lazy" /> : <span className="ph"><IconFor name={shelf.indOf(p)?.icon} size={34} /></span>}
         {off > 0 && <span className="off">-{off}%</span>}
+        {off === 0 && shelf.tagOf?.(p.id) && <span className="mk-tag">{shelf.tagOf(p.id)}</span>}
         {p.stock_status === "out" && <span className="out">Sold out</span>}
       </div>
       <div className="info">
@@ -530,7 +533,7 @@ export function Suppliers({ items, industries, catNames, onOpen }: { items: Publ
   );
 }
 
-export function SupplierDialog({ s, industries, cats, onClose }: { s: PublicSupplier; industries: PublicIndustry[]; cats: string[]; onClose: () => void }) {
+export function SupplierDialog({ s, industries, cats, promos = [], onClose }: { s: PublicSupplier; industries: PublicIndustry[]; cats: string[]; promos?: string[]; onClose: () => void }) {
   useLock(true, onClose);
   const ind = industries.find(i => i.id === s.industry_id);
   return (
@@ -544,6 +547,7 @@ export function SupplierDialog({ s, industries, cats, onClose }: { s: PublicSupp
           <h3>{s.name}</h3>
           {s.location && <p className="mk-brand"><MapPin size={13} /> {s.location}</p>}
           {s.about && <p className="mk-desc">{s.about}</p>}
+          {promos.length > 0 && <p className="mk-promos-chips" aria-label="Promotions">{promos.map(n => <span key={n}>{n}</span>)}</p>}
           {cats.length > 0 && <p className="tags">{cats.map(n => <span key={n}>{n}</span>)}</p>}
           <ContactIcons message={`Hello TradeLink, I would like to connect with ${s.name}.`} />
         </div>

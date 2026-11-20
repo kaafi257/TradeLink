@@ -62,11 +62,11 @@ export type AppNotification = { id: string; user_id: string; kind: string; title
 export type PublicSupplier = Pick<Supplier, "id" | "name" | "industry_id" | "location" | "about"> & { logo_path?: string | null };
 export type ProductImage = { id: string; product_id: string; url: string; sort_order: number };
 export type ProductOption = { id: string; product_id: string; kind: "size" | "color"; label: string; color_hex: string | null; sort_order: number };
-export type QuoteItem = { id: string; product_name: string; quantity: number; unit: string; unit_price: number };
+export type QuoteItem = { id: string; product_name: string; quantity: number; unit: string; unit_price: number; free_qty?: number };
 export type Quote = {
   id: string; quote_number: string; customer_name: string; phone: string; email: string | null;
   delivery_location: string; status: string; notes: string | null; created_at: string;
-  estimated_total: number; customer_type?: "business" | "individual"; coupon_code?: string | null; discount_percent?: number;
+  estimated_total: number; customer_type?: "business" | "individual"; coupon_code?: string | null; discount_percent?: number; coupon_note?: string | null;
   quotation_items?: QuoteItem[];
 };
 export type OrderItem = { product_name: string; quantity: number; unit: string; unit_price: number };

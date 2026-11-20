@@ -1,8 +1,9 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
-import { ArrowRight, BadgePercent, Check, FileText, Gift, Grid3x3, Mail, Package, Send, ShieldCheck, Star, Store, Truck } from "lucide-react";
+import { ArrowRight, BadgePercent, Check, FileText, Gift, Percent, Zap, Grid3x3, Mail, Package, Send, ShieldCheck, Star, Store, Truck } from "lucide-react";
 import { IconFor } from "../../lib/icons";
 import { lookFor } from "../../lib/theme";
 import { supabase, type PublicIndustry, type PublicProduct } from "../../lib/supabase";
+import { KIND_LABEL, offerSub, offerText, timeLeft, type PublicPromo } from "../../lib/promo";
 import { Reveal } from "./Market";
 import "./landing.css";
 
@@ -84,6 +85,40 @@ export function PromoBanners({ offerCount, offerPct, onOffers, onQuote, onSuppli
             <div><h3>Member benefits</h3><p>Business buyers get wholesale prices and a written quote. Suppliers get their own dashboard to sell here.</p>
               <button onClick={onSupplier}>Become a supplier <ArrowRight size={16} /></button></div>
           </article>
+        </div>
+      </div>
+    </Reveal>
+  );
+}
+
+/** Live campaigns from TradeLink and from suppliers (already approved). Hidden when nothing is running. */
+export function LivePromos({ items, supplierName, scopeText, onOpen }: { items: PublicPromo[]; supplierName: (id: string | null) => string | undefined; scopeText: (p: PublicPromo) => string; onOpen: (p: PublicPromo) => void }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const t = window.setInterval(() => setNow(Date.now()), 30_000); return () => window.clearInterval(t); }, []);
+  const list = [...items].sort((a, b) => Number(b.show_banner) - Number(a.show_banner) || (a.ends_at ?? "9").localeCompare(b.ends_at ?? "9")).slice(0, 6);
+  if (list.length === 0) return null;
+  return (
+    <Reveal className="lp-sec" as="section">
+      <div className="lp-wrap" id="campaigns">
+        <div className="lp-head"><h2>Live promotions</h2></div>
+        <div className="lp-live">
+          {list.map(p => {
+            const Icon = p.kind === "flash" ? Zap : p.kind === "bogo" ? Gift : Percent;
+            const left = p.ends_at ? timeLeft(p.ends_at, now) : "";
+            const who = p.supplier_id ? supplierName(p.supplier_id) : undefined;
+            return (
+              <article key={p.id} className={`lp-live-card k-${p.kind}`}>
+                <span className="ico"><Icon size={22} /></span>
+                <div className="tx">
+                  <small>{KIND_LABEL[p.kind]}{who ? ` · ${who}` : ""}</small>
+                  <b>{offerText(p)}</b>
+                  <h3>{p.name}</h3>
+                  <p>{p.banner_text || [scopeText(p), offerSub(p)].filter(Boolean).join(" · ")}</p>
+                </div>
+                <div className="ft">{left && <span className={`left${p.kind === "flash" ? " hot" : ""}`}>{left}</span>}<button onClick={() => onOpen(p)}>Shop now <ArrowRight size={15} /></button></div>
+              </article>
+            );
+          })}
         </div>
       </div>
     </Reveal>

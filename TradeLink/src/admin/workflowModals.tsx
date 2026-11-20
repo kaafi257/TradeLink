@@ -39,8 +39,10 @@ export function PriceQuoteModal({ quote, onClose }: { quote: Quote; onClose: () 
   const items = quote.quotation_items ?? [];
   const [prices, setPrices] = useState<Record<string, string>>(() => Object.fromEntries(items.map(i => [i.id, Number(i.unit_price) > 0 ? String(i.unit_price) : ""])));
   const { busy, run } = useRun(onClose);
-  const off = Number(quote.discount_percent) || 0;   // coupon the customer entered; each line is discounted and rounded like the database does
-  const total = items.reduce((sum, i) => sum + Math.round(Number(i.quantity) * Math.round((Number(prices[i.id]) || 0) * (1 - off / 100) * 100) / 100 * 100) / 100, 0);
+  // Coupons (percentage or fixed, minimum order, one store only) and Buy X Get Y free units are worked out by the database when the prices are saved.
+  const subtotal = items.reduce((sum, i) => sum + Number(i.quantity) * (Number(prices[i.id]) || 0), 0);
+  const free = items.reduce((sum, i) => sum + Number(i.free_qty ?? 0), 0);
+  const hasDiscount = !!quote.coupon_code || free > 0;
   const ready = items.length > 0 && items.every(i => Number(prices[i.id]) > 0);
   const save = (e: FormEvent) => {
     e.preventDefault();
@@ -54,8 +56,9 @@ export function PriceQuoteModal({ quote, onClose }: { quote: Quote; onClose: () 
             <input type="number" min="0.01" step="0.01" required value={prices[i.id] ?? ""} onChange={e => setPrices({ ...prices, [i.id]: e.target.value })} />
           </label>
         ))}
-        {off > 0 && <p className="full">Coupon <b>{quote.coupon_code}</b>: {off}% off every line.</p>}
-        <p className="full"><b>Quote total: {money(total)}</b></p>
+        {quote.coupon_code && <p className="full">Coupon <b>{quote.coupon_code}</b> is applied automatically when you save.{quote.coupon_note ? ` Note: ${quote.coupon_note}` : ""}</p>}
+        {free > 0 && <p className="full">Buy X Get Y: {free} free {free === 1 ? "unit is" : "units are"} included on this request and come off the total automatically.</p>}
+        <p className="full"><b>{hasDiscount ? "Subtotal before discounts" : "Quote total"}: {money(subtotal)}</b>{hasDiscount && <><br /><small>The final total is worked out and shown when you save.</small></>}</p>
         <button className="btn green full" type="submit" disabled={busy || !ready}>{busy ? "Saving…" : "Save prices and mark as quoted"}</button>
       </form>
     </Modal>

@@ -1,155 +1,223 @@
-import { useEffect, useState } from "react";
-import { CalendarClock, Megaphone, Percent, Play, Plus, Power, Square, Tag, Ticket } from "lucide-react";
-import { DataTable, PageHeading, SummaryStrip } from "../../components/ui";
-import { StatusChip, type Tone } from "../Records";
-import { money } from "../../lib/format";
+import { useMemo, useState } from "react";
+import { BarChart3, CalendarClock, CheckCircle2, Gift, Megaphone, Pause, Pencil, Play, Plus, Power, Square, Star, Ticket, Trash2, Undo2, XCircle, Zap } from "lucide-react";
+import { PageHeading, SummaryStrip } from "../../components/ui";
+import { CampaignCard, CampaignForm, CouponCard, CouponForm } from "../../components/promo/PromoUI";
+import { STATUS_LABEL, STATUS_ORDER, couponStatus, etb, rpc, type Coupon, type CouponResult, type Promo, type PromoResult, type PromoStatus } from "../../lib/promo";
 import { requireSupabase } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
-import { ErrorNote, Form, Modal, Tabs, callRpc, label, useAction, useLoad } from "../suite";
+import { ErrorNote, Modal, Tabs, callRpc, useAction, useLoad } from "../suite";
 
-type Promo = { id: string; name: string; scope: string; category_id: string | null; product_id: string | null; percent: number; starts_at: string | null; ends_at: string | null; status: string; note: string | null; promotion_items: { product_id: string }[] };
-type PromoResult = { promotion_id: string; units: number; revenue: number; orders: number };
-type Coupon = { id: string; code: string; name: string | null; percent: number; max_uses: number | null; starts_at: string | null; ends_at: string | null; active: boolean };
-type CouponResult = { coupon_id: string; uses: number; orders: number; discount: number; revenue: number };
-const TONE: Record<string, Tone> = { draft: "muted", scheduled: "info", active: "good", ended: "muted" };
-const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString([], { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }) : null);
-const asLocal = (v: string) => (v ? new Date(v).toISOString() : null);
+type Supplier = { id: string; name: string };
+type Tab = "campaigns" | "approvals" | "coupons" | "featured" | "analytics";
 
 export default function Marketing() {
   const { can, categories, products, search } = useAdmin();
-  const [tab, setTab] = useState<"promotions" | "coupons">("promotions");
-  const [modal, setModal] = useState(false);
+  const edit = can("marketing.manage");
+  const [tab, setTab] = useState<Tab>("campaigns");
+  const [filter, setFilter] = useState<PromoStatus | "all">("all");
+  const [promoForm, setPromoForm] = useState<Promo | null | "new">(null);
+  const [couponForm, setCouponForm] = useState<Coupon | null | "new">(null);
+  const [reject, setReject] = useState<{ kind: "promo" | "coupon"; id: string; name: string } | null>(null);
+  const [reason, setReason] = useState("");
   const { busy, run } = useAction();
+
   const promos = useLoad(async () => {
-    await callRpc("expire_promotions");                       // starts or ends anything that is due
+    await callRpc("expire_promotions");                      // starts, ends or pauses whatever is due
     const { data, error } = await requireSupabase().from("promotions").select("*, promotion_items(product_id)").order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as Promo[];
   }, []);
-  const pres = useLoad(() => callRpc<PromoResult[]>("promotion_results"), []);
   const coupons = useLoad(async () => {
     const { data, error } = await requireSupabase().from("coupons").select("*").order("created_at", { ascending: false });
     if (error) throw error;
     return (data ?? []) as Coupon[];
   }, []);
+  const pres = useLoad(() => callRpc<PromoResult[]>("promotion_results"), []);
   const cres = useLoad(() => callRpc<CouponResult[]>("coupon_results"), []);
-  const edit = can("marketing.manage");
-  const s = search.toLowerCase();
+  const sups = useLoad(async () => {
+    const { data, error } = await requireSupabase().from("suppliers").select("id,name").eq("status", "approved").eq("active", true).order("name");
+    if (error) throw error;
+    return (data ?? []) as Supplier[];
+  }, []);
+  const feat = useLoad(async () => {
+    const { data, error } = await requireSupabase().from("featured_items").select("kind,ref_id");
+    if (error) throw error;
+    return (data ?? []) as { kind: "product" | "supplier"; ref_id: string }[];
+  }, []);
+  const reloadAll = () => { promos.reload(); coupons.reload(); pres.reload(); cres.reload(); };
+
   const rows = promos.data ?? [];
   const crow = coupons.data ?? [];
+  const supName = (id: string | null) => sups.data?.find(s => s.id === id)?.name;
   const pr = new Map((pres.data ?? []).map(r => [r.promotion_id, r]));
   const cr = new Map((cres.data ?? []).map(r => [r.coupon_id, r]));
-  const scopeText = (p: Promo) => p.scope === "all" ? "All retail products" : p.scope === "category" ? `Category: ${categories.find(c => c.id === p.category_id)?.name ?? "removed"}` : `Product: ${products.find(x => x.id === p.product_id)?.name ?? "removed"}`;
-  const reloadAll = () => { promos.reload(); pres.reload(); coupons.reload(); cres.reload(); };
-  const couponLive = (c: Coupon) => c.active && (!c.starts_at || new Date(c.starts_at) <= new Date()) && (!c.ends_at || new Date(c.ends_at) > new Date());
+  const s = search.toLowerCase();
+  const scopeText = (p: Promo) => p.scope === "all" ? "All retail products" : p.scope === "category" ? `Category: ${categories.find(c => c.id === p.category_id)?.name ?? "removed"}`
+    : p.scope === "store" ? `Store: ${supName(p.supplier_id) ?? "supplier"}` : `Product: ${products.find(x => x.id === p.product_id)?.name ?? "removed"}`;
+  const pendingPromos = rows.filter(r => r.status === "pending");
+  const pendingCoupons = crow.filter(c => c.approval === "pending");
+  const productOpts = useMemo(() => products.filter(p => p.active).map(p => ({ id: p.id, name: p.name, retail: Number(p.retail_price) > 0 && p.audience !== "b2b" })), [products]);
+  const act = (id: string, action: string, done: string, note?: string) => run(async () => { await rpc("promotion_action", { p_id: id, p_action: action, p_note: note ?? null }); reloadAll(); }, done);
+  const cact = (id: string, action: string, done: string, note?: string) => run(async () => { await rpc("coupon_action", { p_id: id, p_action: action, p_note: note ?? null }); reloadAll(); }, done);
+
+  const counts = useMemo(() => { const m = new Map<string, number>(); rows.forEach(r => m.set(r.status, (m.get(r.status) ?? 0) + 1)); return m; }, [rows]);
+  const shown = rows.filter(r => (filter === "all" || r.status === filter) && `${r.name} ${supName(r.supplier_id) ?? ""}`.toLowerCase().includes(s));
+
+  const promoActions = (r: Promo) => {
+    if (!edit) return null;
+    const mine = r.owner === "store";
+    return (
+      <>
+        {r.status === "draft" && mine && <>
+          <button className="btn outline" onClick={() => setPromoForm(r)}><Pencil size={14} /> Edit</button>
+          <button className="btn green" disabled={busy} onClick={() => void act(r.id, "start", r.starts_at && new Date(r.starts_at) > new Date() ? "Scheduled. It will start by itself." : "Promotion started.")}><Play size={14} /> {r.starts_at && new Date(r.starts_at) > new Date() ? "Schedule" : "Start"}</button>
+          <button className="btn outline" disabled={busy} aria-label="Delete draft" onClick={() => void act(r.id, "delete", "Draft deleted.")}><Trash2 size={14} /></button>
+        </>}
+        {r.status === "draft" && !mine && <small className="su-muted">Supplier is still editing.</small>}
+        {r.status === "pending" && <>
+          <button className="btn green" disabled={busy} onClick={() => void act(r.id, "approve", "Approved.")}><CheckCircle2 size={14} /> Approve</button>
+          <button className="btn outline" disabled={busy} onClick={() => { setReason(""); setReject({ kind: "promo", id: r.id, name: r.name }); }}><XCircle size={14} /> Reject</button>
+        </>}
+        {r.status === "scheduled" && <button className="btn outline" disabled={busy} onClick={() => void act(r.id, "cancel", "Scheduled campaign cancelled.")}><Undo2 size={14} /> Cancel</button>}
+        {r.status === "active" && <>
+          <button className="btn outline" disabled={busy} onClick={() => void act(r.id, "pause", "Paused. Earlier prices are back.")}><Pause size={14} /> Pause</button>
+          <button className="btn outline" disabled={busy} onClick={() => void act(r.id, "end", "Ended. Earlier prices are back.")}><Square size={14} /> End</button>
+        </>}
+        {r.status === "paused" && <>
+          <button className="btn green" disabled={busy} onClick={() => void act(r.id, "resume", "Resumed.")}><Play size={14} /> Resume</button>
+          <button className="btn outline" disabled={busy} onClick={() => void act(r.id, "end", "Ended.")}><Square size={14} /> End</button>
+        </>}
+      </>
+    );
+  };
+
+  const couponActions = (c: Coupon) => {
+    if (!edit) return null;
+    return (
+      <>
+        {c.approval === "pending" && <>
+          <button className="btn green" disabled={busy} onClick={() => void cact(c.id, "approve", "Coupon approved.")}><CheckCircle2 size={14} /> Approve</button>
+          <button className="btn outline" disabled={busy} onClick={() => { setReason(""); setReject({ kind: "coupon", id: c.id, name: c.code }); }}><XCircle size={14} /> Reject</button>
+        </>}
+        {c.approval === "approved" && <button className="btn outline" disabled={busy} onClick={() => void cact(c.id, c.active ? "pause" : "resume", c.active ? "Coupon paused." : "Coupon is live again.")}><Power size={14} /> {c.active ? "Pause" : "Resume"}</button>}
+        {c.owner === "store" && !(cr.get(c.id)?.uses) && <button className="btn outline" onClick={() => setCouponForm(c)}><Pencil size={14} /> Edit</button>}
+        {!(cr.get(c.id)?.uses) && (c.owner === "store" || c.approval !== "pending") && <button className="btn outline" disabled={busy} aria-label="Delete coupon" onClick={() => void cact(c.id, "delete", "Coupon deleted.")}><Trash2 size={14} /></button>}
+      </>
+    );
+  };
+
+  const running = rows.filter(r => r.status === "active");
+  const revenue = (pres.data ?? []).reduce((a, r) => a + Number(r.revenue), 0);
+  const topResults = rows.filter(r => pr.get(r.id)).map(r => ({ r, res: pr.get(r.id)! })).sort((a, b) => Number(b.res.revenue) - Number(a.res.revenue)).slice(0, 8);
+  const maxRev = Math.max(1, ...topResults.map(x => Number(x.res.revenue)));
+  const err = promos.error || coupons.error;
 
   return (
     <>
-      <PageHeading title="Marketing & Promotions" sub="Run timed sales and coupon codes, and see what they earn." action={edit ? <button className="btn green" onClick={() => setModal(true)}><Plus size={16} /> {tab === "promotions" ? "New promotion" : "New coupon"}</button> : undefined} />
-      <ErrorNote text={promos.error || coupons.error} />
+      <PageHeading title="Marketing & Promotions" sub="Campaigns, coupons and featured picks for TradeLink and its suppliers." action={edit && (tab === "campaigns" || tab === "coupons") ? <button className="btn green" onClick={() => (tab === "campaigns" ? setPromoForm("new") : setCouponForm("new"))}><Plus size={16} /> {tab === "campaigns" ? "New campaign" : "New coupon"}</button> : undefined} />
+      <ErrorNote text={err} />
       <SummaryStrip items={[
-        { icon: <Play />, tone: "mint", value: rows.filter(r => r.status === "active").length, label: "Running" },
-        { icon: <CalendarClock />, tone: "blue", value: rows.filter(r => r.status === "scheduled").length, label: "Scheduled" },
-        { icon: <Percent />, tone: "gold", value: rows.filter(r => r.status === "active").reduce((a, r) => a + r.promotion_items.length, 0), label: "Products on sale" },
-        { icon: <Ticket />, tone: "red", value: crow.filter(couponLive).length, label: "Live coupons" },
+        { icon: <Play />, tone: "mint", value: running.length, label: "Running" },
+        { icon: <CalendarClock />, tone: "blue", value: counts.get("scheduled") ?? 0, label: "Scheduled" },
+        { icon: <CheckCircle2 />, tone: "gold", value: pendingPromos.length + pendingCoupons.length, label: "Waiting for approval" },
+        { icon: <Ticket />, tone: "red", value: crow.filter(c => couponStatus(c, cr.get(c.id)?.uses) === "active").length, label: "Live coupons" },
       ]} />
-      <Tabs label="Marketing views" value={tab} onChange={setTab} tabs={[{ id: "promotions", label: "Sales", icon: <Tag /> }, { id: "coupons", label: "Coupon codes", icon: <Ticket /> }]} />
+      <Tabs label="Marketing views" value={tab} onChange={setTab} tabs={[
+        { id: "campaigns", label: "Campaigns", icon: <Megaphone /> },
+        { id: "approvals", label: "Approvals", icon: <CheckCircle2 />, count: pendingPromos.length + pendingCoupons.length },
+        { id: "coupons", label: "Coupons", icon: <Ticket /> },
+        { id: "featured", label: "Featured", icon: <Star /> },
+        { id: "analytics", label: "Analytics", icon: <BarChart3 /> },
+      ]} />
 
-      {tab === "promotions" && <>
-        <div className="info-banner"><Megaphone /> A sale puts the discounted price on each product, and the storefront shows it and quotes it. It starts and ends on its own at the times you set, and the earlier price comes back. Wholesale prices are never touched.</div>
-        <DataTable headers={["Promotion", "Covers", "Discount", "Runs", "Status", "Sold", "Revenue", "Actions"]} isEmpty={!rows.length} empty={promos.loading ? "Loading…" : "No promotions yet."}>
-          {rows.filter(r => r.name.toLowerCase().includes(s)).map(r => { const res = pr.get(r.id); return (
-            <tr key={r.id}><td><b>{r.name}</b>{r.note && <><br /><small className="su-muted">{r.note}</small></>}</td><td>{scopeText(r)}</td><td>{Number(r.percent)}% off</td>
-              <td>{r.status === "active" || r.status === "ended" ? `${r.promotion_items.length} products` : ""}<br /><small className="su-muted">{r.starts_at ? `from ${when(r.starts_at)}` : "starts by hand"}{r.ends_at ? ` · until ${when(r.ends_at)}` : ""}</small></td>
-              <td><StatusChip tone={TONE[r.status] ?? "muted"}>{label(r.status)}</StatusChip></td>
-              <td>{res ? `${Number(res.units)} units · ${Number(res.orders)} orders` : "—"}</td><td>{res ? money(Number(res.revenue)) : "—"}</td>
-              <td>{edit && r.status === "draft" && <button className="btn green" disabled={busy} onClick={() => void run(async () => { await callRpc<number>("start_promotion", { p_id: r.id }); reloadAll(); }, "Promotion started.")}><Play size={14} /> Start</button>}
-                {edit && r.status === "active" && <button className="btn outline" disabled={busy} onClick={() => void run(async () => { await callRpc("end_promotion", { p_id: r.id }); reloadAll(); }, "Promotion ended and prices restored.")}><Square size={14} /> End</button>}
-                {edit && r.status === "scheduled" && <button className="btn outline" disabled={busy} onClick={() => void run(async () => { await callRpc("end_promotion", { p_id: r.id }); reloadAll(); }, "Scheduled promotion cancelled.")}>Cancel</button>}</td></tr>
-          ); })}
-        </DataTable>
-        <p className="su-muted" style={{ marginTop: 10 }}>Sold and revenue count paid sales of the promoted products while the sale was running.</p>
+      {tab === "campaigns" && <>
+        <div className="pm-chips" role="group" aria-label="Filter by status">
+          <button className={filter === "all" ? "on" : ""} onClick={() => setFilter("all")}>All <i>{rows.length}</i></button>
+          {STATUS_ORDER.filter(st => counts.get(st)).map(st => <button key={st} className={filter === st ? "on" : ""} onClick={() => setFilter(st)}>{STATUS_LABEL[st]} <i>{counts.get(st)}</i></button>)}
+        </div>
+        {shown.length === 0 ? <div className="pm-empty"><Megaphone size={26} />{promos.loading ? "Loading…" : rows.length ? "No campaign matches." : "No campaigns yet. Create your first sale, flash sale or Buy X Get Y."}</div> : (
+          <div className="pm-grid">{shown.map(r => <CampaignCard key={r.id} p={r} scopeText={scopeText(r)} owner={r.owner === "supplier" && r.scope !== "store" ? supName(r.supplier_id) ?? "Supplier" : undefined} result={pr.get(r.id)} banner={r.show_banner} actions={promoActions(r)} />)}</div>
+        )}
+        <p className="su-muted" style={{ marginTop: 14 }}>Sales put the discounted price on each product, so the storefront shows it and quotes use it. Buy X Get Y adds free units when a request is priced. A product can be in only one promotion at a time. Wholesale prices are never changed.</p>
+      </>}
+
+      {tab === "approvals" && <>
+        {pendingPromos.length + pendingCoupons.length === 0 ? <div className="pm-empty"><CheckCircle2 size={26} />Nothing is waiting for approval.</div> : (
+          <div className="pm-grid">
+            {pendingPromos.map(r => <CampaignCard key={r.id} p={r} scopeText={scopeText(r)} owner={r.scope !== "store" ? supName(r.supplier_id) ?? "Supplier" : undefined} actions={promoActions(r)} />)}
+            {pendingCoupons.map(c => <CouponCard key={c.id} c={c} owner={supName(c.supplier_id) ?? "Supplier"} actions={couponActions(c)} />)}
+          </div>
+        )}
+        <p className="su-muted" style={{ marginTop: 14 }}>Approving checks again that the campaign does not overlap another one. A campaign with a future start time becomes Scheduled; otherwise it goes live now.</p>
       </>}
 
       {tab === "coupons" && <>
-        <div className="info-banner"><Ticket /> Customers type a code on the request form. The percentage comes off every line when you price their quote, and shows on the quote, order and sale. Each phone number can use a code once.</div>
-        <DataTable headers={["Code", "Discount", "Valid", "Used", "Orders", "Discount given", "Revenue", "Status", "Actions"]} isEmpty={!crow.length} empty={coupons.loading ? "Loading…" : "No coupons yet."}>
-          {crow.filter(c => `${c.code} ${c.name ?? ""}`.toLowerCase().includes(s)).map(c => { const res = cr.get(c.id); return (
-            <tr key={c.id}><td><span className="docno">{c.code}</span>{c.name && <><br /><small className="su-muted">{c.name}</small></>}</td><td>{Number(c.percent)}% off</td>
-              <td><small className="su-muted">{c.starts_at ? `from ${when(c.starts_at)}` : "now"}{c.ends_at ? ` · until ${when(c.ends_at)}` : " · no end"}</small></td>
-              <td>{res ? Number(res.uses) : 0}{c.max_uses ? ` / ${c.max_uses}` : ""}</td><td>{res ? Number(res.orders) : 0}</td><td>{res ? money(Number(res.discount)) : "—"}</td><td>{res ? money(Number(res.revenue)) : "—"}</td>
-              <td>{couponLive(c) ? <StatusChip tone="good">Live</StatusChip> : <StatusChip tone="muted">{c.active ? "Scheduled / ended" : "Off"}</StatusChip>}</td>
-              <td>{edit && <button className="btn outline" disabled={busy} onClick={() => void run(async () => { await callRpc("set_coupon_active", { p_id: c.id, p_active: !c.active }); coupons.reload(); }, c.active ? "Coupon turned off." : "Coupon turned on.")}><Power size={14} /> {c.active ? "Turn off" : "Turn on"}</button>}</td></tr>
-          ); })}
-        </DataTable>
-        <p className="su-muted" style={{ marginTop: 10 }}>Used counts requests that entered the code. Orders, discount and revenue count only paid sales.</p>
+        {crow.length === 0 ? <div className="pm-empty"><Ticket size={26} />{coupons.loading ? "Loading…" : "No coupons yet."}</div> : (
+          <div className="pm-grid">{crow.filter(c => `${c.code} ${c.name ?? ""}`.toLowerCase().includes(s)).map(c => <CouponCard key={c.id} c={c} used={cr.get(c.id)?.uses} result={cr.get(c.id)} owner={c.owner === "supplier" ? supName(c.supplier_id) ?? "Supplier" : undefined} actions={couponActions(c)} />)}</div>
+        )}
+        <p className="su-muted" style={{ marginTop: 14 }}>Customers type a code on the request form. The discount comes off when the request is priced and shows on the quote, order and sale. Orders, discount and revenue count only paid sales.</p>
       </>}
 
-      {modal && tab === "promotions" && <NewPromo onClose={() => setModal(false)} onDone={() => { setModal(false); reloadAll(); }} />}
-      {modal && tab === "coupons" && <NewCoupon onClose={() => setModal(false)} onDone={() => { setModal(false); reloadAll(); }} />}
+      {tab === "featured" && <Featured edit={edit} products={products.filter(p => p.active).map(p => ({ id: p.id, name: p.name }))} suppliers={sups.data ?? []} on={feat.data ?? []} search={s} onChange={feat.reload} />}
+
+      {tab === "analytics" && <>
+        <SummaryStrip items={[
+          { icon: <Megaphone />, tone: "blue", value: rows.filter(r => r.started_at).length, label: "Campaigns run" },
+          { icon: <BarChart3 />, tone: "mint", value: etb(revenue), label: "Revenue from promoted products" },
+          { icon: <Zap />, tone: "gold", value: (pres.data ?? []).reduce((a, r) => a + Number(r.units), 0), label: "Units sold on promotion" },
+          { icon: <Gift />, tone: "red", value: (pres.data ?? []).reduce((a, r) => a + Number(r.free_units), 0), label: "Free units given" },
+        ]} />
+        <section className="pm-panel">
+          <h3>Revenue by campaign</h3>
+          {topResults.length === 0 ? <p className="su-muted">Results appear here once a campaign has run and its products have paid sales.</p> : topResults.map(({ r, res }) => (
+            <div className="pm-bar" key={r.id}><span className="n">{r.name}<small>{Number(res.units)} units · {Number(res.orders)} orders</small></span><span className="t"><i style={{ width: `${Math.max(3, (Number(res.revenue) / maxRev) * 100)}%` }} /></span><b>{etb(res.revenue)}</b></div>
+          ))}
+        </section>
+        <section className="pm-panel">
+          <h3>Coupons</h3>
+          {crow.length === 0 ? <p className="su-muted">No coupons yet.</p> : crow.map(c => { const x = cr.get(c.id); return (
+            <div className="pm-bar" key={c.id}><span className="n"><span className="pm-code sm">{c.code}</span><small>{Number(x?.uses ?? 0)} requests · {Number(x?.orders ?? 0)} orders</small></span><span className="t"><i style={{ width: `${Math.min(100, (Number(x?.orders ?? 0) / Math.max(1, Number(x?.uses ?? 0))) * 100)}%` }} /></span><b>{etb(x?.discount ?? 0)} given</b></div>
+          ); })}
+        </section>
+        <p className="su-muted" style={{ marginTop: 10 }}>Counted from paid sales of the promoted products while the campaign was live. A pause is not counted. Coupon bars show how many requests became orders.</p>
+      </>}
+
+      {promoForm && <Modal title={promoForm === "new" ? "New campaign" : "Edit campaign"} kicker="MARKETING" onClose={() => setPromoForm(null)}>
+        <CampaignForm role="admin" initial={promoForm === "new" ? null : promoForm} products={productOpts} categories={categories.map(c => ({ id: c.id, name: c.name }))} suppliers={sups.data ?? []}
+          onCancel={() => setPromoForm(null)} onDone={() => { setPromoForm(null); reloadAll(); }} />
+      </Modal>}
+      {couponForm && <Modal title={couponForm === "new" ? "New coupon" : "Edit coupon"} kicker="MARKETING" onClose={() => setCouponForm(null)}>
+        <CouponForm role="admin" initial={couponForm === "new" ? null : couponForm} onCancel={() => setCouponForm(null)} onDone={() => { setCouponForm(null); reloadAll(); }} />
+      </Modal>}
+      {reject && <Modal title={`Reject ${reject.name}`} kicker="APPROVALS" onClose={() => setReject(null)}>
+        <form className="pm-form" onSubmit={e => { e.preventDefault(); const r = reject; void (r.kind === "promo" ? act : cact)(r.id, "reject", "Sent back to the supplier.", reason).then(ok => { if (ok) setReject(null); }); }}>
+          <label>Reason the supplier will see<textarea required rows={3} maxLength={500} value={reason} onChange={e => setReason(e.target.value)} placeholder="e.g. The discount is too deep for this product" /></label>
+          <div className="pm-foot"><button type="button" className="btn outline" onClick={() => setReject(null)}>Cancel</button><button className="btn green" disabled={busy || !reason.trim()}>Send back</button></div>
+        </form>
+      </Modal>}
     </>
   );
 }
 
-function NewPromo({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
-  const { categories, products } = useAdmin();
+/** Featured products and stores: the public homepage shows these first. */
+function Featured({ edit, products, suppliers, on, search, onChange }: { edit: boolean; products: { id: string; name: string }[]; suppliers: Supplier[]; on: { kind: string; ref_id: string }[]; search: string; onChange: () => void }) {
   const { busy, run } = useAction();
-  const [name, setName] = useState("");
-  const [scope, setScope] = useState("category");
-  const [cat, setCat] = useState("");
-  const [prod, setProd] = useState("");
-  const [pct, setPct] = useState("10");
-  const [starts, setStarts] = useState("");
-  const [ends, setEnds] = useState("");
-  useEffect(() => { setCat(""); setProd(""); }, [scope]);
-  const retail = products.filter(p => p.active && Number(p.retail_price) > 0 && p.audience !== "b2b");
-  const submit = async () => {
-    const ok = await run(() => callRpc("create_promotion", { p_name: name, p_scope: scope, p_category: scope === "category" ? cat : null, p_product: scope === "product" ? prod : null, p_percent: Number(pct), p_starts: asLocal(starts), p_ends: asLocal(ends) }),
-      starts ? "Scheduled. It will start by itself." : "Saved as a draft. Press Start when you are ready.");
-    if (ok) onDone();
-  };
+  const [q, setQ] = useState("");
+  const isOn = (kind: string, id: string) => on.some(x => x.kind === kind && x.ref_id === id);
+  const toggle = (kind: "product" | "supplier", id: string, next: boolean) => run(async () => { await rpc("set_featured", { p_kind: kind, p_id: id, p_on: next }); onChange(); }, next ? "Featured on the homepage." : "Removed from featured.");
+  const term = (q || search).toLowerCase();
+  const prods = products.filter(p => p.name.toLowerCase().includes(term)).sort((a, b) => Number(isOn("product", b.id)) - Number(isOn("product", a.id))).slice(0, 40);
+  const row = (kind: "product" | "supplier", id: string, name: string) => { const f = isOn(kind, id); return (
+    <li key={id} className={f ? "on" : ""}><span>{name}</span><button disabled={!edit || busy} aria-pressed={f} aria-label={f ? `Remove ${name} from featured` : `Feature ${name}`} onClick={() => void toggle(kind, id, !f)}><Star size={17} fill={f ? "currentColor" : "none"} /></button></li>
+  ); };
   return (
-    <Modal title="New promotion" kicker="MARKETING" onClose={onClose}>
-      <Form onSubmit={() => void submit()} busy={busy} submit={starts ? "Schedule" : "Save draft"}>
-        <label>Name<input required minLength={2} maxLength={80} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Eid sale" /></label>
-        <div className="two">
-          <label>Covers<select value={scope} onChange={e => setScope(e.target.value)}><option value="category">One category</option><option value="product">One product</option><option value="all">All retail products</option></select></label>
-          <label>Discount (%)<input type="number" min="1" max="90" step="0.5" required value={pct} onChange={e => setPct(e.target.value)} /></label>
-        </div>
-        {scope === "category" && <label>Category<select required value={cat} onChange={e => setCat(e.target.value)}><option value="">Choose…</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
-        {scope === "product" && <label>Product<select required value={prod} onChange={e => setProd(e.target.value)}><option value="">Choose…</option>{retail.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}
-        <div className="two">
-          <label>Starts (optional)<input type="datetime-local" value={starts} onChange={e => setStarts(e.target.value)} /></label>
-          <label>Ends (optional)<input type="datetime-local" value={ends} onChange={e => setEnds(e.target.value)} /></label>
-        </div>
-        <p className="su-muted">Leave the start empty to start it yourself. With a start time it begins by itself. Only active products with a retail price are included.</p>
-      </Form>
-    </Modal>
-  );
-}
-
-function NewCoupon({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
-  const { busy, run } = useAction();
-  const [f, setF] = useState({ code: "", name: "", percent: "10", max: "", starts: "", ends: "" });
-  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
-  const submit = async () => {
-    const ok = await run(() => callRpc("create_coupon", { p_code: f.code, p_name: f.name, p_percent: Number(f.percent), p_max_uses: f.max ? Number(f.max) : null, p_starts: asLocal(f.starts), p_ends: asLocal(f.ends) }), "Coupon created.");
-    if (ok) onDone();
-  };
-  return (
-    <Modal title="New coupon" kicker="MARKETING" onClose={onClose}>
-      <Form onSubmit={() => void submit()} busy={busy} submit="Create coupon">
-        <div className="two">
-          <label>Code<input required minLength={4} maxLength={20} pattern="[A-Za-z0-9_\-]{4,20}" title="4 to 20 letters, numbers, - or _" value={f.code} onChange={e => setF({ ...f, code: e.target.value.toUpperCase() })} placeholder="WELCOME10" /></label>
-          <label>Discount (%)<input type="number" min="1" max="90" step="0.5" required value={f.percent} onChange={set("percent")} /></label>
-        </div>
-        <label>Note (optional)<input maxLength={80} value={f.name} onChange={set("name")} placeholder="Who or what it is for" /></label>
-        <label>Maximum uses (optional)<input type="number" min="1" step="1" value={f.max} onChange={set("max")} placeholder="Unlimited" /></label>
-        <div className="two">
-          <label>Valid from (optional)<input type="datetime-local" value={f.starts} onChange={set("starts")} /></label>
-          <label>Valid until (optional)<input type="datetime-local" value={f.ends} onChange={set("ends")} /></label>
-        </div>
-      </Form>
-    </Modal>
+    <div className="pm-feat">
+      <section className="pm-panel"><h3>Featured stores <small>{on.filter(x => x.kind === "supplier").length} chosen</small></h3>
+        {suppliers.length === 0 ? <p className="su-muted">No approved suppliers yet.</p> : <ul>{suppliers.map(s => row("supplier", s.id, s.name))}</ul>}</section>
+      <section className="pm-panel"><h3>Featured products <small>{on.filter(x => x.kind === "product").length} chosen</small></h3>
+        <input className="pm-find" value={q} onChange={e => setQ(e.target.value)} placeholder="Find a product" aria-label="Find a product" />
+        <ul>{prods.map(p => row("product", p.id, p.name))}</ul>
+        {prods.length === 0 && <p className="su-muted">No product matches.</p>}</section>
+    </div>
   );
 }
