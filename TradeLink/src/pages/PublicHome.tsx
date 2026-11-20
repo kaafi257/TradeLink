@@ -12,10 +12,11 @@ import { track, trackState } from "../lib/track";
 import { applyCoupon } from "../lib/coupon";
 import { useWishlist } from "../lib/wishlist";
 import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TradeHeader, TradeNav, TradeRow } from "./market/Trade";
+import Campaign, { DEFAULT_SLIDES } from "./market/Campaign";
 import { BrowseCategories, LandingHero, PromoBanners, TrustNewsletter } from "./market/Landing";
 import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
-import { supabase, withPhoto, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
+import { supabase, withPhoto, type CampaignSlide, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
 import "./home.css";
 
 export type Mode = "business" | "individual";
@@ -189,6 +190,7 @@ export default function PublicHome() {
     track("visit", { mode: readMode() });
   }, [authLoading, session]);
   const wish = useWishlist();
+  const [campaign, setCampaign] = useState<CampaignSlide[]>(DEFAULT_SLIDES);
   const [bestIds, setBestIds] = useState<string[]>([]);
   const [suppliers, setSuppliers] = useState<PublicSupplier[]>([]);
   const [supCats, setSupCats] = useState<{ supplier_id: string; category_id: string }[]>([]);
@@ -238,6 +240,7 @@ export default function PublicHome() {
       // Real sales ranking (migration 0006). Without it the page simply shows the newest products.
       // Suppliers directory (migration 0007). If it is not set up, the section is simply hidden.
       void supabase!.from("public_suppliers").select("*").order("name").then(r => { if (!r.error) setSuppliers((r.data ?? []) as PublicSupplier[]); });
+      void supabase!.from("public_campaign").select("*").order("sort_order").then(r => { if (!r.error && r.data) setCampaign(r.data as CampaignSlide[]); });
       void supabase!.from("public_supplier_categories").select("*").then(r => { if (!r.error) setSupCats((r.data ?? []) as { supplier_id: string; category_id: string }[]); });
       void supabase!.from("public_best_sellers").select("*").order("rank").then(r => {
         if (!r.error) setBestIds(((r.data ?? []) as { product_id: string }[]).map(b => b.product_id));
@@ -369,16 +372,17 @@ export default function PublicHome() {
       <ModeToggle mode={mode} onMode={changeMode} className="mobile" />
       <LandingHero photos={heroPhotos} offerPct={offerPct} onShop={() => go("public-products")} onQuote={() => setRfqOpen(true)} />
       <BrowseCategories items={catCards} onPick={openIndustry} onMore={() => setMenuOpen(true)} />
+      <Campaign slides={campaign} products={products.length} suppliers={suppliers.length} industries={catCards.length}
+        onShop={m => { changeMode(m); go("public-products"); }} onRegister={() => navigate("/supplier/register")} onQuote={() => setRfqOpen(true)} />
+      <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
+        industry={effIndustry} category={effCategory} setIndustry={setIndustryId} setCategory={setCategoryId}
+        search={search} setSearch={setSearch} items={shown} emptyText={emptyMessage} />
       <TradeRow id="trending" title="Trending products" shelf={shelf} items={featured} max={5} onAll={() => go("public-products")} />
       <PromoBanners offerCount={sale.length} offerPct={offerPct} onOffers={() => go("offers")} onQuote={() => setRfqOpen(true)} onSupplier={() => navigate("/supplier/register")} />
       <TradeRow id="wholesale" title="Wholesale sourcing" sub="Buy in bulk. Minimum order shown." shelf={shelf} mode="business" items={wholesaleList} onAll={() => { changeMode("business"); go("public-products"); }} />
       <SupplierStrip items={suppliers} industries={inds} onOpen={setSupplier} />
       <TradeRow id="new-arrivals" title="New arrivals" shelf={shelf} items={newest} onAll={() => go("public-products")} />
       <TradeRow id="offers" title="Special offers" sub="Active discounts" shelf={shelf} mode="individual" items={offers} />
-      <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
-        industry={effIndustry} category={effCategory} setIndustry={setIndustryId} setCategory={setCategoryId}
-        search={search} setSearch={setSearch} items={shown} emptyText={emptyMessage} />
-
       <RfqBanner onOpen={() => setRfqOpen(true)} />
       <TrustNewsletter products={products.length} suppliers={suppliers.length} industries={catCards.length} />
       <MarketFooter industries={headerInds} onIndustry={openIndustry} onRequest={() => setQuoteOpen(true)} signedIn={!!session} onAccount={() => navigate(session ? "/admin" : "/login")} />

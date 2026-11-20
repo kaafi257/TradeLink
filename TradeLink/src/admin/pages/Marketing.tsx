@@ -5,6 +5,7 @@ import { StatusChip, type Tone } from "../Records";
 import { money } from "../../lib/format";
 import { requireSupabase } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
+import CampaignScenes from "./CampaignScenes";
 import { ErrorNote, Form, Modal, Tabs, callRpc, label, useAction, useLoad } from "../suite";
 
 type Promo = { id: string; name: string; scope: string; category_id: string | null; product_id: string | null; percent: number; starts_at: string | null; ends_at: string | null; status: string; note: string | null; promotion_items: { product_id: string }[] };
@@ -17,7 +18,7 @@ const asLocal = (v: string) => (v ? new Date(v).toISOString() : null);
 
 export default function Marketing() {
   const { can, categories, products, search } = useAdmin();
-  const [tab, setTab] = useState<"promotions" | "coupons">("promotions");
+  const [tab, setTab] = useState<"promotions" | "coupons" | "banner">("promotions");
   const [modal, setModal] = useState(false);
   const { busy, run } = useAction();
   const promos = useLoad(async () => {
@@ -45,7 +46,7 @@ export default function Marketing() {
 
   return (
     <>
-      <PageHeading title="Marketing & Promotions" sub="Run timed sales and coupon codes, and see what they earn." action={edit ? <button className="btn green" onClick={() => setModal(true)}><Plus size={16} /> {tab === "promotions" ? "New promotion" : "New coupon"}</button> : undefined} />
+      <PageHeading title="Marketing & Promotions" sub="Run timed sales and coupon codes, and see what they earn." action={edit && tab !== "banner" ? <button className="btn green" onClick={() => setModal(true)}><Plus size={16} /> {tab === "promotions" ? "New promotion" : "New coupon"}</button> : undefined} />
       <ErrorNote text={promos.error || coupons.error} />
       <SummaryStrip items={[
         { icon: <Play />, tone: "mint", value: rows.filter(r => r.status === "active").length, label: "Running" },
@@ -53,7 +54,9 @@ export default function Marketing() {
         { icon: <Percent />, tone: "gold", value: rows.filter(r => r.status === "active").reduce((a, r) => a + r.promotion_items.length, 0), label: "Products on sale" },
         { icon: <Ticket />, tone: "red", value: crow.filter(couponLive).length, label: "Live coupons" },
       ]} />
-      <Tabs label="Marketing views" value={tab} onChange={setTab} tabs={[{ id: "promotions", label: "Sales", icon: <Tag /> }, { id: "coupons", label: "Coupon codes", icon: <Ticket /> }]} />
+      <Tabs label="Marketing views" value={tab} onChange={setTab} tabs={[{ id: "promotions", label: "Sales", icon: <Tag /> }, { id: "coupons", label: "Coupon codes", icon: <Ticket /> }, { id: "banner", label: "Homepage banner", icon: <Megaphone /> }]} />
+
+      {tab === "banner" && <CampaignScenes canEdit={edit} />}
 
       {tab === "promotions" && <>
         <div className="info-banner"><Megaphone /> A sale puts the discounted price on each product, and the storefront shows it and quotes it. It starts and ends on its own at the times you set, and the earlier price comes back. Wholesale prices are never touched.</div>
