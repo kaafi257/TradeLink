@@ -1,5 +1,5 @@
 import { Children, cloneElement, isValidElement, type ReactNode } from "react";
-import { Activity, Boxes, ChartNoAxesCombined, FileText, Layers, MessageCircle, Package, Plus, Receipt, Settings, ShoppingCart, Truck, Users } from "lucide-react";
+import { Activity, Boxes, ChartNoAxesCombined, FileText, Globe, Headset, Layers, Megaphone, MessageCircle, Package, Percent, Plus, Receipt, RotateCcw, Settings, ShieldCheck, ShoppingCart, Star, Truck, Users, Wallet } from "lucide-react";
 import { shortDate } from "../lib/format";
 import { CountUp } from "../admin/Records";
 import type { Activity as ActivityRow } from "../lib/supabase";
@@ -22,6 +22,8 @@ const HEADING_ICON: Record<string, ReactNode> = {
   "Product Management": <Package />, "Industries & Categories": <Layers />, Quotations: <FileText />, Orders: <ShoppingCart />,
   "Sales & Deliveries": <Receipt />, Deliveries: <Truck />, "Staff Management": <Users />, "Inventory Management": <Boxes />,
   "Reports & Analytics": <ChartNoAxesCombined />, Communication: <MessageCircle />, Customers: <Users />, "Activity Log": <Activity />, Settings: <Settings />,
+  "Payments & Payouts": <Wallet />, Commissions: <Percent />, "Returns & Disputes": <RotateCcw />, "Supplier Verification": <ShieldCheck />, "Marketing & Promotions": <Megaphone />,
+  "Reviews & Ratings": <Star />, "Website Management": <Globe />, "Customer Support": <Headset />,
 };
 
 /** Page title with an icon. The longer description stays available to screen readers only. */

@@ -6,7 +6,7 @@ import { useAuth } from "../lib/auth";
 import { supabase, type Role } from "../lib/supabase";
 import "./admin.css";
 import { AdminDataProvider, useAdmin } from "./AdminData";
-import { NAV, allowed } from "./nav";
+import { NAV, NAV_GROUPS, allowed, currentItem } from "./nav";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Quotations from "./pages/Quotations";
@@ -24,6 +24,14 @@ import SupplierOps from "./pages/SupplierOps";
 import Communication from "./pages/Communication";
 import ActivityLog from "./pages/ActivityLog";
 import SettingsPage from "./pages/Settings";
+import Payments from "./pages/Payments";
+import CommissionRates from "./pages/CommissionRates";
+import Returns from "./pages/Returns";
+import Verification from "./pages/Verification";
+import Marketing from "./pages/Marketing";
+import ReviewsPage from "./pages/ReviewsPage";
+import Website from "./pages/Website";
+import Support from "./pages/Support";
 
 function Screen({ title, text, children }: { title: string; text: string; children?: ReactNode }) {
   return (
@@ -48,8 +56,15 @@ function Guard({ role, roles, children }: { role: Role; roles: Role[]; children:
   return roles.includes(role) ? <>{children}</> : <Navigate to="/admin" replace />;
 }
 
+/** A newer page is open to whoever has been granted its permission (the owner always has it). */
+function PermGuard({ perm, children }: { perm: string; children: ReactNode }) {
+  const { can, loading } = useAdmin();
+  if (loading) return <div className="page-skel" aria-busy="true"><i /><i /><i /></div>;
+  return can(perm) ? <>{children}</> : <Navigate to="/admin" replace />;
+}
+
 function Shell() {
-  const { profile, search, setSearch, newQuoteCount, notice } = useAdmin();
+  const { profile, search, setSearch, newQuoteCount, notice, can } = useAdmin();
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -73,7 +88,8 @@ function Shell() {
     setCollapsed(c => { const n = !c; try { localStorage.setItem("tl-admin-collapsed", n ? "1" : "0"); } catch { /* storage blocked */ } return n; });
   };
   const role = profile.role;
-  const current = NAV.find(n => (n.end ? pathname === n.path : pathname.startsWith(n.path)));
+  const current = currentItem(pathname);
+  const visible = NAV.filter(item => allowed(item, role, can));
   const displayName = profile.full_name || profile.email;
 
   // A new page closes the drawer and the phone search row.
@@ -85,7 +101,7 @@ function Shell() {
     nav.style.setProperty("--mk-o", on ? "1" : "0");
     if (on) { nav.style.setProperty("--mk-y", `${on.offsetTop}px`); nav.style.setProperty("--mk-h", `${on.offsetHeight}px`); }
   }, []);
-  useLayoutEffect(() => { placeMarker(); }, [pathname, role, wide, placeMarker]);
+  useLayoutEffect(() => { placeMarker(); }, [pathname, role, wide, collapsed, visible.length, placeMarker]);
   useEffect(() => {
     window.addEventListener("resize", placeMarker);
     return () => window.removeEventListener("resize", placeMarker);
@@ -114,13 +130,22 @@ function Shell() {
         <div className="sidebar-brand"><Brand light /></div>
         <nav className="side-nav" aria-label="Admin navigation" ref={navRef}>
           <i className="nav-marker" aria-hidden="true" />
-          {NAV.filter(item => allowed(item, role)).map(item => {
-            const Icon = item.icon;
+          {NAV_GROUPS.map(group => {
+            const items = visible.filter(i => i.group === group);
+            if (!items.length) return null;
             return (
-              <NavLink key={item.path} to={item.path} end={item.end} className={({ isActive }) => (isActive ? "selected" : "")} title={collapsed && wide ? item.label : undefined}
-                onClick={() => setMobileNav(false)} onMouseEnter={item.path === "/admin/reports" ? () => void loadReports() : undefined} onFocus={item.path === "/admin/reports" ? () => void loadReports() : undefined}>
-                <Icon size={18} /><span>{item.label}</span>
-              </NavLink>
+              <div className="nav-group" key={group} role="group" aria-label={group}>
+                <p className="nav-group-title">{group}</p>
+                {items.map(item => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink key={item.path} to={item.path} end={item.end} className={({ isActive }) => (isActive ? "selected" : "")} title={collapsed && wide ? item.label : undefined}
+                      onClick={() => setMobileNav(false)} onMouseEnter={item.path === "/admin/reports" ? () => void loadReports() : undefined} onFocus={item.path === "/admin/reports" ? () => void loadReports() : undefined}>
+                      <Icon size={18} /><span>{item.label}</span>
+                    </NavLink>
+                  );
+                })}
+              </div>
             );
           })}
         </nav>
@@ -171,6 +196,14 @@ function Shell() {
             <Route path="customers" element={g(["owner", "manager", "sales"], <Customers />)} />
             <Route path="activity" element={g(["owner", "manager"], <ActivityLog />)} />
             <Route path="settings" element={g(["owner", "manager"], <SettingsPage />)} />
+            <Route path="payments" element={<PermGuard perm="payments.view"><Payments /></PermGuard>} />
+            <Route path="commissions" element={<PermGuard perm="commissions.manage"><CommissionRates /></PermGuard>} />
+            <Route path="returns" element={<PermGuard perm="returns.manage"><Returns /></PermGuard>} />
+            <Route path="verification" element={<PermGuard perm="verification.manage"><Verification /></PermGuard>} />
+            <Route path="marketing" element={<PermGuard perm="marketing.manage"><Marketing /></PermGuard>} />
+            <Route path="reviews" element={<PermGuard perm="reviews.moderate"><ReviewsPage /></PermGuard>} />
+            <Route path="website" element={<PermGuard perm="website.manage"><Website /></PermGuard>} />
+            <Route path="support" element={<PermGuard perm="support.manage"><Support /></PermGuard>} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes></Suspense></PageBoundary>
         </main>
