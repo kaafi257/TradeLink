@@ -3,6 +3,7 @@ import { ArrowRight, Briefcase, Building2, Check, ChevronDown, ChevronRight, Cli
 import { Brand } from "../../components/Brand";
 import { ContactIcons } from "../../components/ContactActions";
 import { useContact } from "../../lib/contact";
+import { applyCoupon } from "../../lib/coupon";
 import { IconFor } from "../../lib/icons";
 import { lookFor } from "../../lib/theme";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../../lib/supabase";
@@ -21,6 +22,7 @@ export function AnnouncementBar({ products }: { products: number; industries: nu
   const [banners, setBanners] = useState<{ id: string; message: string; link: string | null }[]>([]);
   useEffect(() => {
     if (!supabase) return;
+    void supabase.rpc("sync_promotions").then(() => undefined, () => undefined);   // starts or ends scheduled promotions that are due
     void supabase.from("site_banners").select("id, message, link").order("sort_order").order("created_at", { ascending: false }).limit(3)
       .then(({ data, error }) => { if (!error && data) setBanners(data); });
   }, []);
@@ -300,6 +302,8 @@ export function RfqModal({ products, industries, categories, catOf, onClose }: {
   const [pid, setPid] = useState("");
   const [qty, setQty] = useState("");
   const [f, setF] = useState({ name: "", phone: "", email: "", location: "", notes: "", website: "" });
+  const [coupon, setCoupon] = useState("");
+  const [couponMsg, setCouponMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [done, setDone] = useState("");
@@ -317,6 +321,7 @@ export function RfqModal({ products, industries, categories, catOf, onClose }: {
       p_name: f.name, p_phone: f.phone, p_email: f.email, p_location: f.location, p_items: [{ product_id: prod.id, quantity: n }],
       p_notes: f.notes || null, p_website: f.website, p_customer_type: "business",
     });
+    if (!error) setCouponMsg(await applyCoupon(String(data ?? ""), f.phone, coupon));
     setBusy(false);
     if (error) { setErr(error.message); return; }
     setDone(String(data ?? "") || "QTN-RECEIVED");
@@ -333,7 +338,7 @@ export function RfqModal({ products, industries, categories, catOf, onClose }: {
             <ul><li><Package size={16} />Pick a product</li><li><Tag size={16} />Enter quantity and details</li><li><Check size={16} />Get a price from the team</li></ul>
           </div>
           {done ? (
-            <div className="done"><Check size={44} /><h3>Request received</h3><p>Your reference is <b>{done}</b>. The TradeLink team will contact you shortly.</p><button onClick={() => { setDone(""); setPid(""); setQty(""); setF({ name: "", phone: "", email: "", location: "", notes: "", website: "" }); }}>New request</button></div>
+            <div className="done"><Check size={44} /><h3>Request received</h3><p>Your reference is <b>{done}</b>. The TradeLink team will contact you shortly.</p>{couponMsg && <p role="status"><b>{couponMsg}</b></p>}<button onClick={() => { setDone(""); setPid(""); setQty(""); setCoupon(""); setCouponMsg(""); setF({ name: "", phone: "", email: "", location: "", notes: "", website: "" }); }}>New request</button></div>
           ) : (
             <form onSubmit={submit}>
               <div className="g2">
@@ -345,6 +350,7 @@ export function RfqModal({ products, industries, categories, catOf, onClose }: {
                 <label>Delivery location<span className="pin"><MapPin size={15} /><input value={f.location} onChange={set("location")} placeholder="City or area" required /></span></label>
               </div>
               <label>Specifications<textarea rows={2} value={f.notes} onChange={set("notes")} placeholder="Brand, size, packaging or anything else we should know" maxLength={1000} /></label>
+              <label>Coupon code (optional)<input value={coupon} onChange={e => setCoupon(e.target.value)} maxLength={20} autoComplete="off" placeholder="e.g. WELCOME10" /></label>
               <div className="g3">
                 <label>Name or business<input value={f.name} onChange={set("name")} required autoComplete="name" /></label>
                 <label>Phone<input type="tel" value={f.phone} onChange={set("phone")} required autoComplete="tel" /></label>

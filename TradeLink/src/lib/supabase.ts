@@ -66,7 +66,7 @@ export type QuoteItem = { id: string; product_name: string; quantity: number; un
 export type Quote = {
   id: string; quote_number: string; customer_name: string; phone: string; email: string | null;
   delivery_location: string; status: string; notes: string | null; created_at: string;
-  estimated_total: number; customer_type?: "business" | "individual";
+  estimated_total: number; customer_type?: "business" | "individual"; coupon_code?: string | null; discount_percent?: number;
   quotation_items?: QuoteItem[];
 };
 export type OrderItem = { product_name: string; quantity: number; unit: string; unit_price: number };

@@ -9,6 +9,7 @@ import { IconFor } from "../lib/icons";
 import { useInstall } from "../lib/install";
 import { useAuth } from "../lib/auth";
 import { track, trackState } from "../lib/track";
+import { applyCoupon } from "../lib/coupon";
 import { useWishlist } from "../lib/wishlist";
 import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TradeHeader, TradeHero, TradeNav, TradeRow } from "./market/Trade";
 import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
@@ -39,6 +40,7 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [quoteNumber, setQuoteNumber] = useState("");
+  const [couponMsg, setCouponMsg] = useState("");
   const [token, setToken] = useState("");
   const onToken = useCallback((t: string) => setToken(t), []);
 
@@ -94,6 +96,7 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
       });
       if (rpcError) failure = rpcError.message; else data = d;
     }
+    if (!failure) setCouponMsg(await applyCoupon(String(data ?? ""), fields.phone, String(f.get("coupon") ?? "")));
     setBusy(false);
     if (failure) { setError(failure); return; }
     setQuoteNumber(String(data ?? ""));
@@ -108,6 +111,7 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
           <div className="success-state">
             <Check size={48} /><h2>Request received</h2>
             <p>Thank you. Your reference is <b>{quoteNumber}</b>. The TradeLink team will contact you shortly.</p>
+            {couponMsg && <p role="status"><b>{couponMsg}</b></p>}
             <ContactPills title="Want a faster reply? Message us with your reference" message={`Hello TradeLink, my request reference is ${quoteNumber}.`} />
             <button className="btn green" onClick={onClose}>Close</button>
           </div>
@@ -146,6 +150,7 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
               <label>Email (optional)<input name="email" type="email" maxLength={160} placeholder="name@email.com" /></label>
               <label>Delivery location<input name="location" required maxLength={120} placeholder="City / town" /></label>
               <label className="full">Additional details<textarea name="notes" rows={2} maxLength={1000} placeholder="Timing or other requirements" /></label>
+              <label className="full">Coupon code (optional)<input name="coupon" maxLength={20} autoComplete="off" autoCapitalize="characters" placeholder="e.g. WELCOME10" /></label>
               <div className="honeypot" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
               {TURNSTILE_SITE_KEY && <Turnstile onToken={onToken} />}
               {error && <p className="form-error full" role="alert">{error}</p>}
