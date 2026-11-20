@@ -9,7 +9,11 @@ import "./landing.css";
 const tone = (name: string) => { const l = lookFor(name); return { "--ta": l.a, "--tt": l.tint, "--ti": l.ink } as CSSProperties; };
 
 /** Reference-style hero: words on the left, real product photos on the right. Nothing here is invented: the discount badge only shows while a real sale price exists. */
-export function LandingHero({ photos, offerPct, onShop, onQuote }: { photos: { id: string; src: string; name: string }[]; offerPct: number; onShop: () => void; onQuote: () => void }) {
+export type HeroPromo = { id: string; src: string; tag: string; title: string; body: string; cta: string; run: () => void };
+export function LandingHero({ photos, offerPct, promos = [], onShop, onQuote }: { photos: { id: string; src: string; name: string }[]; offerPct: number; promos?: HeroPromo[]; onShop: () => void; onQuote: () => void }) {
+  const [pi, setPi] = useState(0);
+  useEffect(() => { if (promos.length < 2) return; const t = window.setInterval(() => setPi(i => (i + 1) % promos.length), 6000); return () => window.clearInterval(t); }, [promos.length]);
+  const promo = promos.length ? promos[pi % promos.length] : null;
   const [a, b, c] = photos;
   return (
     <section className="lp-hero" id="top" aria-label="Welcome">
@@ -29,6 +33,16 @@ export function LandingHero({ photos, offerPct, onShop, onQuote }: { photos: { i
             <li><ShieldCheck size={22} /><span><b>Checked suppliers</b><small>Reviewed by our team</small></span></li>
           </ul>
         </div>
+        {promo ? (
+          <div className="lp-stage lp-promo" role="group" aria-label="Promotion">
+            <figure key={promo.id}><img src={promo.src} alt={promo.title} loading="eager" /></figure>
+            <div className="lp-promo-cap" key={"c" + promo.id}>
+              <small>{promo.tag}</small><b>{promo.title}</b>{promo.body && <span>{promo.body}</span>}
+              <button className="lp-btn solid" onClick={promo.run}>{promo.cta}</button>
+            </div>
+            {promos.length > 1 && <div className="lp-promo-dots">{promos.map((p, i) => <button key={p.id} aria-label={`Promotion ${i + 1}`} aria-current={i === pi % promos.length} onClick={() => setPi(i)} />)}</div>}
+          </div>
+        ) : (
         <div className="lp-stage" aria-hidden={photos.length === 0}>
           {photos.length === 0 && <span className="lp-mark"><Store size={150} strokeWidth={1.2} /></span>}
           {a && <figure className="p1"><img src={a.src} alt={a.name} loading="eager" /></figure>}
@@ -36,6 +50,7 @@ export function LandingHero({ photos, offerPct, onShop, onQuote }: { photos: { i
           {c && <figure className="p3"><img src={c.src} alt={c.name} loading="lazy" /></figure>}
           {offerPct > 0 && <div className="lp-badge" role="note"><span>Up to</span><b>{offerPct}%</b><span>off</span></div>}
         </div>
+        )}
       </div>
     </section>
   );

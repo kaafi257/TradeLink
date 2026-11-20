@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { ArrowDown, ArrowUp, Edit3, Eye, EyeOff, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import Campaign, { ACTION_LABEL, DEFAULT_SLIDES, SCENE_LABEL } from "../../pages/market/Campaign";
+import { uploadProductImage } from "../../lib/upload";
 import { errorText, requireSupabase, type CampaignAction, type CampaignScene, type CampaignSlide } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
 
@@ -12,9 +13,14 @@ function SceneModal({ editing, order, onClose, onSaved }: { editing: CampaignSli
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState<CampaignSlide>(editing ?? blank(order));
   const set = <K extends keyof CampaignSlide>(k: K, v: CampaignSlide[K]) => setF(x => ({ ...x, [k]: v }));
+  const pick = async (file?: File) => {
+    if (!file) return;
+    setBusy(true);
+    try { set("image_url", await uploadProductImage(file)); } catch (err) { notify(errorText(err, "Could not upload the image")); } finally { setBusy(false); }
+  };
   const save = async (e: FormEvent) => {
     e.preventDefault();
-    const row = { scene: f.scene, tag: f.tag.trim(), title: f.title.trim(), body: f.body.trim(), cta_label: f.cta_label.trim(), cta_action: f.cta_action, sort_order: f.sort_order, active: f.active ?? true };
+    const row = { scene: f.scene, tag: f.tag.trim(), title: f.title.trim(), body: f.body.trim(), cta_label: f.cta_label.trim(), cta_action: f.cta_action, sort_order: f.sort_order, active: f.active ?? true, image_url: f.image_url || null };
     setBusy(true);
     try {
       const t = requireSupabase().from("campaign_slides");
@@ -32,6 +38,12 @@ function SceneModal({ editing, order, onClose, onSaved }: { editing: CampaignSli
           <label>Animation
             <select value={f.scene} onChange={e => set("scene", e.target.value as CampaignScene)}>{Object.entries(SCENE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
           </label>
+          <div className="full mk-img">
+            <span>Promotion picture <small>(shown on the homepage, next to the welcome text)</small></span>
+            {f.image_url && <img src={f.image_url} alt="" />}
+            <div><label className="btn outline mk-up">{f.image_url ? "Change picture" : "Upload picture"}<input type="file" accept="image/*" hidden onChange={e => void pick(e.target.files?.[0])} /></label>
+              {f.image_url && <button type="button" className="btn outline" onClick={() => set("image_url", null)}>Remove</button>}</div>
+          </div>
           <label>Label <input required maxLength={24} value={f.tag} onChange={e => set("tag", e.target.value)} placeholder="e.g. Wholesale" /><small>Small tag above the headline.</small></label>
           <label className="full">Headline <input required maxLength={70} value={f.title} onChange={e => set("title", e.target.value)} placeholder="e.g. Buy in bulk, straight from suppliers" /><small>{f.title.length}/70</small></label>
           <label className="full">Text <textarea maxLength={160} rows={3} value={f.body} onChange={e => set("body", e.target.value)} placeholder="One or two short sentences" /><small>{f.body.length}/160</small></label>

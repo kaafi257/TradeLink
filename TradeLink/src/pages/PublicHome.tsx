@@ -13,7 +13,7 @@ import { applyCoupon } from "../lib/coupon";
 import { useWishlist } from "../lib/wishlist";
 import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TradeHeader, TradeNav, TradeRow } from "./market/Trade";
 import Campaign, { DEFAULT_SLIDES } from "./market/Campaign";
-import { BrowseCategories, LandingHero, PromoBanners, TrustNewsletter } from "./market/Landing";
+import { BrowseCategories, LandingHero, type HeroPromo, PromoBanners, TrustNewsletter } from "./market/Landing";
 import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
 import { supabase, withPhoto, type CampaignSlide, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
@@ -345,6 +345,10 @@ export default function PublicHome() {
     const pool = [...featured, ...newest, ...visible].filter(p => !!p.image_url);
     return [...new Map(pool.map(p => [p.id, p])).values()].slice(0, 3).map(p => ({ id: p.id, src: p.image_url as string, name: p.name }));
   }, [featured, newest, visible]);
+  const heroPromos = useMemo<HeroPromo[]>(() => campaign.filter(c => !!c.image_url).map(c => ({
+    id: c.id, src: c.image_url as string, tag: c.tag, title: c.title, body: c.body, cta: c.cta_label,
+    run: () => { if (c.cta_action === "register") navigate("/supplier/register"); else if (c.cta_action === "quote") setRfqOpen(true); else { changeMode(c.cta_action === "shop_retail" ? "individual" : "business"); go("public-products"); } },
+  })), [campaign, navigate, changeMode, go]);
   const sale = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0 && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price)), [products]);
   const offerPct = sale.length ? Math.max(...sale.map(p => Math.round((1 - Number(p.sale_price) / Number(p.retail_price)) * 100))) : 0;
 
@@ -370,7 +374,7 @@ export default function PublicHome() {
         openMenu={() => setMenuOpen(v => !v)} menuOpen={menuOpen} />
       <TradeNav mode={mode} industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} onRfq={() => setRfqOpen(true)} />
       <ModeToggle mode={mode} onMode={changeMode} className="mobile" />
-      <LandingHero photos={heroPhotos} offerPct={offerPct} onShop={() => go("public-products")} onQuote={() => setRfqOpen(true)} />
+      <LandingHero photos={heroPhotos} promos={heroPromos} offerPct={offerPct} onShop={() => go("public-products")} onQuote={() => setRfqOpen(true)} />
       <BrowseCategories items={catCards} onPick={openIndustry} onMore={() => setMenuOpen(true)} />
       <Campaign slides={campaign} products={products.length} suppliers={suppliers.length} industries={catCards.length}
         onShop={m => { changeMode(m); go("public-products"); }} onRegister={() => navigate("/supplier/register")} onQuote={() => setRfqOpen(true)} />

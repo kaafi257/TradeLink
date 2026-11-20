@@ -25,10 +25,12 @@ create policy "Manage campaign" on public.campaign_slides for all to authenticat
 using ((public.has_permission('marketing.manage') or public.has_any_role(array['owner','manager']::public.app_role[]))) with check ((public.has_permission('marketing.manage') or public.has_any_role(array['owner','manager']::public.app_role[])));
 grant select, insert, update, delete on public.campaign_slides to authenticated;
 
+alter table public.campaign_slides add column if not exists image_url text;
+
 -- The website only ever sees the active scenes, in order.
 drop view if exists public.public_campaign;
 create view public.public_campaign as
-select id, scene, tag, title, body, cta_label, cta_action, sort_order
+select id, scene, tag, title, body, cta_label, cta_action, sort_order, image_url
 from public.campaign_slides where active order by sort_order, created_at;
 grant select on public.public_campaign to anon, authenticated;
 

@@ -1073,3 +1073,4 @@
 .admin-layout .gs .gs-icon{background:linear-gradient(135deg,var(--tone,#1479c2),#073256)!important;color:#fff!important}
 .admin-layout .gs .gs-icon svg{color:#fff!important;stroke:#fff}
 .mk-bar{display:flex;justify-content:flex-end;margin:0 0 12px}
+.mk-img{display:grid;gap:8px}.mk-img img{width:100%;max-height:180px;object-fit:cover;border-radius:12px}.mk-img>div{display:flex;gap:8px;flex-wrap:wrap}.mk-up{cursor:pointer}

@@ -30,7 +30,7 @@ export type Industry = { id: string; name: string; description: string | null; i
 export type Category = { id: string; industry_id: string; name: string; description: string | null; image_url: string | null; sort_order: number; active: boolean };
 export type CampaignScene = "wholesale" | "retail" | "supplier" | "quote";
 export type CampaignAction = "shop_wholesale" | "shop_retail" | "register" | "quote";
-export type CampaignSlide = { id: string; scene: CampaignScene; tag: string; title: string; body: string; cta_label: string; cta_action: CampaignAction; sort_order: number; active?: boolean };
+export type CampaignSlide = { id: string; scene: CampaignScene; tag: string; title: string; body: string; cta_label: string; cta_action: CampaignAction; sort_order: number; active?: boolean; image_url?: string | null };
 export type PublicIndustry = Pick<Industry, "id" | "name" | "description" | "icon" | "sort_order" | "storefront">;
 export type PublicCategory = Pick<Category, "id" | "industry_id" | "name" | "description" | "image_url" | "sort_order">;
 /** Supplier photos are stored as "storage:<bucket>/<path>" so the database never needs to know the project address. */
