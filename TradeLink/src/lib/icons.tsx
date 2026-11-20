@@ -1,5 +1,5 @@
 import {
-  Armchair, Baby, BookOpen, Car, Cpu, Factory, Gem, Hammer, HardHat, Home, Leaf, Package, Pill, Shirt, Smartphone, Sparkles, Sprout, Utensils, Wheat, Wrench,
+  Armchair, Baby, BookOpen, Car, ChefHat, Cpu, Dumbbell, Factory, FlaskConical, Gem, Hammer, HardHat, Home, Leaf, Package, Pill, Shirt, Smartphone, Sparkles, Sprout, Utensils, Wheat, Wrench, Zap,
   type LucideIcon,
 } from "lucide-react";
 
@@ -25,6 +25,10 @@ export const INDUSTRY_ICONS: Record<string, { label: string; Icon: LucideIcon }>
   book: { label: "Books & stationery", Icon: BookOpen },
   car: { label: "Automotive", Icon: Car },
   gem: { label: "Jewellery & gifts", Icon: Gem },
+  flask: { label: "Chemicals & cleaning", Icon: FlaskConical },
+  dumbbell: { label: "Sports & fitness", Icon: Dumbbell },
+  zap: { label: "Energy & solar", Icon: Zap },
+  chefhat: { label: "Hospitality & catering", Icon: ChefHat },
 };
 export const IconFor = ({ name, size = 20 }: { name?: string | null; size?: number }) => {
   const Icon = (name && INDUSTRY_ICONS[name]?.Icon) || Package;

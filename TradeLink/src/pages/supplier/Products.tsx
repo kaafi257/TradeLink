@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Image as ImageIcon, Package, Pencil, Plus, Power, Search, Trash2, Upload } from "lucide-react";
 import { errorText, requireSupabase, type PublicCategory } from "../../lib/supabase";
 import { IMAGE_ACCEPT, productImageUrl, removeProductImage, uploadProductImage } from "./files";
+import CategoryPicker, { sortCategories } from "../../components/CategoryPicker";
 import { useSupplier } from "./context";
 import { Modal, Pill, Spinner, money, qty, useLoad, type SProduct } from "./ops";
 
@@ -50,7 +51,7 @@ function ProductForm({ row, cats, supplierId, onClose, onDone }: { row: SProduct
           <label className="span2">Product name<input value={f.name} onChange={e => set("name", e.target.value)} required minLength={2} maxLength={120} /></label>
           <label>Brand<input value={f.brand} onChange={e => set("brand", e.target.value)} maxLength={60} /></label>
           <label>SKU<input value={f.sku} onChange={e => set("sku", e.target.value)} maxLength={40} /></label>
-          <label>Category<select value={f.category_id} onChange={e => set("category_id", e.target.value)}><option value="">Choose a category</option>{cats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+          <div className="cp-field"><span>Category <small>({cats.length} in your industry — type to search)</small></span><CategoryPicker options={cats} value={f.category_id} onChange={v => set("category_id", v)} required /></div>
           <label>Subcategory<input value={f.subcategory} onChange={e => set("subcategory", e.target.value)} maxLength={60} /></label>
           <label>Unit<input value={f.unit} onChange={e => set("unit", e.target.value)} maxLength={20} placeholder="bag, carton, kg…" /></label>
           <label>Wholesale price (ETB)<input type="number" inputMode="decimal" min="0" step="0.01" value={f.price} onChange={e => set("price", e.target.value)} required /></label>
@@ -86,7 +87,7 @@ function ProductForm({ row, cats, supplierId, onClose, onDone }: { row: SProduct
 
 export default function Products() {
   const { supplier } = useSupplier();
-  const [q, setQ] = useState(""), [st, setSt] = useState("");
+  const [q, setQ] = useState(""), [st, setSt] = useState(""), [cf, setCf] = useState("");
   const [edit, setEdit] = useState<SProduct | null | undefined>(undefined);
   const [msg, setMsg] = useState("");
   const { data, error, loading, reload } = useLoad(async () => {
@@ -95,8 +96,11 @@ export default function Products() {
     if (p.error) throw p.error;
     return { rows: (p.data ?? []) as SProduct[], cats: (c.data ?? []) as PublicCategory[] };
   });
+  // Only the categories of the supplier's own industry (with "Other ..." last). A category already on an older product stays selectable so editing it never fails.
+  const myCats = useMemo(() => sortCategories((data?.cats ?? []).filter(c => c.industry_id === supplier?.industry_id || (edit?.category_id === c.id))), [data, supplier, edit]);
   const catName = useMemo(() => new Map((data?.cats ?? []).map(c => [c.id, c.name])), [data]);
-  const shown = (data?.rows ?? []).filter(p => (!st || (st === "inactive" ? !p.active : p.status === st)) && (!q || `${p.name} ${p.sku ?? ""} ${p.brand ?? ""}`.toLowerCase().includes(q.toLowerCase())));
+  const usedCats = useMemo(() => { const ids = new Set((data?.rows ?? []).map(r => r.category_id)); return sortCategories((data?.cats ?? []).filter(c => ids.has(c.id))); }, [data]);
+  const shown = (data?.rows ?? []).filter(p => (!cf || p.category_id === cf) && (!st || (st === "inactive" ? !p.active : p.status === st)) && (!q || `${p.name} ${p.sku ?? ""} ${p.brand ?? ""}`.toLowerCase().includes(q.toLowerCase())));
   const toggle = async (p: SProduct) => {
     setMsg("");
     const { error } = await requireSupabase().from("supplier_products").update({ active: !p.active }).eq("id", p.id);
@@ -108,6 +112,7 @@ export default function Products() {
       <div className="sp-toolbar">
         <label className="sp-search"><Search size={16} /><input placeholder="Search name, SKU or brand" value={q} onChange={e => setQ(e.target.value)} aria-label="Search products" /></label>
         <select value={st} onChange={e => setSt(e.target.value)} aria-label="Filter"><option value="">All products</option><option value="approved">Approved</option><option value="pending">Awaiting approval</option><option value="rejected">Needs changes</option><option value="inactive">Not available</option></select>
+        <select value={cf} onChange={e => setCf(e.target.value)} aria-label="Filter by category"><option value="">All categories</option>{usedCats.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
         <button className="sp-btn primary" onClick={() => setEdit(null)}><Plus size={16} /> Add product</button>
       </div>
       {msg && <p className="sp-note err" role="alert">{msg}</p>}
@@ -131,7 +136,7 @@ export default function Products() {
           </li>))}
         </ul>
       )}
-      {edit !== undefined && <ProductForm row={edit} cats={data?.cats ?? []} supplierId={supplier.id} onClose={() => setEdit(undefined)} onDone={() => { setEdit(undefined); void reload(); }} />}
+      {edit !== undefined && <ProductForm row={edit} cats={myCats} supplierId={supplier.id} onClose={() => setEdit(undefined)} onDone={() => { setEdit(undefined); void reload(); }} />}
     </>
   );
 }
