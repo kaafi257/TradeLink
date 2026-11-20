@@ -2,12 +2,18 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "r
 import { ArrowRight, ImagePlus, X } from "lucide-react";
 import { IMAGE_ACCEPT, checkImage, removeProductImage, uploadProductImage } from "../lib/upload";
 import { errorText, requireSupabase, type Product } from "../lib/supabase";
+import CategoryPicker, { sortCategories } from "../components/CategoryPicker";
 import { useAdmin } from "./AdminData";
 import { FashionFields, useFashionEditor } from "./FashionFields";
 
 export function ProductModal({ editing, onClose }: { editing: Product | null; onClose: () => void }) {
   const { notify, reload, industries, categories } = useAdmin();
   const [busy, setBusy] = useState(false);
+  const [catId, setCatId] = useState(editing?.category_id ?? "");
+  const [indId, setIndId] = useState(() => categories.find(c => c.id === editing?.category_id)?.industry_id ?? "");
+  // Industry narrows the list; with "All industries" every category shows with its industry underneath. "Other ..." always last.
+  const catOptions = sortCategories(categories.filter(c => (!indId || c.industry_id === indId) && (c.active || c.id === editing?.category_id)))
+    .map(c => ({ id: c.id, name: c.name, group: indId ? undefined : industries.find(i => i.id === c.industry_id)?.name }));
   const fileRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [removed, setRemoved] = useState(false);
@@ -86,17 +92,16 @@ export function ProductModal({ editing, onClose }: { editing: Product | null; on
         <h2>{editing ? "Edit Product" : "Add Wholesale Product"}</h2>
         <form className="form-grid" onSubmit={save}>
           <label>Product name<input name="name" required defaultValue={editing?.name} /></label>
-          <label>Category
-            <select name="category_id" required defaultValue={editing?.category_id || ""}>
-              <option value="" disabled>Choose a category…</option>
-              {industries.map(i => (
-                <optgroup key={i.id} label={i.active ? i.name : `${i.name} (hidden)`}>
-                  {categories.filter(c => c.industry_id === i.id && (c.active || c.id === editing?.category_id)).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </optgroup>
-              ))}
-            </select>
+          <div className="cp-field"><span>Industry</span>
+            <select value={indId} onChange={e => { setIndId(e.target.value); setCatId(""); }} aria-label="Industry">
+              <option value="">All industries</option>
+              {industries.map(i => <option key={i.id} value={i.id}>{i.active ? i.name : `${i.name} (hidden)`}</option>)}
+            </select></div>
+          <div className="cp-field"><span>Category <small>(type to search)</small></span>
+            <CategoryPicker required value={catId} onChange={setCatId} options={catOptions} emptyText="No category matches. Add one under Industries & Categories." />
+            <input type="hidden" name="category_id" value={catId} />
             {!categories.length && <small>No categories yet. Add them under Industries &amp; Categories first.</small>}
-          </label>
+          </div>
           <label>SKU<input name="sku" defaultValue={editing?.sku || ""} placeholder="e.g. RICE-50 (optional)" /></label>
           <label>Package size<input name="package_size" defaultValue={editing?.package_size || ""} placeholder="e.g. 50kg bag" /></label>
           <label>Unit<select name="unit" defaultValue={editing?.unit || "bag"}><option>bag</option><option>kg</option><option>ton</option><option>container</option><option>carton</option></select></label>

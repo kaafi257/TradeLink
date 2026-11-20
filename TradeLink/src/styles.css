@@ -89,7 +89,7 @@
 .hm-reach .contact-pills{justify-content:flex-start}
 .success-state .contact-pills-wrap{justify-items:center;margin:14px 0}
 /* Logo mark */
-.brand-mark{display:block;flex:none;border-radius:12px;box-shadow:0 2px 8px #0a2d4933}
+.brand-mark{display:block;flex:none}
 .sidebar .brand-mark{width:40px;height:40px}
 .admin-footer .brand-mark{width:34px;height:34px}
 .login-card .brand-mark{width:48px;height:48px}
@@ -146,3 +146,14 @@ body:has(.modal-backdrop){overflow:hidden}
 .inline-note,.report-cards p,.setting-card small{font-size:13px}
 @media(pointer:coarse),(max-width:640px){.pill{min-height:44px}}
 @media(prefers-reduced-motion:reduce){.modal,.modal-backdrop{animation:none}}
+
+/* Official logo */
+.brand{display:inline-flex;align-items:center;max-width:100%}
+.brand .brand-full{display:block;height:42px;width:auto;max-width:100%;object-fit:contain}
+.brand .brand-mark-only{display:none;height:38px;width:auto;border-radius:0;box-shadow:none}
+.brand .brand-mark{border-radius:0;box-shadow:none}
+.sidebar .brand .brand-full{height:40px}.admin-footer .brand .brand-full{height:34px}.sp-side-top .brand .brand-full{height:38px}
+.loading-screen .brand .brand-full{height:58px}
+.admin-layout.collapsed .sidebar-brand .brand .brand-full{display:none}
+.admin-layout.collapsed .sidebar-brand .brand .brand-mark-only{display:block;height:34px}
+@media(max-width:520px){.brand .brand-full{height:36px}}
