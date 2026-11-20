@@ -10,6 +10,7 @@ import { useInstall } from "../lib/install";
 import { useAuth } from "../lib/auth";
 import { track, trackState } from "../lib/track";
 import { useWishlist } from "../lib/wishlist";
+import Campaign from "./market/Campaign";
 import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TradeHeader, TradeHero, TradeNav, TradeRow } from "./market/Trade";
 import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
@@ -354,6 +355,8 @@ export default function PublicHome() {
       <TradeNav mode={mode} industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} onRfq={() => setRfqOpen(true)} />
       <ModeToggle mode={mode} onMode={changeMode} className="mobile" />
       <TradeHero shelf={shelf} slides={slides} counts={counts} onPickIndustry={openIndustry} onPickCategory={openCategory} />
+      <Campaign products={products.length} suppliers={suppliers.length} industries={mInds.filter(i => (indCount.get(i.id) ?? 0) > 0).length} mode={mode}
+        onShop={m => { changeMode(m); go("public-products"); }} onRegister={() => navigate("/supplier/register")} onQuote={() => setRfqOpen(true)} />
       <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
         industry={effIndustry} category={effCategory} setIndustry={setIndustryId} setCategory={setCategoryId}
         search={search} setSearch={setSearch} items={shown} emptyText={emptyMessage} />
