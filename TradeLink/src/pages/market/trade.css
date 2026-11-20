@@ -674,3 +674,6 @@ body:has(.public-site),.public-site{background:var(--tl-bg)!important}
 }
 .public-site .tl-sups{grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
 .public-site .tl-sups button{min-height:68px}
+
+/* The search pill already lights up as a whole (focus-within), so the gold square ring on the scope select and the input inside it is dropped. */
+.public-site .tl-search form :focus-visible{outline:none;border-radius:inherit}
