@@ -977,3 +977,41 @@
   .admin-layout *,.admin-layout *::before,.admin-layout *::after{animation:none!important;transition:none!important}
   .admin-layout .page-skel i{background:#eef2f9}
 }
+
+/* ——— Blue dashboard theme (TradeLink navy + marketplace blue; overrides the grey/black defaults above) ——— */
+.admin-layout{--bg:#e9f1fa;--line:#d3e2f1;--tint:#dcebfa;--muted:#4f6a85;--ink:#0b2a4a;--deep:#073256;--teal:#0b5d99;--brand:#0b5d99;--brand-2:#1479c2;
+  background:linear-gradient(180deg,#e4effa 0%,#eef5fc 320px,#e9f1fa 100%)}
+.admin-layout .sidebar{background:linear-gradient(180deg,#0a3f73 0%,#073256 55%,#052a47 100%)}
+.admin-layout .side-nav a.selected{background:linear-gradient(90deg,#1479c2 0%,#0b5d99 100%);box-shadow:0 8px 18px -10px #1479c2}
+.admin-layout .side-nav a.selected:before{background:#8cc8ff}
+.admin-layout .admin-topbar{background:#fff;border-bottom:1px solid var(--line);box-shadow:0 6px 20px -16px #0b5d99}
+.admin-layout .topbar-title{color:#073256}
+.admin-layout .page-heading h1,.admin-layout .dash-hello h1{color:#073256}
+/* buttons: blue instead of black */
+.admin-layout .btn:not(.outline):not(.gold):not(.danger):not(.red),.admin-layout .btn.green,.admin-layout .btn.dark{background:linear-gradient(180deg,#1479c2,#0b5d99);color:#fff;border:0;box-shadow:0 8px 16px -10px #0b5d99}
+.admin-layout .btn:not(.outline):not(.gold):not(.danger):not(.red):hover,.admin-layout .btn.green:hover,.admin-layout .btn.dark:hover{background:linear-gradient(180deg,#2288d4,#0d68ad)}
+.admin-layout .btn.gold{background:#1479c2;color:#fff}.admin-layout .btn.gold:hover{background:#0d68ad}
+.admin-layout .btn.outline{border-color:#b9d3ea;color:#0b5d99;background:#fff}.admin-layout .btn.outline:hover{background:#eaf3fc}
+.admin-layout .range-tabs{background:#dcebfa}
+.admin-layout .range-tabs button.on,.admin-layout .dash-glass .range-tabs button.on{background:#0b5d99;color:#fff;box-shadow:none}
+.admin-layout .link-btn{color:#0b5d99}
+/* cards: white with a blue top edge and blue-tinted shadow */
+.admin-layout .dash-glass{--glass:#ffffff;--glass-edge:#d3e2f1;--glass-shadow:0 12px 30px -18px rgba(11,93,153,.45)}
+.admin-layout .dash-glass::after{background:radial-gradient(circle at 50% 50%,#7cc0f5 0%,#4a9fe266 42%,transparent 70%)}
+.admin-layout .glass{-webkit-backdrop-filter:none;backdrop-filter:none;border-radius:16px}
+.admin-layout .panel-head,.admin-layout .dash-glass .panel-head{background:linear-gradient(180deg,#f3f8fe,#eaf3fc);border-bottom:1px solid var(--line);border-radius:16px 16px 0 0}
+.admin-layout .gs{border-top:4px solid var(--tone,#1479c2)}
+.admin-layout .gs::after{opacity:.16}
+.admin-layout .gs.mint{--tone:#0b5d99}.admin-layout .gs.gold{--tone:#3a8fe0}.admin-layout .gs.blue{--tone:#1479c2}.admin-layout .gs.teal{--tone:#073256}
+.admin-layout .gs-value{color:#073256}
+.admin-layout th{background:#eaf3fc;color:#3f5f80}
+.admin-layout tbody tr:hover td{background:#f4f9fe}
+.admin-layout .toast{background:#073256}
+.admin-layout .global-search,.admin-layout .notification-button{background:#f3f8fe;border-color:#cfe0f1}
+.admin-layout .avatar,.admin-layout .topbar-avatar{background:linear-gradient(135deg,#1479c2,#073256)}
+.admin-layout .glass.gs,.admin-layout .glass.gs.link{border:1px solid var(--line);border-top:4px solid var(--tone,#1479c2);background:linear-gradient(180deg,#ffffff 0%,#f3f8fe 100%)}
+.admin-layout .gs-icon{background:linear-gradient(135deg,var(--tone,#1479c2),#073256);box-shadow:0 6px 14px rgba(11,93,153,.3)}
+.admin-layout .gs .spark{color:var(--tone,#1479c2)}
+.admin-layout .gs-label{color:#3f5f80}
+.admin-layout .gs .gs-icon{background:linear-gradient(135deg,var(--tone,#1479c2),#073256)!important;color:#fff!important}
+.admin-layout .gs .gs-icon svg{color:#fff!important;stroke:#fff}
