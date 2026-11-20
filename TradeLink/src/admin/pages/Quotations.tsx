@@ -62,7 +62,7 @@ export default function Quotations() {
                 {open && can("quotes.price") && <IconBtn primary tone="gold" icon={<Tag size={18} />} label={q.status === "quoted" ? "Re-price" : "Price"} onClick={() => setPricing(q)} />}
                 {["quoted", "accepted"].includes(q.status) && total > 0 && can("quotes.convert") && <IconBtn primary tone="green" icon={<ShoppingCart size={18} />} label="Order" disabled={busyId === q.id} onClick={() => void createOrder(q)} />}
               </>}
-              details={[["Phone", q.phone], ["Request", describe(q)], ["Address", q.delivery_location], ["Received", shortDate(q.created_at)]]} />
+              details={[["Phone", q.phone], ["Request", describe(q)], ["Address", q.delivery_location], ["Received", shortDate(q.created_at)], ...(q.coupon_code ? [["Coupon", `${q.coupon_code} · ${Number(q.discount_percent)}% off`] as [string, string]] : [])]} />
           );
         })}
       </RecordList>

@@ -39,7 +39,8 @@ export function PriceQuoteModal({ quote, onClose }: { quote: Quote; onClose: () 
   const items = quote.quotation_items ?? [];
   const [prices, setPrices] = useState<Record<string, string>>(() => Object.fromEntries(items.map(i => [i.id, Number(i.unit_price) > 0 ? String(i.unit_price) : ""])));
   const { busy, run } = useRun(onClose);
-  const total = items.reduce((sum, i) => sum + Number(i.quantity) * (Number(prices[i.id]) || 0), 0);
+  const off = Number(quote.discount_percent) || 0;   // coupon the customer entered; each line is discounted and rounded like the database does
+  const total = items.reduce((sum, i) => sum + Math.round(Number(i.quantity) * Math.round((Number(prices[i.id]) || 0) * (1 - off / 100) * 100) / 100 * 100) / 100, 0);
   const ready = items.length > 0 && items.every(i => Number(prices[i.id]) > 0);
   const save = (e: FormEvent) => {
     e.preventDefault();
@@ -53,6 +54,7 @@ export function PriceQuoteModal({ quote, onClose }: { quote: Quote; onClose: () 
             <input type="number" min="0.01" step="0.01" required value={prices[i.id] ?? ""} onChange={e => setPrices({ ...prices, [i.id]: e.target.value })} />
           </label>
         ))}
+        {off > 0 && <p className="full">Coupon <b>{quote.coupon_code}</b>: {off}% off every line.</p>}
         <p className="full"><b>Quote total: {money(total)}</b></p>
         <button className="btn green full" type="submit" disabled={busy || !ready}>{busy ? "Saving…" : "Save prices and mark as quoted"}</button>
       </form>
