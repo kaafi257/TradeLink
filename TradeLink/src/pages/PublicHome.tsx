@@ -10,11 +10,11 @@ import { useInstall } from "../lib/install";
 import { useAuth } from "../lib/auth";
 import { track, trackState } from "../lib/track";
 import { useWishlist } from "../lib/wishlist";
-import Campaign from "./market/Campaign";
+import Campaign, { DEFAULT_SLIDES } from "./market/Campaign";
 import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TradeHeader, TradeHero, TradeNav, TradeRow } from "./market/Trade";
 import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
-import { supabase, withPhoto, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
+import { supabase, withPhoto, type CampaignSlide, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
 import "./home.css";
 
 export type Mode = "business" | "individual";
@@ -175,6 +175,8 @@ export default function PublicHome() {
   const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [rfqOpen, setRfqOpen] = useState(false);
+  // Campaign scenes managed in Admin -> Marketing (migration 0017). Before it is installed the built-in scenes play.
+  const [campaign, setCampaign] = useState<CampaignSlide[]>(DEFAULT_SLIDES);
   const { session, loading: authLoading } = useAuth();
   // Staff browsing the public site are not counted as visitors. One visit per browser tab.
   useEffect(() => {
@@ -234,6 +236,7 @@ export default function PublicHome() {
       // Suppliers directory (migration 0007). If it is not set up, the section is simply hidden.
       void supabase!.from("public_suppliers").select("*").order("name").then(r => { if (!r.error) setSuppliers((r.data ?? []) as PublicSupplier[]); });
       void supabase!.from("public_supplier_categories").select("*").then(r => { if (!r.error) setSupCats((r.data ?? []) as { supplier_id: string; category_id: string }[]); });
+      void supabase!.from("public_campaign").select("*").order("sort_order").then(r => { if (!r.error && r.data) setCampaign(r.data as CampaignSlide[]); });
       void supabase!.from("public_best_sellers").select("*").order("rank").then(r => {
         if (!r.error) setBestIds(((r.data ?? []) as { product_id: string }[]).map(b => b.product_id));
       });
@@ -355,7 +358,7 @@ export default function PublicHome() {
       <TradeNav mode={mode} industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} onRfq={() => setRfqOpen(true)} />
       <ModeToggle mode={mode} onMode={changeMode} className="mobile" />
       <TradeHero shelf={shelf} slides={slides} counts={counts} onPickIndustry={openIndustry} onPickCategory={openCategory} />
-      <Campaign products={products.length} suppliers={suppliers.length} industries={mInds.filter(i => (indCount.get(i.id) ?? 0) > 0).length} mode={mode}
+      <Campaign slides={campaign} products={products.length} suppliers={suppliers.length} industries={mInds.filter(i => (indCount.get(i.id) ?? 0) > 0).length} 
         onShop={m => { changeMode(m); go("public-products"); }} onRegister={() => navigate("/supplier/register")} onQuote={() => setRfqOpen(true)} />
       <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
         industry={effIndustry} category={effCategory} setIndustry={setIndustryId} setCategory={setCategoryId}

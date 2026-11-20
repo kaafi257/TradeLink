@@ -19,6 +19,7 @@ const loadReports = () => import("./pages/Reports");
 const Reports = lazy(loadReports);
 import Customers from "./pages/Customers";
 import Categories from "./pages/Categories";
+import Marketing from "./pages/Marketing";
 import Suppliers from "./pages/Suppliers";
 import SupplierOps from "./pages/SupplierOps";
 import Communication from "./pages/Communication";
@@ -157,6 +158,7 @@ function Shell() {
           <PageBoundary key={pathname}><Suspense fallback={<div className="page-skel" aria-busy="true"><i /><i /><i /></div>}><Routes>
             <Route index element={<Dashboard />} />
             <Route path="products" element={g(["owner", "manager", "sales", "inventory", "delivery"], <Products />)} />
+            <Route path="marketing" element={g(["owner", "manager"], <Marketing />)} />
             <Route path="categories" element={g(["owner", "manager", "inventory"], <Categories />)} />
             <Route path="suppliers" element={g(["owner", "manager", "inventory"], <Suppliers />)} />
             <Route path="supplier-ops" element={g(["owner", "manager"], <SupplierOps />)} />

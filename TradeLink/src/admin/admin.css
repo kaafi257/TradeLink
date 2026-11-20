@@ -1015,3 +1015,9 @@
 .admin-layout .gs-label{color:#3f5f80}
 .admin-layout .gs .gs-icon{background:linear-gradient(135deg,var(--tone,#1479c2),#073256)!important;color:#fff!important}
 .admin-layout .gs .gs-icon svg{color:#fff!important;stroke:#fff}
+
+/* Marketing page */
+.mk-preview{padding:14px;overflow:hidden}
+.mk-preview .tl-campaign{margin:0}
+.notice{background:#eaf3fb;border:1px solid #b9d6ee;border-radius:12px;padding:14px 16px;margin:0 0 16px;color:#0b3a63}
+.notice p{margin:0}
