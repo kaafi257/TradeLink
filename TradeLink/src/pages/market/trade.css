@@ -677,3 +677,21 @@ body:has(.public-site),.public-site{background:var(--tl-bg)!important}
 
 /* The search pill already lights up as a whole (focus-within), so the gold square ring on the scope select and the input inside it is dropped. */
 .public-site .tl-search form :focus-visible{outline:none;border-radius:inherit}
+
+/* Category scope: compact animated dropdown (replaces the native select) */
+.tl-scope{overflow:visible}
+.tl-scope-btn{display:flex;align-items:center;gap:6px;height:100%;border:0;background:transparent;padding:0 10px 0 14px;font:600 13.5px 'Inter',sans-serif;color:var(--tl-navy);cursor:pointer;max-width:130px}
+.tl-scope-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tl-scope-btn svg{position:static;flex:none;color:var(--tl-mute);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.tl-scope.open .tl-scope-btn svg{transform:rotate(180deg)}
+.tl-scope-menu{position:absolute;left:0;top:calc(100% + 8px);z-index:60;min-width:200px;max-width:min(260px,80vw);max-height:min(300px,55vh);overflow:auto;margin:0;padding:6px;list-style:none;background:#fff;border:1px solid #e3eaf4;border-radius:14px;box-shadow:0 18px 40px -14px #0b1f3a40,0 2px 6px #0b1f3a10;
+  opacity:0;transform:translateY(-6px) scale(.97);transform-origin:top left;visibility:hidden;pointer-events:none;transition:opacity .2s ease,transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s .24s}
+.tl-scope.open .tl-scope-menu{opacity:1;transform:none;visibility:visible;pointer-events:auto;transition:opacity .2s ease,transform .24s cubic-bezier(.2,.8,.2,1)}
+.tl-scope-menu li{margin:0}
+.tl-scope-menu button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:0;background:none;text-align:left;padding:9px 10px;border-radius:9px;font:500 13.5px 'Inter',sans-serif;color:var(--tl-navy);cursor:pointer;transition:background .15s,color .15s}
+.tl-scope-menu button:hover{background:#eef4fd}
+.tl-scope-menu button.on{background:#e6f0fd;color:#0b5d99;font-weight:700}
+.tl-scope-menu button svg{position:static;flex:none}
+.public-site .tl-scope-btn{font-size:13.5px;color:var(--pm-navy);padding:0 8px 0 16px}
+@media (max-width:640px){.tl-scope-btn{max-width:96px;padding-left:12px}.tl-scope-menu{min-width:190px}}
+@media (prefers-reduced-motion:reduce){.tl-scope-menu,.tl-scope-btn svg{transition:none}}

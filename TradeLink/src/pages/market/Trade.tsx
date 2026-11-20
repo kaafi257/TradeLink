@@ -47,6 +47,37 @@ type Hit =
   | { kind: "category"; c: PublicCategory; label: string; sub: string }
   | { kind: "supplier"; s: PublicSupplier; label: string; sub: string };
 
+/* Compact animated replacement for the native <select> (the OS picker is huge on phones). */
+function ScopeMenu({ value, onChange, items }: { value: string; onChange: (v: string) => void; items: { id: string; name: string }[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const all = [{ id: "all", name: "All" }, ...items];
+  const cur = all.find(i => i.id === value) ?? all[0];
+  useEffect(() => {
+    if (!open) return;
+    const down = (e: MouseEvent | TouchEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", down); document.addEventListener("touchstart", down); document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("mousedown", down); document.removeEventListener("touchstart", down); document.removeEventListener("keydown", key); };
+  }, [open]);
+  return (
+    <div className={`tl-scope${open ? " open" : ""}`} ref={ref}>
+      <button type="button" className="tl-scope-btn" aria-haspopup="listbox" aria-expanded={open} aria-label="Search in" onClick={() => setOpen(o => !o)}>
+        <span>{cur.name}</span><ChevronDown size={14} />
+      </button>
+      <ul className="tl-scope-menu" role="listbox" aria-hidden={!open}>
+        {all.map(i => (
+          <li key={i.id} role="option" aria-selected={i.id === value}>
+            <button type="button" tabIndex={open ? 0 : -1} className={i.id === value ? "on" : ""} onClick={() => { onChange(i.id); setOpen(false); }}>
+              <span>{i.name}</span>{i.id === value && <Check size={14} />}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function TradeHeader({ shelf, suppliers, wishCount, requestCount, signedIn, onWishlist, onRequest, onAccount, onSearch, onPickIndustry, onPickCategory, onSupplier, searchRef, openMenu, menuOpen }: {
   shelf: Shelf; suppliers: PublicSupplier[]; wishCount: number; requestCount: number; signedIn: boolean;
   onWishlist: () => void; onRequest: () => void; onAccount: () => void;
@@ -81,9 +112,7 @@ export function TradeHeader({ shelf, suppliers, wishCount, requestCount, signedI
         <a href="#top" className="tl-logo" aria-label="TradeLink home" onClick={e => { e.preventDefault(); nav("top"); }}><Brand /></a>
         <div className="tl-search">
           <form role="search" onSubmit={submit}>
-            <label className="tl-scope" title="Search in"><select value={scope} onChange={e => setScope(e.target.value)} aria-label="Search in">
-              <option value="all">All</option>{shelf.industries.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-            </select><ChevronDown size={14} /></label>
+            <ScopeMenu value={scope} onChange={setScope} items={shelf.industries.map(i => ({ id: i.id, name: i.name }))} />
             <input ref={searchRef} type="search" value={q} onChange={e => { setQ(e.target.value); setFocus(true); }} onFocus={() => setFocus(true)} onBlur={() => window.setTimeout(() => setFocus(false), 150)}
               placeholder="Search products" aria-label="Search" autoComplete="off" />
             {q && <button type="button" className="clr" aria-label="Clear" onClick={() => { setQ(""); searchRef.current?.focus(); }}><X size={15} /></button>}
