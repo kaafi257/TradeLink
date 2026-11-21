@@ -6,6 +6,7 @@ import { useContact } from "../../lib/contact";
 import { applyCoupon } from "../../lib/coupon";
 import { IconFor } from "../../lib/icons";
 import { lookFor } from "../../lib/theme";
+import { THEMES, useTheme } from "../../lib/siteTheme";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../../lib/supabase";
 import { CleanCard, Reveal, type Mode, type Shelf } from "./Market";
 import "./trade.css";
@@ -16,6 +17,18 @@ const nav = (id: string) => document.getElementById(id)?.scrollIntoView({ behavi
 /* ---------------------------------------------------------- announcement bar */
 
 /** Only facts we really have: catalogue size and the contact details saved in Admin. */
+/** Website colour theme: Comfort (default), Calm or Light. Remembered on this device. */
+function ThemeSwitch() {
+  const { theme, setTheme } = useTheme();
+  return (
+    <div className="tl-theme" role="group" aria-label="Page colour">
+      {THEMES.map(t => (
+        <button key={t.id} type="button" className={theme === t.id ? "on" : ""} aria-pressed={theme === t.id} aria-label={t.label} title={t.label} onClick={() => setTheme(t.id)} style={{ background: t.swatch }} />
+      ))}
+    </div>
+  );
+}
+
 export function AnnouncementBar({ products }: { products: number; industries: number }) {
   const c = useContact();
   // Live banners written in Admin → Website Management. If none (or the table is not set up yet) the usual line is shown.
@@ -34,6 +47,7 @@ export function AnnouncementBar({ products }: { products: number; industries: nu
           : <span key={b.id} style={{ fontWeight: 700 }}>{b.message}</span>)}
         {banners.length === 0 && <span>Wholesale and retail, one marketplace{products > 0 ? ` · ${products} products` : ""}</span>}
         {c.phone && <a className="hide-s" href={`tel:${c.phone.replace(/[^0-9+]/g, "")}`}>{c.phone}</a>}
+        <ThemeSwitch />
       </div>
     </div>
   );

@@ -8,7 +8,7 @@
 .public-site .cmp h2{margin:12px 0 8px;font-size:clamp(24px,2.8vw,36px);line-height:1.12;font-weight:800;letter-spacing:-.02em;color:#fff}
 .cmp p{margin:0;max-width:480px;font-size:16px;line-height:1.5;color:#d6e8fb}
 .cmp-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:20px}
-.cmp-cta{display:inline-flex;align-items:center;gap:9px;height:46px;padding:0 22px;border:0;border-radius:23px;background:#fff;color:#073256;font:700 15.5px/1 inherit;cursor:pointer;box-shadow:0 10px 22px -12px #02183a}
+.cmp-cta{display:inline-flex;align-items:center;gap:9px;height:46px;padding:0 22px;border:0;border-radius:23px;background:var(--surface,#fff);color:#073256;font:700 15.5px/1 inherit;cursor:pointer;box-shadow:0 10px 22px -12px #02183a}
 .cmp-cta:hover{background:#eaf3fc}.cmp-cta svg{transition:transform .15s}.cmp-cta:hover svg{transform:translateX(3px)}
 .cmp-row small{color:#bcd7f2;font-size:13.5px}
 .cmp-art{position:relative;z-index:1;animation:cmp-art .6s ease both}
@@ -17,7 +17,7 @@
 .cmp-dots{display:flex;gap:8px}
 .cmp-dots button{position:relative;width:34px;height:20px;padding:0;border:0;background:none;cursor:pointer}
 .cmp-dots button:before{content:"";position:absolute;left:0;right:0;top:8px;height:4px;border-radius:2px;background:#ffffff40}
-.cmp-dots i{position:absolute;left:0;top:8px;height:4px;width:0;border-radius:2px;background:#fff}
+.cmp-dots i{position:absolute;left:0;top:8px;height:4px;width:0;border-radius:2px;background:var(--surface,#fff)}
 .cmp-dots .on i{width:100%;animation:cmp-fill linear both}
 .cmp-pause{width:30px;height:30px;border-radius:50%;border:1px solid #ffffff55;background:#ffffff1a;color:#fff;display:grid;place-items:center;cursor:pointer}
 .cmp :focus-visible{outline:3px solid #8cc8ff;outline-offset:2px}
