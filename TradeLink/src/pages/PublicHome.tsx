@@ -382,8 +382,8 @@ export default function PublicHome() {
     }
     return out.slice(0, 3);
   }, [promos, promoProds, products]); // eslint-disable-line react-hooks/exhaustive-deps
-  const heroPromos = useMemo<HeroPromo[]>(() => campaign.filter(c => !!c.image_url).map(c => ({
-    id: c.id, src: c.image_url as string, tag: c.tag, title: c.title, body: c.body, cta: c.cta_label,
+  const heroPromos = useMemo<HeroPromo[]>(() => campaign.map(c => ({
+    id: c.id, src: c.image_url ?? "", tag: c.tag, title: c.title, body: c.body, cta: c.cta_label,
     run: () => { if (c.cta_action === "register") navigate("/supplier/register"); else if (c.cta_action === "quote") setRfqOpen(true); else { changeMode(c.cta_action === "shop_retail" ? "individual" : "business"); go("public-products"); } },
   })), [campaign, navigate, changeMode, go]);
   const sale = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0 && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price)), [products]);
@@ -411,7 +411,7 @@ export default function PublicHome() {
         openMenu={() => setMenuOpen(v => !v)} menuOpen={menuOpen} />
       <TradeNav mode={mode} industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} onRfq={() => setRfqOpen(true)} />
       <ModeToggle mode={mode} onMode={changeMode} className="mobile" />
-      <LandingHero photos={heroPhotos} promos={[...liveHero, ...heroPromos].slice(0, 4)} offerPct={offerPct} onShop={() => go("public-products")} onQuote={() => setRfqOpen(true)} />
+      <LandingHero photos={heroPhotos} promos={[...heroPromos, ...liveHero].slice(0, 8)} offerPct={offerPct} onShop={() => go("public-products")} onQuote={() => setRfqOpen(true)} />
       <PromoBanners offerCount={sale.length} offerPct={offerPct} onOffers={() => go("offers")} onQuote={() => setRfqOpen(true)} onSupplier={() => navigate("/supplier/register")} />
       <BrowseCategories items={catCards} onPick={openIndustry} onMore={() => setMenuOpen(true)} />
       <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}

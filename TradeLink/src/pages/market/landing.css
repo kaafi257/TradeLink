@@ -216,3 +216,6 @@
   .public-site .lp-cat{padding:10px 8px}
   .public-site .tl-sec:has(> .tl-wrap > .tl-rfqbar){padding-block:0}
 }
+
+.public-site .lp-stage.lp-hero-promo figure.nopic{background:linear-gradient(135deg,#0b5d99,#0e2a40)}
+.public-site .lp-stage.lp-hero-promo figure.nopic::after{display:none}

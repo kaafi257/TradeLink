@@ -39,7 +39,7 @@ function SceneModal({ editing, order, onClose, onSaved }: { editing: CampaignSli
             <select value={f.scene} onChange={e => set("scene", e.target.value as CampaignScene)}>{Object.entries(SCENE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
           </label>
           <div className="full mk-img">
-            <span>Promotion picture <small>(shown on the homepage, next to the welcome text)</small></span>
+            <span>Promotion picture <small>(optional. Without one, the scene shows on a blue background)</small></span>
             {f.image_url && <img src={f.image_url} alt="" />}
             <div><label className="btn outline mk-up">{f.image_url ? "Change picture" : "Upload picture"}<input type="file" accept="image/*" hidden onChange={e => void pick(e.target.files?.[0])} /></label>
               {f.image_url && <button type="button" className="btn outline" onClick={() => set("image_url", null)}>Remove</button>}</div>
