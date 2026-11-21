@@ -199,3 +199,20 @@
   .lp-pcs::-webkit-scrollbar{display:none}
   .lp-pc{flex:0 0 min(82%,340px);scroll-snap-align:start}
 }
+
+/* Tighter vertical rhythm on phones and small tablets: less empty space between sections and product rows */
+@media(max-width:820px){
+  .public-site{--lp-gap:20px}
+  .public-site .tl-sec,.public-site .mk-shop,.public-site .lp-sec{padding-top:18px}
+  .public-site .lp-strip{padding-top:12px}
+  .public-site .tl-sh{margin-bottom:8px}
+  .public-site .tl-sh small{margin-top:1px}
+  .public-site .tl-prods,.public-site .mk-shop-grid{gap:8px}
+  .public-site .tl-card .media{aspect-ratio:5/4}
+  .public-site .tl-card .info{padding:7px 9px 9px;gap:2px}
+  .public-site .tl-card .price{row-gap:0}
+  .public-site .lp-h{margin-bottom:10px}
+  .public-site .lp-cats{gap:8px}
+  .public-site .lp-cat{padding:10px 8px}
+  .public-site .tl-sec:has(> .tl-wrap > .tl-rfqbar){padding-block:0}
+}
