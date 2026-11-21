@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent } from "react";
 import { Image as ImageIcon, Package, Pencil, Plus, Power, Search, Trash2, Upload } from "lucide-react";
 import { errorText, requireSupabase, type PublicCategory } from "../../lib/supabase";
 import { IMAGE_ACCEPT, productImageUrl, removeProductImage, uploadProductImage } from "./files";
-import CategoryPicker, { sortCategories } from "../../components/CategoryPicker";
+import CategoryPicker, { sortCategories, type PickerOption } from "../../components/CategoryPicker";
 import { useSupplier } from "./context";
 import { Modal, Pill, Spinner, money, qty, useLoad, type SProduct } from "./ops";
 
@@ -11,7 +11,7 @@ type Form = { name: string; brand: string; sku: string; category_id: string; sub
 const blank: Form = { name: "", brand: "", sku: "", category_id: "", subcategory: "", unit: "bag", price: "", min_order_qty: "1", reorder_level: "0", description: "", tiers: [], images: [], active: true };
 const fromRow = (p: SProduct): Form => ({ name: p.name, brand: p.brand ?? "", sku: p.sku ?? "", category_id: p.category_id ?? "", subcategory: p.subcategory ?? "", unit: p.unit, price: String(p.price), min_order_qty: String(p.min_order_qty), reorder_level: String(p.reorder_level), description: p.description ?? "", tiers: (p.bulk_tiers ?? []).map(t => ({ min_qty: String(t.min_qty), price: String(t.price) })), images: p.image_paths ?? [], active: p.active });
 
-function ProductForm({ row, cats, supplierId, onClose, onDone }: { row: SProduct | null; cats: PublicCategory[]; supplierId: string; onClose: () => void; onDone: () => void }) {
+function ProductForm({ row, cats, supplierId, rates, ownRate, onClose, onDone }: { row: SProduct | null; cats: PickerOption[]; supplierId: string; rates: Map<string, number>; ownRate: number; onClose: () => void; onDone: () => void }) {
   const [f, setF] = useState<Form>(row ? fromRow(row) : blank);
   const [busy, setBusy] = useState(false), [err, setErr] = useState(""), [up, setUp] = useState(false);
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF(p => ({ ...p, [k]: v }));
@@ -51,7 +51,8 @@ function ProductForm({ row, cats, supplierId, onClose, onDone }: { row: SProduct
           <label className="span2">Product name<input value={f.name} onChange={e => set("name", e.target.value)} required minLength={2} maxLength={120} /></label>
           <label>Brand<input value={f.brand} onChange={e => set("brand", e.target.value)} maxLength={60} /></label>
           <label>SKU<input value={f.sku} onChange={e => set("sku", e.target.value)} maxLength={40} /></label>
-          <div className="cp-field"><span>Category <small>({cats.length} in your industry — type to search)</small></span><CategoryPicker options={cats} value={f.category_id} onChange={v => set("category_id", v)} required /></div>
+          <div className="cp-field"><span>Category <small>({cats.length} available — type to search)</small></span><CategoryPicker options={cats} value={f.category_id} onChange={v => set("category_id", v)} required />
+            {f.category_id && <small className="cp-rate">Commission for this category: <b>{rates.has(f.category_id) ? rates.get(f.category_id) : ownRate}%</b>{rates.has(f.category_id) ? "" : " (your standard rate)"}</small>}</div>
           <label>Subcategory<input value={f.subcategory} onChange={e => set("subcategory", e.target.value)} maxLength={60} /></label>
           <label>Unit<input value={f.unit} onChange={e => set("unit", e.target.value)} maxLength={20} placeholder="bag, carton, kg…" /></label>
           <label>Wholesale price (ETB)<input type="number" inputMode="decimal" min="0" step="0.01" value={f.price} onChange={e => set("price", e.target.value)} required /></label>
@@ -92,12 +93,19 @@ export default function Products() {
   const [msg, setMsg] = useState("");
   const { data, error, loading, reload } = useLoad(async () => {
     const db = requireSupabase();
-    const [p, c] = await Promise.all([db.from("supplier_products").select("*").order("created_at", { ascending: false }), db.from("public_categories").select("*").order("name")]);
+    const [p, c, i, r] = await Promise.all([db.from("supplier_products").select("*").order("created_at", { ascending: false }), db.from("public_categories").select("*").order("name"), db.from("public_industries").select("id, name"), db.from("category_commission_public").select("category_id, rate")]);
     if (p.error) throw p.error;
-    return { rows: (p.data ?? []) as SProduct[], cats: (c.data ?? []) as PublicCategory[] };
+    if (c.error) throw c.error;
+    return { rows: (p.data ?? []) as SProduct[], cats: (c.data ?? []) as PublicCategory[], inds: new Map(((i.data ?? []) as { id: string; name: string }[]).map(x => [x.id, x.name])), rates: new Map(((r.data ?? []) as { category_id: string; rate: number }[]).map(x => [x.category_id, Number(x.rate)])) };
   });
   // Only the categories of the supplier's own industry (with "Other ..." last). A category already on an older product stays selectable so editing it never fails.
-  const myCats = useMemo(() => sortCategories((data?.cats ?? []).filter(c => c.industry_id === supplier?.industry_id || (edit?.category_id === c.id))), [data, supplier, edit]);
+  // If the industry has no categories yet, every category is offered (grouped by industry) so the supplier is never stuck.
+  const myCats = useMemo<PickerOption[]>(() => {
+    const all = data?.cats ?? [];
+    const own = all.filter(c => c.industry_id === supplier?.industry_id || (edit?.category_id === c.id));
+    const list = own.some(c => c.industry_id === supplier?.industry_id) ? own : all;
+    return sortCategories(list).map(c => ({ id: c.id, name: c.name, group: list === all ? data?.inds.get(c.industry_id) : undefined }));
+  }, [data, supplier, edit]);
   const catName = useMemo(() => new Map((data?.cats ?? []).map(c => [c.id, c.name])), [data]);
   const usedCats = useMemo(() => { const ids = new Set((data?.rows ?? []).map(r => r.category_id)); return sortCategories((data?.cats ?? []).filter(c => ids.has(c.id))); }, [data]);
   const shown = (data?.rows ?? []).filter(p => (!cf || p.category_id === cf) && (!st || (st === "inactive" ? !p.active : p.status === st)) && (!q || `${p.name} ${p.sku ?? ""} ${p.brand ?? ""}`.toLowerCase().includes(q.toLowerCase())));
@@ -136,7 +144,7 @@ export default function Products() {
           </li>))}
         </ul>
       )}
-      {edit !== undefined && <ProductForm row={edit} cats={myCats} supplierId={supplier.id} onClose={() => setEdit(undefined)} onDone={() => { setEdit(undefined); void reload(); }} />}
+      {edit !== undefined && <ProductForm row={edit} cats={myCats} supplierId={supplier.id} rates={data?.rates ?? new Map()} ownRate={Number(supplier.fee_rate ?? 0)} onClose={() => setEdit(undefined)} onDone={() => { setEdit(undefined); void reload(); }} />}
     </>
   );
 }

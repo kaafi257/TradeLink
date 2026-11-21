@@ -18,3 +18,4 @@
 .cp-field{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600;color:#0e2a40}
 .cp-field>span small{font-weight:400;color:#6b84a0}
 .cp-field select{width:100%;min-height:44px}
+.cp-rate{display:block;margin-top:6px;color:var(--muted,#5b6b7a);font-size:12.5px}.cp-rate b{color:#0a3a68}
