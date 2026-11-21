@@ -711,3 +711,11 @@ html[data-theme=comfort] .public-site .tl-head,html[data-theme=comfort] .public-
 html[data-theme=calm] .public-site .tl-head,html[data-theme=calm] .public-site .tl-head.solid{background:linear-gradient(180deg,#dcebdf,#ebf3ec)}
 html[data-theme=comfort] .public-site .tl-nav{background:linear-gradient(180deg,#f7f1e2,#faf6ec)}
 html[data-theme=calm] .public-site .tl-nav{background:linear-gradient(180deg,#ebf3ec,#f3f8f4)}
+
+/* Price colours: normal price green; a discounted item shows its new price and the % off in red, with the old price struck through. */
+:root{--price-green:#15803d;--price-red:#dc2626}
+.tl-card .price:not(.ask) b,.mk-price b,.fd-price b,.fx-price b,.req-estimate b{color:var(--price-green)}
+.tl-card .price:not(.ask):has(s) b,.mk-price:not(.ask):has(s) b,.fd-price:not(.ask):has(s) b,.fx-price:not(.ask):has(s) b,.tl-card .price.sale b{color:var(--price-red)}
+.tl-card .price s,.mk-price s,.fd-price s,.fx-price s{color:#8a94a0}
+.public-site .tl-card .off,.mk-off,.fx-badge:not(.out){background:var(--price-red);color:#fff}
+.fd-tech .fd-price b{color:#4ade80}.fd-tech .fd-price:not(.ask):has(s) b{color:#ff6b6b}
