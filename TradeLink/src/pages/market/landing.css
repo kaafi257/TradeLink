@@ -159,3 +159,28 @@
 .public-site footer.mk-footer .mk-copy{padding-block:10px;gap:12px}
 @media(max-width:760px){.public-site footer.mk-footer nav{grid-template-columns:minmax(0,1fr);gap:6px}.public-site footer.mk-footer .mk-fbrand{padding-bottom:10px}}
 @media(prefers-reduced-motion:reduce){.public-site footer.mk-footer li button,.public-site footer.mk-footer li a{transition:none;transform:none}}
+
+/* ===== Shaped app bar (top) and footer (bottom) ===== */
+/* Top: announcement strip in a blue gradient, header and menu row on a soft blue panel with rounded lower corners */
+.public-site .tl-ann{background:linear-gradient(90deg,#0b1f3a,#0b4f86 55%,#0b1f3a)}
+.public-site .tl-head{background:linear-gradient(180deg,#dcebfc,#e9f3ff);-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom:0;transition:box-shadow .3s,border-radius .3s}
+.public-site .tl-head.solid{border-radius:0 0 22px 22px;box-shadow:0 14px 30px -18px #0b3a6b73}
+.public-site .tl-nav{background:linear-gradient(180deg,#e9f3ff,#f3f8ff);border-bottom:0;border-radius:0 0 28px 28px;box-shadow:0 14px 28px -20px #0b3a6b66;position:relative}
+.public-site .tl-links button,.public-site .tl-links a{border-radius:999px}
+.public-site .tl-links button:not(.rfq):hover,.public-site .tl-links a:hover{background:#fff;color:#0b5d99}
+.public-site .tl-buy.mobile{margin:10px 16px 0;background:#e3eefb;box-shadow:inset 0 0 0 1px #cfe1f8}
+.public-site .tl-search form{background:#fff;box-shadow:0 8px 20px -14px #0b3a6b80}
+
+/* Bottom: deep-blue panel with a rounded top, light pills, white logo chip */
+.public-site footer.mk-footer{background:linear-gradient(165deg,#0b1f3a 0%,#0a3a68 55%,#0b5d99 120%);color:#cfe0f3;border-top:0;border-radius:34px 34px 0 0;margin-top:var(--lp-gap);padding-top:clamp(22px,2.6vw,34px);position:relative;overflow:hidden}
+.public-site footer.mk-footer::before{display:block;content:"";position:absolute;right:-90px;top:-90px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,#2f8de033,transparent 70%);left:auto;height:300px}
+.public-site footer.mk-footer .mk-fbrand{border-bottom:1px solid #ffffff22;position:relative}
+.public-site footer.mk-footer .brand{background:#fff;padding:8px 14px;border-radius:16px;box-shadow:0 10px 24px -14px #000a}
+.public-site footer.mk-footer nav h4{color:#8fbbe6}
+.public-site footer.mk-footer li button,.public-site footer.mk-footer li a{background:#ffffff1a;border-color:#ffffff33;color:#fff}
+.public-site footer.mk-footer li button:hover,.public-site footer.mk-footer li a:hover,.public-site footer.mk-footer li button:focus-visible,.public-site footer.mk-footer li a:focus-visible{background:#fff;border-color:#fff;color:#0b4f86;box-shadow:0 8px 18px -10px #000a}
+.public-site footer.mk-footer .mk-copy{border-top:1px solid #ffffff22;position:relative}
+.public-site footer.mk-footer .mk-copy small{color:#a9c4e0}
+.public-site footer.mk-footer .mk-top{background:#ffffff1a;border-color:#ffffff33;color:#fff}
+.public-site footer.mk-footer .mk-top:hover{background:#fff;color:#0b4f86}
+.public-site footer.mk-footer .contact-icons{position:relative}
