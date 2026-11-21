@@ -55,7 +55,8 @@ export function RecordList({ isEmpty, empty, icon, children }: { isEmpty: boolea
   return <div className="rec-list">{children}</div>;
 }
 
-export type Fact = { icon: ReactNode; text: string; tone?: "price" | "cost" | "stock" | "place" | "time" };
+export type Fact = { icon: ReactNode; text: string; tone?: "price" | "cost" | "stock" | "place" | "time"; label?: string };
+const FACT_LABEL = { price: "Wholesale", cost: "Retail", stock: "Pack", place: "Area", time: "When" } as const;
 
 /** One record as a glass card: icon or picture, title, a few icon facts, status and actions. Details open on tap. */
 export function RecCard({ i = 0, tone = "info", lead, img, initials, title, sub, facts, control, amount, meter, status, actions, details }: {
@@ -70,7 +71,7 @@ export function RecCard({ i = 0, tone = "info", lead, img, initials, title, sub,
         <span className="rec-lead">{img ? <img src={img} alt="" /> : initials ? <b>{initials}</b> : lead}</span>
         <div className="rec-title"><b>{title}</b>{sub && <small>{sub}</small>}</div>
         {(shown.length > 0 || control) && (
-          <div className="rec-facts">{shown.map(f => <span key={f.text} className={f.tone ? `ft-${f.tone}` : undefined} title={f.text}>{f.icon}<em>{f.text}</em></span>)}{control}</div>
+          <div className="rec-facts">{shown.map(f => <span key={f.text} className={f.tone ? `ft-${f.tone}` : undefined} title={f.text}><i className="ft-ico">{f.icon}</i><span className="ft-body">{(f.label ?? (f.tone && FACT_LABEL[f.tone])) && <small>{f.label ?? FACT_LABEL[f.tone!]}</small>}<em>{f.text}</em></span></span>)}{control}</div>
         )}
         {amount !== undefined && (
           <div className="rec-amount"><b>{amount}</b>{meter !== undefined && <i className="meter"><s style={{ width: `${Math.max(4, Math.min(100, meter * 100))}%` }} /></i>}</div>

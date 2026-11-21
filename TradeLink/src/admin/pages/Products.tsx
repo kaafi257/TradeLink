@@ -25,7 +25,7 @@ export default function Products() {
       <RecordList isEmpty={!rows.length} empty={products.length ? "No match" : "No products yet"} icon={<Package />}>
         {rows.map((p, i) => (
           <RecCard key={p.id} i={i} tone={p.active ? "good" : "muted"} img={p.image_url || riceImg} title={p.name} sub={p.category}
-            facts={[{ icon: <Package size={14} />, text: p.package_size ? `Pack ${p.package_size}` : "", tone: "stock" }, { icon: <Tag size={14} />, text: p.wholesale_price ? `Wholesale ${money(p.wholesale_price)}` : "Set price", tone: "price" }, ...(Number(p.retail_price) > 0 ? [{ icon: <Banknote size={14} />, text: `Retail ${money(Number(p.retail_price))}`, tone: "cost" as const }] : [])]}
+            facts={[{ icon: <Package size={14} />, text: p.package_size ? p.package_size : "", tone: "stock" }, { icon: <Tag size={14} />, text: p.wholesale_price ? money(p.wholesale_price) : "Set price", tone: "price" }, ...(Number(p.retail_price) > 0 ? [{ icon: <Banknote size={14} />, text: money(Number(p.retail_price)), tone: "cost" as const }] : [])]}
             amount={`${p.stock_quantity} ${p.unit}`}
             status={<StatusChip tone={p.active ? "good" : "muted"} icon={p.active ? <Check size={14} /> : <EyeOff size={14} />}>{p.active ? "Active" : "Off"}</StatusChip>}
             actions={canEdit ? <IconBtn icon={<Edit3 size={17} />} label={`Edit ${p.name}`} onClick={() => setModal({ editing: p })} /> : undefined} />
