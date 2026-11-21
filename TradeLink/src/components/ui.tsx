@@ -26,11 +26,11 @@ const HEADING_ICON: Record<string, ReactNode> = {
   "Reviews & Ratings": <Star />, "Website Management": <Globe />, "Customer Support": <Headset />,
 };
 
-/** Page title with an icon. The longer description stays available to screen readers only. */
+/** Page banner: icon, title, one-line description and the page's main action. */
 export function PageHeading({ title, sub, action }: { title: string; sub: string; action?: ReactNode }) {
   return (
     <div className="page-heading">
-      <div className="ph-title"><span className="ph-ico">{HEADING_ICON[title] ?? <Package />}</span><h1>{title}</h1><p className="sr-only">{sub}</p></div>
+      <div className="ph-title"><span className="ph-ico">{HEADING_ICON[title] ?? <Package />}</span><div className="ph-text"><h1>{title}</h1><p>{sub}</p></div></div>
       {action}
     </div>
   );

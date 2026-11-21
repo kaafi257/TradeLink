@@ -5,6 +5,7 @@ import { Brand } from "../components/Brand";
 import { useAuth } from "../lib/auth";
 import { supabase, type Role } from "../lib/supabase";
 import "./admin.css";
+import "./adminPages.css";
 import "../appThemes.css";
 import ThemePicker from "../components/ThemePicker";
 import { AdminDataProvider, useAdmin } from "./AdminData";

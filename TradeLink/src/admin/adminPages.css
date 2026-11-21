@@ -1,0 +1,30 @@
+/* Every admin page: navy banner header (icon, title, description, action) and softer panels. Same look as the dashboard and Reports. */
+.admin-layout .page-heading{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 24px;margin:0 0 18px;border-radius:22px;color:#fff;background:linear-gradient(120deg,#0b1f3a 0%,#0a3a68 55%,#1479c2 125%);box-shadow:0 20px 38px -26px #0b3a6bb0}
+.admin-layout .page-heading::before{content:"";position:absolute;width:300px;height:300px;right:-70px;top:-160px;border-radius:50%;background:radial-gradient(circle,#4db3f2 0,#4db3f200 70%);opacity:.42;pointer-events:none}
+.admin-layout .page-heading>*{position:relative}
+.admin-layout .ph-title{display:flex;align-items:center;gap:14px;min-width:0}
+.admin-layout .ph-ico{width:48px;height:48px;border-radius:15px;color:#fff;background:#ffffff1f;border:1px solid #ffffff33;box-shadow:none}
+.admin-layout .ph-text{min-width:0}
+.admin-layout .page-heading h1{margin:0;font:800 clamp(20px,2.4vw,27px)/1.15 Manrope,'Inter',sans-serif;letter-spacing:-.5px;color:#fff}
+.admin-layout .page-heading p{margin:3px 0 0;position:static;width:auto;height:auto;clip:auto;overflow:hidden;white-space:normal;font-size:13px;line-height:1.4;color:#c5dcf2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.admin-layout .page-heading .btn{flex:none}
+.admin-layout .page-heading .btn.green,.admin-layout .page-heading .btn:not(.outline):not(.danger):not(.red){background:#fff;color:#0a3a68;border:0;box-shadow:0 10px 18px -12px #02142b88}
+.admin-layout .page-heading .btn.green:hover{background:#eaf4fd}
+.admin-layout .page-heading .btn.outline{background:#ffffff1f;color:#fff;border:1px solid #ffffff3a}
+.admin-layout .page-heading .btn.outline:hover{background:#ffffff33}
+@media(max-width:700px){
+  .admin-layout .page-heading{padding:16px;border-radius:20px;align-items:stretch}
+  .admin-layout .ph-ico{width:42px;height:42px;border-radius:13px}
+  .admin-layout .page-heading p{-webkit-line-clamp:2;font-size:12.5px}
+}
+
+/* Panels and tables */
+.admin-layout .table-panel,.admin-layout .panel{border-radius:20px;border-color:#e3ebf5}
+.admin-layout .table-panel .industry-head,.admin-layout .table-panel>header{background:linear-gradient(180deg,#f4f9ff,#fff);border-bottom:1px solid #e3ebf5}
+.admin-layout .rt th{background:#eef5fc;color:#4a6179;text-transform:uppercase;letter-spacing:.04em;font-size:11.5px}
+.admin-layout .rt tbody tr:hover{background:#f3f8fe}
+.admin-layout .summary-strip>.metric{border-radius:18px}
+html[data-theme=dark] .admin-layout .table-panel .industry-head,html[data-theme=dark] .admin-layout .table-panel>header{background:linear-gradient(180deg,var(--a-head),var(--a-head2));border-bottom-color:var(--a-line)}
+html[data-theme=dark] .admin-layout .rt th{background:var(--a-tint);color:var(--a-muted)}
+html[data-theme=dark] .admin-layout .rt tbody tr:hover{background:var(--a-tint)}
+html[data-theme=dark] .admin-layout .table-panel,html[data-theme=dark] .admin-layout .panel{border-color:var(--a-line)}
