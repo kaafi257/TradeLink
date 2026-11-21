@@ -1,14 +1,15 @@
 import { useMemo, useState } from "react";
-import { BarChart3, CalendarClock, CheckCircle2, Gift, Megaphone, Pause, Pencil, Play, Plus, Power, Square, Star, Ticket, Trash2, Undo2, XCircle, Zap } from "lucide-react";
+import { BarChart3, CalendarClock, CheckCircle2, Gift, Megaphone, Pause, PanelTop, Pencil, Play, Plus, Power, Square, Star, Ticket, Trash2, Undo2, XCircle, Zap } from "lucide-react";
 import { PageHeading, SummaryStrip } from "../../components/ui";
 import { CampaignCard, CampaignForm, CouponCard, CouponForm } from "../../components/promo/PromoUI";
 import { STATUS_LABEL, STATUS_ORDER, couponStatus, etb, rpc, type Coupon, type CouponResult, type Promo, type PromoResult, type PromoStatus } from "../../lib/promo";
 import { requireSupabase } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
+import CampaignScenes from "./CampaignScenes";
 import { ErrorNote, Modal, Tabs, callRpc, useAction, useLoad } from "../suite";
 
 type Supplier = { id: string; name: string };
-type Tab = "campaigns" | "approvals" | "coupons" | "featured" | "analytics";
+type Tab = "campaigns" | "approvals" | "coupons" | "featured" | "analytics" | "banner";
 
 export default function Marketing() {
   const { can, categories, products, search } = useAdmin();
@@ -128,7 +129,10 @@ export default function Marketing() {
         { id: "coupons", label: "Coupons", icon: <Ticket /> },
         { id: "featured", label: "Featured", icon: <Star /> },
         { id: "analytics", label: "Analytics", icon: <BarChart3 /> },
+        { id: "banner", label: "Homepage banner", icon: <PanelTop /> },
       ]} />
+
+      {tab === "banner" && <CampaignScenes canEdit={edit} />}
 
       {tab === "campaigns" && <>
         <div className="pm-chips" role="group" aria-label="Filter by status">

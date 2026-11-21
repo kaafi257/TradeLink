@@ -1,0 +1,57 @@
+/* Homepage advertising campaign (TradeLink navy + blue only) */
+.cmp{position:relative;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:center;gap:20px;min-height:250px;padding:30px 36px 44px;border-radius:20px;overflow:hidden;color:#fff;
+  background:linear-gradient(120deg,#073256 0%,#0a4aa8 62%,#1b6ac0 100%);box-shadow:0 22px 44px -26px #073256}
+.cmp:before,.cmp:after{content:"";position:absolute;border-radius:50%;background:#4aa3ff;opacity:.16;pointer-events:none}
+.cmp:before{width:360px;height:360px;right:-90px;top:-170px}.cmp:after{width:240px;height:240px;left:38%;bottom:-150px;opacity:.12}
+.cmp-copy{position:relative;z-index:1;animation:cmp-in .6s cubic-bezier(.2,.8,.2,1) both}
+.cmp-tag{display:inline-block;padding:5px 12px;border-radius:999px;background:#ffffff1f;border:1px solid #ffffff3d;font-size:12.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#cfe6ff}
+.public-site .cmp h2{margin:12px 0 8px;font-size:clamp(24px,2.8vw,36px);line-height:1.12;font-weight:800;letter-spacing:-.02em;color:#fff}
+.cmp p{margin:0;max-width:480px;font-size:16px;line-height:1.5;color:#d6e8fb}
+.cmp-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:20px}
+.cmp-cta{display:inline-flex;align-items:center;gap:9px;height:46px;padding:0 22px;border:0;border-radius:23px;background:#fff;color:#073256;font:700 15.5px/1 inherit;cursor:pointer;box-shadow:0 10px 22px -12px #02183a}
+.cmp-cta:hover{background:#eaf3fc}.cmp-cta svg{transition:transform .15s}.cmp-cta:hover svg{transform:translateX(3px)}
+.cmp-row small{color:#bcd7f2;font-size:13.5px}
+.cmp-art{position:relative;z-index:1;animation:cmp-art .6s ease both}
+.cmp-art svg{display:block;width:100%;height:auto;max-height:210px;overflow:visible}
+.cmp-ctl{position:absolute;left:36px;right:36px;bottom:14px;display:flex;align-items:center;justify-content:space-between;z-index:2}
+.cmp-dots{display:flex;gap:8px}
+.cmp-dots button{position:relative;width:34px;height:20px;padding:0;border:0;background:none;cursor:pointer}
+.cmp-dots button:before{content:"";position:absolute;left:0;right:0;top:8px;height:4px;border-radius:2px;background:#ffffff40}
+.cmp-dots i{position:absolute;left:0;top:8px;height:4px;width:0;border-radius:2px;background:#fff}
+.cmp-dots .on i{width:100%;animation:cmp-fill linear both}
+.cmp-pause{width:30px;height:30px;border-radius:50%;border:1px solid #ffffff55;background:#ffffff1a;color:#fff;display:grid;place-items:center;cursor:pointer}
+.cmp :focus-visible{outline:3px solid #8cc8ff;outline-offset:2px}
+
+.cmp-truck{animation:cmp-drive 5s cubic-bezier(.3,.1,.3,1) both}
+.cmp-wheel{transform-box:fill-box;transform-origin:center;animation:cmp-spin .6s linear infinite}
+.cmp-box{animation:cmp-bounce .5s ease-in-out infinite alternate}.cmp-box.b2{animation-delay:.18s}
+.cmp-pop{transform-box:fill-box;transform-origin:center;animation:cmp-pop .5s .9s cubic-bezier(.2,1.4,.4,1) both}.cmp-pop.p2{animation-delay:1.4s}
+.cmp-dash{animation:cmp-road .9s linear infinite}
+.cmp-knob{animation:cmp-knob 5s ease-in-out both}
+.cmp-bag{transform-box:fill-box;transform-origin:50% 100%;animation:cmp-hop 1.1s ease-in-out infinite}
+.cmp-awning{transform-box:fill-box;transform-origin:50% 0;animation:cmp-awning .8s .3s cubic-bezier(.2,1.2,.4,1) both}
+.cmp-door{transform-box:fill-box;transform-origin:0 50%;animation:cmp-door 1s 1s ease-out both}
+.cmp-msg{animation:cmp-msg .5s cubic-bezier(.2,.9,.3,1) both}.cmp-msg.m1{animation-delay:.2s}.cmp-msg.m2{animation-delay:1.1s}.cmp-msg.m3{animation-delay:2s}
+.cmp-dot{animation:cmp-type 1s ease-in-out infinite}.cmp-dot.d2{animation-delay:.15s}.cmp-dot.d3{animation-delay:.3s}
+@keyframes cmp-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes cmp-art{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+@keyframes cmp-fill{from{width:0}to{width:100%}}
+@keyframes cmp-drive{0%{transform:translateX(-170px)}38%,78%{transform:translateX(130px)}100%{transform:translateX(130px)}}
+@keyframes cmp-spin{to{transform:rotate(360deg)}}
+@keyframes cmp-bounce{to{transform:translateY(-3px)}}
+@keyframes cmp-road{to{transform:translateX(-40px)}}
+@keyframes cmp-pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+@keyframes cmp-knob{0%,18%{transform:translateX(0)}32%,68%{transform:translateX(88px)}82%,100%{transform:translateX(0)}}
+@keyframes cmp-hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes cmp-awning{from{transform:scaleY(.1);opacity:0}to{transform:none;opacity:1}}
+@keyframes cmp-door{from{transform:scaleX(1)}to{transform:scaleX(.12)}}
+@keyframes cmp-msg{from{opacity:0;transform:translateY(12px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes cmp-type{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(-5px);opacity:1}}
+
+@media(max-width:860px){
+  .cmp{grid-template-columns:1fr;gap:4px;min-height:0;padding:22px 18px 46px}
+  .cmp-art{order:-1;max-width:300px;margin:0 auto -4px}.cmp-art svg{max-height:130px}
+  .cmp p{font-size:14.5px}.cmp-ctl{left:18px;right:18px}
+  .cmp-row{margin-top:14px}
+}
+@media(prefers-reduced-motion:reduce){.cmp *,.cmp-copy,.cmp-art{animation:none!important}.cmp-dots .on i{width:100%}.cmp-truck{transform:translateX(130px)}}

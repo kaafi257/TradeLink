@@ -129,3 +129,19 @@
 .mk-promos-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}.mk-promos-chips span{padding:5px 11px;border-radius:999px;background:#eaf3ff;color:#0b5d99;font:600 12px 'Inter',sans-serif}
 .tl-sups .star{margin-left:auto;color:#e0a100;display:inline-flex}
 @media(prefers-reduced-motion:reduce){.lp-live-card,.lp-live-card:hover{transition:none;transform:none}}
+/* Promotion in the hero: picture with the offer written on it */
+.lp-promo{aspect-ratio:1/.92}
+.lp-promo figure{position:absolute;inset:0;margin:0;overflow:hidden;border-radius:26px;box-shadow:0 30px 60px -30px #0e2a40a0;animation:lp-pf .7s ease both}
+.lp-promo figure img{width:100%;height:100%;object-fit:cover}
+.lp-promo figure::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 38%,#06223dd9)}
+.lp-promo-cap{position:absolute;left:0;right:0;bottom:0;padding:clamp(16px,3vw,30px);color:#fff;display:grid;gap:6px;justify-items:start;animation:lp-pc .7s .15s ease both}
+.lp-promo-cap small{font:700 .72rem 'Inter',sans-serif;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.lp-promo-cap b{font:800 clamp(1.2rem,2.2vw,1.8rem)/1.15 'Inter',sans-serif}
+.lp-promo-cap span{font-size:.95rem;opacity:.92;max-width:44ch}
+.lp-promo-cap .lp-btn.solid{margin-top:6px;padding:0 28px!important;min-width:0;width:auto;background:#fff;color:var(--lp-navy)}
+.lp-promo-dots{position:absolute;right:18px;top:16px;display:flex;gap:6px;z-index:2}
+.lp-promo-dots button{width:22px;height:5px;border-radius:3px;border:0;background:#fff8;padding:0;cursor:pointer}
+.lp-promo-dots button[aria-current=true]{background:#fff}
+@keyframes lp-pf{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:none}}
+@keyframes lp-pc{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.lp-promo figure,.lp-promo-cap{animation:none}}
