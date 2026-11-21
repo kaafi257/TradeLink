@@ -35,7 +35,7 @@ export function LandingHero({ photos, offerPct, promos = [], onShop, onQuote }: 
           </ul>
         </div>
         {promo ? (
-          <div className="lp-stage lp-promo" role="group" aria-label="Promotion">
+          <div className="lp-stage lp-hero-promo" role="group" aria-label="Promotion">
             <figure key={promo.id}><img src={promo.src} alt={promo.title} loading="eager" /></figure>
             <div className="lp-promo-cap" key={"c" + promo.id}>
               <small>{promo.tag}</small><b>{promo.title}</b>{promo.body && <span>{promo.body}</span>}
