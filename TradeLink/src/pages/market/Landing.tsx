@@ -20,10 +20,7 @@ export function LandingHero({ photos, offerPct, promos = [], onShop, onQuote }: 
     <section className="lp-hero" id="top" aria-label="Welcome">
       <div className="lp-wrap lp-hero-in">
         <div className="lp-copy">
-          <p className="lp-eyebrow">Welcome to TradeLink</p>
           <h1>Wholesale and retail.<br />In one place.</h1>
-          <p className="lp-script">Buy in bulk, or one at a time.</p>
-          <p className="lp-lead">Browse products from TradeLink and its suppliers, then send a request and we reply with your price.</p>
           <div className="lp-cta">
             <button className="lp-btn solid" onClick={onShop}>Shop now</button>
             <button className="lp-btn line" onClick={onQuote}>Request a quote</button>

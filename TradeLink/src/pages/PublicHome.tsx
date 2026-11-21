@@ -12,9 +12,8 @@ import { track, trackState } from "../lib/track";
 import { applyCoupon } from "../lib/coupon";
 import { useWishlist } from "../lib/wishlist";
 import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TradeHeader, TradeNav, TradeRow } from "./market/Trade";
-import Campaign, { DEFAULT_SLIDES } from "./market/Campaign";
 import { BrowseCategories, LivePromos, LandingHero, type HeroPromo, PromoBanners, TrustNewsletter } from "./market/Landing";
-import { offerText, type PublicPromo } from "../lib/promo";
+import { KIND_LABEL, offerText, type PublicPromo } from "../lib/promo";
 import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
 import { supabase, withPhoto, type CampaignSlide, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
@@ -191,7 +190,7 @@ export default function PublicHome() {
     track("visit", { mode: readMode() });
   }, [authLoading, session]);
   const wish = useWishlist();
-  const [campaign, setCampaign] = useState<CampaignSlide[]>(DEFAULT_SLIDES);
+  const [campaign, setCampaign] = useState<CampaignSlide[]>([]);
   const [bestIds, setBestIds] = useState<string[]>([]);
   const [suppliers, setSuppliers] = useState<PublicSupplier[]>([]);
   const [supCats, setSupCats] = useState<{ supplier_id: string; category_id: string }[]>([]);
@@ -373,6 +372,16 @@ export default function PublicHome() {
     const pool = [...featured, ...newest, ...visible].filter(p => !!p.image_url);
     return [...new Map(pool.map(p => [p.id, p])).values()].slice(0, 3).map(p => ({ id: p.id, src: p.image_url as string, name: p.name }));
   }, [featured, newest, visible]);
+  // The hero card only shows something real: a live promotion with the photo of a product it covers, then any picture an admin added themselves.
+  const liveHero = useMemo<HeroPromo[]>(() => {
+    const out: HeroPromo[] = [];
+    for (const c of promos) {
+      const ids = c.scope === "product" && c.product_id ? [c.product_id] : promoProds.filter(x => x.promotion_id === c.id).map(x => x.product_id);
+      const pr = ids.map(id => products.find(p => p.id === id)).find(p => p?.image_url);
+      if (pr) out.push({ id: `live-${c.id}`, src: pr.image_url as string, tag: KIND_LABEL[c.kind], title: offerText(c), body: c.banner_text || c.name, cta: "Shop now", run: () => openPromo(c) });
+    }
+    return out.slice(0, 3);
+  }, [promos, promoProds, products]); // eslint-disable-line react-hooks/exhaustive-deps
   const heroPromos = useMemo<HeroPromo[]>(() => campaign.filter(c => !!c.image_url).map(c => ({
     id: c.id, src: c.image_url as string, tag: c.tag, title: c.title, body: c.body, cta: c.cta_label,
     run: () => { if (c.cta_action === "register") navigate("/supplier/register"); else if (c.cta_action === "quote") setRfqOpen(true); else { changeMode(c.cta_action === "shop_retail" ? "individual" : "business"); go("public-products"); } },
@@ -402,10 +411,8 @@ export default function PublicHome() {
         openMenu={() => setMenuOpen(v => !v)} menuOpen={menuOpen} />
       <TradeNav mode={mode} industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} onRfq={() => setRfqOpen(true)} />
       <ModeToggle mode={mode} onMode={changeMode} className="mobile" />
-      <LandingHero photos={heroPhotos} promos={heroPromos} offerPct={offerPct} onShop={() => go("public-products")} onQuote={() => setRfqOpen(true)} />
+      <LandingHero photos={heroPhotos} promos={[...liveHero, ...heroPromos].slice(0, 4)} offerPct={offerPct} onShop={() => go("public-products")} onQuote={() => setRfqOpen(true)} />
       <BrowseCategories items={catCards} onPick={openIndustry} onMore={() => setMenuOpen(true)} />
-      <Campaign slides={campaign} products={products.length} suppliers={suppliers.length} industries={catCards.length}
-        onShop={m => { changeMode(m); go("public-products"); }} onRegister={() => navigate("/supplier/register")} onQuote={() => setRfqOpen(true)} />
       <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
         industry={effIndustry} category={effCategory} setIndustry={setIndustryId} setCategory={setCategoryId}
         search={search} setSearch={setSearch} items={shown} emptyText={emptyMessage} />
