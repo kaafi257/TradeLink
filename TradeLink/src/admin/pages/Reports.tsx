@@ -1,12 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Activity, Banknote, Boxes, Building2, ClipboardList, FileQuestion, LayoutDashboard, Package, ShieldCheck, ShoppingCart, Store, Truck, UserPlus, Users, Wallet, Receipt, Percent, Undo2, Hourglass } from "lucide-react";
-import { PageHeading } from "../../components/ui";
 import { fmtDate, fmtDateTime, fmtMoney, fmtN, iso, num, rangeFor, TZ, useRpc, type Preset, type Range } from "../reports/api";
 import { Donut, HBars, LineChart, PALETTE } from "../reports/charts";
 import { Badge, Box, Cards, DataTable, DateBar, Err, Note, Select, Spin, type Card } from "../reports/parts";
 import { requireSupabase } from "../../lib/supabase";
 import { Audit, Market, Products, Suppliers } from "../reports/more";
+import "../reports/reports.css";
 
 type Tab = { key: string; label: string; icon: ReactNode; soon?: boolean };
 const TABS: Tab[] = [
@@ -282,9 +282,13 @@ export default function Reports() {
   const body = cur.soon ? <Soon t={cur} /> : tab === "overview" ? <Overview c={c} /> : tab === "customers" ? <Customers c={c} /> : tab === "suppliers" ? <Suppliers c={c} /> : tab === "products" ? <Products c={c} /> : tab === "audit" ? <Audit c={c} /> : tab === "market" ? <Market c={c} /> : tab === "orders" ? <Orders c={c} /> : tab === "inquiries" ? <Inquiries c={c} /> : tab === "inventory" ? <Inventory c={c} /> : <Financial c={c} />;
   return (
     <>
-      <PageHeading title="Reports & Analytics" sub="Business reports from your real TradeLink records." />
+      <header className="rp-hero">
+        <div className="rp-hero-top">
+          <div><small className="rp-eyebrow">Analytics</small><h1>Reports &amp; Analytics</h1><p>{r.label} · from your real TradeLink records</p></div>
+          {!cur.soon && <DateBar preset={preset} setPreset={setPreset} cf={cf} ct={ct} setCf={setCf} setCt={setCt} label={r.label} />}
+        </div>
       <div className="rp-tabs" role="tablist" ref={tabsRef}><i className="rp-tab-pill" aria-hidden="true" />{TABS.map(t => <button key={t.key} role="tab" aria-selected={tab === t.key} className={tab === t.key ? "on" : ""} onClick={() => setTab(t.key)}>{t.icon}<span>{t.label}</span></button>)}</div>
-      {!cur.soon && <DateBar preset={preset} setPreset={setPreset} cf={cf} ct={ct} setCf={setCf} setCt={setCt} label={r.label} />}
+      </header>
       <div key={tab} className="rp-body">{body}</div>
     </>
   );

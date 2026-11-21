@@ -1,0 +1,78 @@
+/* Reports & Analytics: same look as the dashboard (navy hero, colourful KPI cards, soft panels). Loaded after admin.css, so equal-specificity rules here win. */
+.admin-layout .rp-hero{position:relative;overflow:hidden;border-radius:24px;padding:22px 26px 18px;margin-bottom:18px;color:#fff;background:linear-gradient(120deg,#0b1f3a 0%,#0a3a68 55%,#1479c2 125%);box-shadow:0 22px 40px -26px #0b3a6bb0}
+.admin-layout .rp-hero::before{content:"";position:absolute;width:340px;height:340px;right:-80px;top:-170px;border-radius:50%;background:radial-gradient(circle,#4db3f2 0,#4db3f200 70%);opacity:.45;pointer-events:none}
+.admin-layout .rp-hero-top{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.admin-layout .rp-eyebrow{display:block;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#9fd0f5}
+.admin-layout .rp-hero h1{margin:4px 0 2px;font:800 clamp(22px,2.6vw,30px)/1.15 Manrope,'Inter',sans-serif;letter-spacing:-.6px;color:#fff}
+.admin-layout .rp-hero p{margin:0;font-size:13px;color:#c5dcf2}
+.admin-layout .rp-hero .rp-datebar{margin:0;position:relative}
+.admin-layout .rp-hero .rp-range-label{display:none}
+.admin-layout .rp-hero .range-tabs{background:#ffffff1f;border:1px solid #ffffff2e;border-radius:999px;padding:3px}
+.admin-layout .rp-hero .range-tabs button{color:#d7e8f8;border-radius:999px}
+.admin-layout .rp-hero .range-tabs button.on{background:#fff;color:#0a3a68;box-shadow:none}
+.admin-layout .rp-hero .rp-custom{color:#c5dcf2}
+.admin-layout .rp-hero .rp-custom input{background:#ffffff1f;border-color:#ffffff38;color:#fff}
+.admin-layout .rp-hero .rp-tabs{position:relative;padding:0}
+.admin-layout .rp-hero .rp-tabs button{background:#ffffff14;border:1px solid #ffffff26;color:#dcebf9}
+.admin-layout .rp-hero .rp-tabs button:hover{background:#ffffff26;color:#fff;border-color:#ffffff40}
+.admin-layout .rp-hero .rp-tabs button.on{background:#fff;border-color:#fff;color:#0a3a68}
+
+/* KPI cards */
+.admin-layout .rp-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.admin-layout .rp-card{--t:#1479c2;--t2:#4db3f2;padding:16px 16px 14px 20px;border-radius:18px;border:1px solid #e3ebf5;background:linear-gradient(180deg,#fff,#f6faff);box-shadow:0 14px 28px -24px #0b3a6b99;overflow:hidden}
+.admin-layout .rp-card::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 4px 4px 0;background:linear-gradient(var(--t2),var(--t))}
+.admin-layout .rp-card:nth-child(8n+2){--t:#12935f;--t2:#3fd59a}.admin-layout .rp-card:nth-child(8n+3){--t:#d98a00;--t2:#f6c453}.admin-layout .rp-card:nth-child(8n+4){--t:#6b4fd8;--t2:#a592f2}
+.admin-layout .rp-card:nth-child(8n+5){--t:#0e8fa0;--t2:#4fd0dc}.admin-layout .rp-card:nth-child(8n+6){--t:#d0463a;--t2:#f08a80}.admin-layout .rp-card:nth-child(8n+7){--t:#3a5bd9;--t2:#7f9bf5}.admin-layout .rp-card:nth-child(8n+8){--t:#c2477f;--t2:#ee8ab5}
+.admin-layout .rp-card.click:hover{border-color:var(--t2);box-shadow:0 18px 32px -22px var(--t);transform:translateY(-2px)}
+.admin-layout .rp-card-ic{width:38px;height:38px;border-radius:12px;margin-bottom:8px;color:#fff;background:linear-gradient(135deg,var(--t2),var(--t));box-shadow:0 8px 14px -8px var(--t)}
+.admin-layout .rp-card-ic svg{width:19px;height:19px}
+.admin-layout .rp-card-l{font-size:13px;color:#5b6f86}
+.admin-layout .rp-card b{font:800 26px/1.15 Manrope,'Inter',sans-serif;letter-spacing:-.6px}
+.admin-layout .rp-card small{font-size:12px;color:#6c8097}
+.admin-layout .rp-card em{top:16px;right:14px}
+
+/* Panels and charts */
+.admin-layout .rp-box{border-radius:20px;border:1px solid #e3ebf5;box-shadow:0 14px 30px -26px #0b3a6b99}
+.admin-layout .rp-box .panel-head,.admin-layout .rp-table .panel-head{background:linear-gradient(180deg,#f4f9ff,#fff);border-bottom:1px solid #e3ebf5}
+.admin-layout .rp-box-body{padding:14px 18px 18px}
+.admin-layout .rp-chart svg{height:250px}
+.admin-layout .rp-tick{fill:#6c8097;font-size:13px}
+.admin-layout .rp-grid{stroke:#e3ecf6;stroke-dasharray:4 5}
+.admin-layout .rp-line{stroke:#1479c2;stroke-width:2.6}
+.admin-layout .rp-area{fill:rgba(20,121,194,.13)}
+.admin-layout .rp-dot{stroke:#1479c2}
+.admin-layout .rp-bar{fill:#4aa3e6}.admin-layout .rp-bar.on{fill:#0b5d99}
+.admin-layout .rp-tip{background:#0b2a4a;border-radius:10px}
+.admin-layout .rp-donut-bg{stroke:#e9f0f8}
+.admin-layout .rp-hbars>div>div{background:#e9f0f8;height:10px}
+.admin-layout .rp-big{font:800 30px Manrope,'Inter',sans-serif;color:#0b2a4a}
+
+/* Tables and buttons */
+.admin-layout .rp-tbl th{background:#eef5fc;color:#4a6179;text-transform:uppercase;letter-spacing:.04em;font-size:11.5px}
+.admin-layout .rp-tbl tbody tr:hover{background:#f3f8fe}
+.admin-layout .rp-btn{background:linear-gradient(180deg,#1479c2,#0b5d99);border-radius:999px;box-shadow:0 8px 14px -10px #0b5d99}
+.admin-layout .rp-count{background:#e3f0fc;color:#0b5d99}
+.admin-layout .rp-pager button{border-radius:50%}
+
+@media(max-width:1100px){.admin-layout .rp-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){
+  .admin-layout .rp-hero{border-radius:20px;padding:18px 16px 14px}
+  .admin-layout .rp-cards{gap:10px}
+  .admin-layout .rp-card{padding:14px 12px 12px 16px}
+  .admin-layout .rp-card b{font-size:21px}
+  .admin-layout .rp-grid2{grid-template-columns:1fr}
+  .admin-layout .rp-chart svg{height:210px}
+}
+/* Night mode */
+html[data-theme=dark] .admin-layout .rp-card{background:linear-gradient(180deg,var(--a-card),var(--a-card2));border-color:var(--a-line)}
+html[data-theme=dark] .admin-layout .rp-box{border-color:var(--a-line);background:var(--a-surface)}
+html[data-theme=dark] .admin-layout :is(.rp-box .panel-head,.rp-table .panel-head){background:linear-gradient(180deg,var(--a-head),var(--a-head2));border-bottom-color:var(--a-line)}
+html[data-theme=dark] .admin-layout :is(.rp-card-l,.rp-card small,.rp-tick,.rp-note,.rp-range-label){color:var(--a-muted);fill:var(--a-muted)}
+html[data-theme=dark] .admin-layout :is(.rp-card b,.rp-big,.rp-tbl td,.rp-donut-n){color:var(--a-ink);fill:var(--a-ink)}
+html[data-theme=dark] .admin-layout .rp-tbl th{background:var(--a-tint);color:var(--a-muted)}
+html[data-theme=dark] .admin-layout .rp-tbl td{border-color:var(--a-line)}
+html[data-theme=dark] .admin-layout .rp-tbl tbody tr:hover{background:var(--a-tint)}
+html[data-theme=dark] .admin-layout :is(.rp-grid){stroke:var(--a-line)}
+html[data-theme=dark] .admin-layout :is(.rp-hbars>div,.rp-donut li){color:var(--a-muted)}
+html[data-theme=dark] .admin-layout :is(.rp-hbars b,.rp-donut li b){color:var(--a-ink)}
+.admin-layout .rp-hero .range-tabs button{white-space:nowrap;padding-inline:11px}

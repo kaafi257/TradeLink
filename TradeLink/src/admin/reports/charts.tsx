@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export const PALETTE = ["#2f6df6", "#0b1f3a", "#6fa0ff", "#14a37f", "#e0a030", "#d9534f", "#8b9ab5"];
+export const PALETTE = ["#1479c2", "#0b3a63", "#4db3f2", "#18a36a", "#e9a914", "#d0463a", "#8aa0b8"];
 type Pt = { label: string; value: number };
 
 function nice(max: number) { if (max <= 0) return 1; const p = 10 ** Math.floor(Math.log10(max)); const f = max / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
