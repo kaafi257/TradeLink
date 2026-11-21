@@ -1,65 +1,63 @@
-/* Colour themes for the Admin and Supplier dashboards (picked in the top bar; stored in localStorage "tl-theme").
-   Light is the original blue look. Comfort, Calm and Dark are softer and easier on the eyes. */
-html[data-theme=comfort]{--a-bg:#f1ede3;--a-surface:#faf7f1;--a-ink:#2c3a40;--a-muted:#6b7775;--a-line:#e0d9c8;--a-side:#34505b;--a-side2:#2b444e;--a-sel:#4b6c78;--a-accent:#3f7f8c;--a-accent2:#2f6470;--a-tint:#e8ebdc;--a-head:#f3eee0;--a-head2:#ece6d4;--a-card:#fbf8f2;--a-card2:#f3eee2;--a-sidetxt:#c9d6d9}
-html[data-theme=calm]{--a-bg:#ecf1ed;--a-surface:#f7faf7;--a-ink:#243d36;--a-muted:#62766d;--a-line:#d4dfd6;--a-side:#2f5249;--a-side2:#274840;--a-sel:#44705f;--a-accent:#3d8a74;--a-accent2:#2e6f5c;--a-tint:#e0ece3;--a-head:#eff5f0;--a-head2:#e6efe8;--a-card:#f9fbf8;--a-card2:#eef4ef;--a-sidetxt:#c6dacf}
+/* Night mode for the Admin and Supplier dashboards (picked in the top bar; stored in localStorage "tl-theme").
+   Light is the original look and needs no overrides. */
 html[data-theme=dark]{--a-bg:#141a1f;--a-surface:#1d252b;--a-ink:#e7eef1;--a-muted:#93a3ab;--a-line:#2b363d;--a-side:#0f1418;--a-side2:#0c1114;--a-sel:#223644;--a-accent:#5b9bd0;--a-accent2:#3f78a8;--a-tint:#243039;--a-head:#222c33;--a-head2:#1f282e;--a-card:#212a31;--a-card2:#1b2328;--a-sidetxt:#a9b8c0;color-scheme:dark}
 
 /* ---------- Admin ---------- */
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout{--bg:var(--a-bg);--surface:var(--a-surface);--ink:var(--a-ink);--muted:var(--a-muted);--line:var(--a-line);--deep:var(--a-side);--teal:var(--a-accent);--tint:var(--a-tint);--glass:var(--a-surface);--glass-edge:var(--a-line);--navy:var(--a-accent2);background:var(--a-bg);color:var(--a-ink)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.admin-main,.admin-content,.dash-glass){background:var(--a-bg)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .sidebar{background:linear-gradient(180deg,var(--a-side),var(--a-side2));border-right:1px solid #ffffff0f}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .side-nav a,html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.sidebar-user,.logout-button){color:var(--a-sidetxt)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .side-nav a.selected{background:var(--a-sel);box-shadow:none;color:#fff}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .side-nav a.selected:before{background:var(--a-accent)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .admin-topbar{background:var(--a-surface);border-bottom:1px solid var(--a-line);-webkit-backdrop-filter:none;backdrop-filter:none}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .global-search{background:var(--a-bg);border-color:var(--a-line)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.global-search input,.topbar-title,.user-menu b){color:var(--a-ink)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.avatar,.topbar-avatar){background:linear-gradient(135deg,var(--a-accent),var(--a-accent2))}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.btn:not(.outline):not(.gold):not(.danger):not(.red),.btn.green,.btn.dark){background:var(--a-accent2);color:#fff;box-shadow:none}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.btn:not(.outline):not(.gold):not(.danger):not(.red),.btn.green,.btn.dark):hover{background:var(--a-accent)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .btn.outline{background:var(--a-surface);color:var(--a-ink);border-color:var(--a-line)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.panel-head,.dash-glass .panel-head){background:linear-gradient(180deg,var(--a-head),var(--a-head2));color:var(--a-ink)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.glass,.panel,.table-panel,.setting-card,.inline-form,.activity-page,.info-banner,.metric,.stat-card,.report-cards>div){background:var(--a-surface);border-color:var(--a-line);color:var(--a-ink)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.glass.gs,.glass.gs.link){background:linear-gradient(180deg,var(--a-card),var(--a-card2));border-color:var(--a-line)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.gs-icon,.ph-ico,.sc-ico,.metric-ico,.stat-icon,.rec-lead,.rec-empty span,.report-cards>div svg){background:linear-gradient(135deg,var(--a-accent),var(--a-accent2))!important;box-shadow:none!important;color:#fff!important}
+html[data-theme=dark] .admin-layout{--bg:var(--a-bg);--surface:var(--a-surface);--ink:var(--a-ink);--muted:var(--a-muted);--line:var(--a-line);--deep:var(--a-side);--teal:var(--a-accent);--tint:var(--a-tint);--glass:var(--a-surface);--glass-edge:var(--a-line);--navy:var(--a-accent2);background:var(--a-bg);color:var(--a-ink)}
+html[data-theme=dark] .admin-layout :is(.admin-main,.admin-content,.dash-glass){background:var(--a-bg)}
+html[data-theme=dark] .admin-layout .sidebar{background:linear-gradient(180deg,var(--a-side),var(--a-side2));border-right:1px solid #ffffff0f}
+html[data-theme=dark] .admin-layout .side-nav a,html[data-theme=dark] .admin-layout :is(.sidebar-user,.logout-button){color:var(--a-sidetxt)}
+html[data-theme=dark] .admin-layout .side-nav a.selected{background:var(--a-sel);box-shadow:none;color:#fff}
+html[data-theme=dark] .admin-layout .side-nav a.selected:before{background:var(--a-accent)}
+html[data-theme=dark] .admin-layout .admin-topbar{background:var(--a-surface);border-bottom:1px solid var(--a-line);-webkit-backdrop-filter:none;backdrop-filter:none}
+html[data-theme=dark] .admin-layout .global-search{background:var(--a-bg);border-color:var(--a-line)}
+html[data-theme=dark] .admin-layout :is(.global-search input,.topbar-title,.user-menu b){color:var(--a-ink)}
+html[data-theme=dark] .admin-layout :is(.avatar,.topbar-avatar){background:linear-gradient(135deg,var(--a-accent),var(--a-accent2))}
+html[data-theme=dark] .admin-layout :is(.btn:not(.outline):not(.gold):not(.danger):not(.red),.btn.green,.btn.dark){background:var(--a-accent2);color:#fff;box-shadow:none}
+html[data-theme=dark] .admin-layout :is(.btn:not(.outline):not(.gold):not(.danger):not(.red),.btn.green,.btn.dark):hover{background:var(--a-accent)}
+html[data-theme=dark] .admin-layout .btn.outline{background:var(--a-surface);color:var(--a-ink);border-color:var(--a-line)}
+html[data-theme=dark] .admin-layout :is(.panel-head,.dash-glass .panel-head){background:linear-gradient(180deg,var(--a-head),var(--a-head2));color:var(--a-ink)}
+html[data-theme=dark] .admin-layout :is(.glass,.panel,.table-panel,.setting-card,.inline-form,.activity-page,.info-banner,.metric,.stat-card,.report-cards>div){background:var(--a-surface);border-color:var(--a-line);color:var(--a-ink)}
+html[data-theme=dark] .admin-layout :is(.glass.gs,.glass.gs.link){background:linear-gradient(180deg,var(--a-card),var(--a-card2));border-color:var(--a-line)}
+html[data-theme=dark] .admin-layout :is(.gs-icon,.ph-ico,.sc-ico,.metric-ico,.stat-icon,.rec-lead,.rec-empty span,.report-cards>div svg){background:linear-gradient(135deg,var(--a-accent),var(--a-accent2))!important;box-shadow:none!important;color:#fff!important}
 
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.progress i,.meter s){background:linear-gradient(90deg,var(--a-accent),var(--a-accent2))}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(input,select,textarea){background:var(--a-surface);color:var(--a-ink);border-color:var(--a-line)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(h1,h2,h3,h4,b,strong,th,label){color:inherit}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(td,th){border-color:var(--a-line)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.modal,.modal-card,.drawer,.sheet){background:var(--a-surface);color:var(--a-ink)}
+html[data-theme=dark] .admin-layout :is(.progress i,.meter s){background:linear-gradient(90deg,var(--a-accent),var(--a-accent2))}
+html[data-theme=dark] .admin-layout :is(input,select,textarea){background:var(--a-surface);color:var(--a-ink);border-color:var(--a-line)}
+html[data-theme=dark] .admin-layout :is(h1,h2,h3,h4,b,strong,th,label){color:inherit}
+html[data-theme=dark] .admin-layout :is(td,th){border-color:var(--a-line)}
+html[data-theme=dark] .admin-layout :is(.modal,.modal-card,.drawer,.sheet){background:var(--a-surface);color:var(--a-ink)}
 html[data-theme=dark] .admin-layout :is(small,.muted,time,td,.sub){color:var(--a-muted)}
 html[data-theme=dark] .admin-layout :is(.schip,.chip-dot,.count-badge){filter:brightness(.95)}
 
 
 /* ---------- Admin dashboard (dx-*) ---------- */
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dx-hero{background:linear-gradient(120deg,var(--a-side) 0%,var(--a-accent2) 140%)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dx-hero::before,html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dx-hero::after{display:none}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dx-hero-card{background:#ffffff14;border-color:#ffffff26}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dx-pills button.hot{background:#e6cf94;border-color:#e6cf94;color:#3a2f10}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dx-btn.solid{background:#fbf8f0;color:var(--a-side)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dx-kpi{--t:var(--a-accent2);--t2:var(--a-accent);background:var(--a-surface);border-color:var(--a-line);color:var(--a-ink)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dx-ico{background:linear-gradient(135deg,var(--a-accent),var(--a-accent2));box-shadow:none}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dx-card{background:var(--a-surface);border-color:var(--a-line);box-shadow:none;color:var(--a-ink)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.dx-card .panel-head,.dx-card.alerts.hot .panel-head){background:linear-gradient(180deg,var(--a-head),var(--a-head2));border-bottom-color:var(--a-line)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dx-card .range-tabs{background:var(--a-tint)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dx-card .range-tabs button.on{background:var(--a-accent2);color:#fff;box-shadow:none}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.dx-step:hover,button.dx-item:hover,.dx-order:hover){background:var(--a-tint)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.dx-track,.dx-bar){background:color-mix(in srgb,var(--a-ink) 10%,transparent)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.dx-dot,.dx-tag,.dx-step-ico,.rank){background:color-mix(in srgb,currentColor 15%,transparent)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dx-av{background:linear-gradient(135deg,var(--a-accent),var(--a-accent2))}
+html[data-theme=dark] .admin-layout .dx-hero{background:linear-gradient(120deg,var(--a-side) 0%,var(--a-accent2) 140%)}
+html[data-theme=dark] .admin-layout .dx-hero::before,html[data-theme=dark] .admin-layout .dx-hero::after{display:none}
+html[data-theme=dark] .admin-layout .dx-hero-card{background:#ffffff14;border-color:#ffffff26}
+html[data-theme=dark] .admin-layout .dx-pills button.hot{background:#e6cf94;border-color:#e6cf94;color:#3a2f10}
+html[data-theme=dark] .admin-layout .dx-btn.solid{background:#fbf8f0;color:var(--a-side)}
+html[data-theme=dark] .admin-layout .dx-kpi{--t:var(--a-accent2);--t2:var(--a-accent);background:var(--a-surface);border-color:var(--a-line);color:var(--a-ink)}
+html[data-theme=dark] .admin-layout .dx-ico{background:linear-gradient(135deg,var(--a-accent),var(--a-accent2));box-shadow:none}
+html[data-theme=dark] .admin-layout .dx-card{background:var(--a-surface);border-color:var(--a-line);box-shadow:none;color:var(--a-ink)}
+html[data-theme=dark] .admin-layout :is(.dx-card .panel-head,.dx-card.alerts.hot .panel-head){background:linear-gradient(180deg,var(--a-head),var(--a-head2));border-bottom-color:var(--a-line)}
+html[data-theme=dark] .admin-layout .dx-card .range-tabs{background:var(--a-tint)}
+html[data-theme=dark] .admin-layout .dx-card .range-tabs button.on{background:var(--a-accent2);color:#fff;box-shadow:none}
+html[data-theme=dark] .admin-layout :is(.dx-step:hover,button.dx-item:hover,.dx-order:hover){background:var(--a-tint)}
+html[data-theme=dark] .admin-layout :is(.dx-track,.dx-bar){background:color-mix(in srgb,var(--a-ink) 10%,transparent)}
+html[data-theme=dark] .admin-layout :is(.dx-dot,.dx-tag,.dx-step-ico,.rank){background:color-mix(in srgb,currentColor 15%,transparent)}
+html[data-theme=dark] .admin-layout .dx-av{background:linear-gradient(135deg,var(--a-accent),var(--a-accent2))}
 html[data-theme=dark] .admin-layout :is(.dx-dot,.dx-tag,.dx-step-ico,.dx-sub,.dx-item strong){filter:brightness(1.7) saturate(.85)}
 html[data-theme=dark] .admin-layout .recharts-text,html[data-theme=dark] .admin-layout .recharts-cartesian-axis-tick-value{fill:var(--a-muted)}
 html[data-theme=dark] .admin-layout :is(.dx-item,.dx-order,.dx-step) :is(b,.nm,.dx-step-name){color:var(--a-ink)}
 
 /* ---------- Supplier ---------- */
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp{--bg:var(--a-bg);--card:var(--a-surface);--ink:var(--a-ink);--muted:var(--a-muted);--line:var(--a-line);--deep:var(--a-side);--teal:var(--a-accent);--tint:var(--a-tint);background:var(--a-bg);color:var(--a-ink)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-side{background:linear-gradient(180deg,var(--a-side),var(--a-side2))}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-side nav a.on{background:var(--a-sel)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp :is(.sp-top,.sp-card,.sp-panel,.sp-modal,.sp-pop){background:var(--a-surface);border-color:var(--a-line);color:var(--a-ink)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp :is(.sp-btn.primary,.sp-btn.solid,.sp-btn:not(.ghost):not(.line):not(.danger)){background:var(--a-accent2);color:#fff}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp :is(input,select,textarea){background:var(--a-surface);color:var(--a-ink);border-color:var(--a-line)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp :is(h1,h2,h3,b,strong,th,label){color:inherit}
+html[data-theme=dark] .sp{--bg:var(--a-bg);--card:var(--a-surface);--ink:var(--a-ink);--muted:var(--a-muted);--line:var(--a-line);--deep:var(--a-side);--teal:var(--a-accent);--tint:var(--a-tint);background:var(--a-bg);color:var(--a-ink)}
+html[data-theme=dark] .sp .sp-side{background:linear-gradient(180deg,var(--a-side),var(--a-side2))}
+html[data-theme=dark] .sp .sp-side nav a.on{background:var(--a-sel)}
+html[data-theme=dark] .sp :is(.sp-top,.sp-card,.sp-panel,.sp-modal,.sp-pop){background:var(--a-surface);border-color:var(--a-line);color:var(--a-ink)}
+html[data-theme=dark] .sp :is(.sp-btn.primary,.sp-btn.solid,.sp-btn:not(.ghost):not(.line):not(.danger)){background:var(--a-accent2);color:#fff}
+html[data-theme=dark] .sp :is(input,select,textarea){background:var(--a-surface);color:var(--a-ink);border-color:var(--a-line)}
+html[data-theme=dark] .sp :is(h1,h2,h3,b,strong,th,label){color:inherit}
 
 /* ---------- Theme picker (admin + supplier top bars) ---------- */
 .app-theme{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:999px;border:1px solid var(--line,#ddd);background:var(--surface,var(--card,#fff))}
@@ -67,18 +65,18 @@ html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp :is(h1,h2,
 .app-theme button:hover{transform:scale(1.12)}
 .app-theme button.on{border-color:var(--teal,#2f6df6);box-shadow:0 0 0 2px var(--surface,#fff) inset}
 
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.notification-button,.mobile-menu,.icon-action,.ibtn){background:var(--a-surface);color:var(--a-ink);border-color:var(--a-line)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dash-glass::before,html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .dash-glass::after{display:none}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .rec-facts span{background:color-mix(in srgb,var(--a-ink) 8%,transparent);color:var(--a-muted)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout .rec-facts span svg{color:var(--a-accent)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .admin-layout :is(.page-heading .btn,.btn.green){background:var(--a-accent2);color:#fff}
+html[data-theme=dark] .admin-layout :is(.notification-button,.mobile-menu,.icon-action,.ibtn){background:var(--a-surface);color:var(--a-ink);border-color:var(--a-line)}
+html[data-theme=dark] .admin-layout .dash-glass::before,html[data-theme=dark] .admin-layout .dash-glass::after{display:none}
+html[data-theme=dark] .admin-layout .rec-facts span{background:color-mix(in srgb,var(--a-ink) 8%,transparent);color:var(--a-muted)}
+html[data-theme=dark] .admin-layout .rec-facts span svg{color:var(--a-accent)}
+html[data-theme=dark] .admin-layout :is(.page-heading .btn,.btn.green){background:var(--a-accent2);color:#fff}
 
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-stat{background:linear-gradient(180deg,var(--a-card),var(--a-card2));border-color:var(--a-line);border-top-color:var(--a-accent)!important;box-shadow:none}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-stat b,html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-card-head h3{color:var(--a-ink)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-stat .ico,html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-user{background:linear-gradient(135deg,var(--a-accent),var(--a-accent2))!important;box-shadow:none}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-card,html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-top{box-shadow:none}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-btn.primary{background:var(--a-accent2)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-side nav a.on{background:var(--a-sel);box-shadow:none}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-side nav a.on::before{background:var(--a-accent)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp th{background:var(--a-tint);color:var(--a-muted)}
-html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-link,html:is([data-theme=comfort],[data-theme=calm],[data-theme=dark]) .sp .sp-main a:not(.sp-btn){color:var(--a-accent)}
+html[data-theme=dark] .sp .sp-stat{background:linear-gradient(180deg,var(--a-card),var(--a-card2));border-color:var(--a-line);border-top-color:var(--a-accent)!important;box-shadow:none}
+html[data-theme=dark] .sp .sp-stat b,html[data-theme=dark] .sp .sp-card-head h3{color:var(--a-ink)}
+html[data-theme=dark] .sp .sp-stat .ico,html[data-theme=dark] .sp .sp-user{background:linear-gradient(135deg,var(--a-accent),var(--a-accent2))!important;box-shadow:none}
+html[data-theme=dark] .sp .sp-card,html[data-theme=dark] .sp .sp-top{box-shadow:none}
+html[data-theme=dark] .sp .sp-btn.primary{background:var(--a-accent2)}
+html[data-theme=dark] .sp .sp-side nav a.on{background:var(--a-sel);box-shadow:none}
+html[data-theme=dark] .sp .sp-side nav a.on::before{background:var(--a-accent)}
+html[data-theme=dark] .sp .sp th{background:var(--a-tint);color:var(--a-muted)}
+html[data-theme=dark] .sp .sp-link,html[data-theme=dark] .sp .sp-main a:not(.sp-btn){color:var(--a-accent)}
