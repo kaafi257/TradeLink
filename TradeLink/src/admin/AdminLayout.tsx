@@ -5,6 +5,8 @@ import { Brand } from "../components/Brand";
 import { useAuth } from "../lib/auth";
 import { supabase, type Role } from "../lib/supabase";
 import "./admin.css";
+import "../appThemes.css";
+import ThemePicker from "../components/ThemePicker";
 import { AdminDataProvider, useAdmin } from "./AdminData";
 import { NAV, NAV_GROUPS, allowed, currentItem } from "./nav";
 import Dashboard from "./pages/Dashboard";
@@ -165,6 +167,7 @@ function Shell() {
           <h2 className="topbar-title">{current?.label ?? "Dashboard"}</h2>
           <div className="global-search"><Search size={19} /><input ref={searchRef} aria-label="Search this page" placeholder="Search this page…" value={search} onChange={e => setSearch(e.target.value)} /></div>
           <div className="top-actions">
+            <ThemePicker />
             <button className="mobile-search" aria-label="Search this page" aria-expanded={searchOpen} onClick={() => setSearchOpen(o => !o)}><Search size={19} /></button>
             {["owner", "manager", "sales"].includes(role) && (
               <button className="notification-button" title="New quote requests" aria-label={`${newQuoteCount} new quote requests`} onClick={() => navigate("/admin/quotations")}>

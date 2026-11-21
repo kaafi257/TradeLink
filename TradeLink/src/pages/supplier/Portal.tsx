@@ -15,6 +15,8 @@ import Inventory from "./Inventory";
 import Orders from "./Orders";
 import Promotions from "./Promotions";
 import "./supplier.css";
+import "../../appThemes.css";
+import ThemePicker from "../../components/ThemePicker";
 
 export const STATUS: Record<SupplierStatus, { label: string; tone: "wait" | "good" | "bad" | "hold"; Icon: typeof Clock }> = {
   pending: { label: "Pending approval", tone: "wait", Icon: Clock },
@@ -193,6 +195,7 @@ function Shell() {
           <button className="sp-icon sp-burger" aria-label="Open menu" onClick={() => setDrawer(true)}><Menu size={20} /></button>
           <h1>{title}</h1>
           <div className="sp-top-right">
+            <ThemePicker />
             <StatusPill status={supplier.status ?? "pending"} />
             <div className="sp-bellwrap">
               <button className="sp-icon" aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`} aria-expanded={bell} onClick={() => setBell(b => !b)}><Bell size={19} />{unread > 0 && <i>{unread}</i>}</button>

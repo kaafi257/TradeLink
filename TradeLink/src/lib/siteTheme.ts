@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type ThemeId = "comfort" | "calm" | "light";
+export type ThemeId = "comfort" | "calm" | "light" | "dark";
 export const THEMES: { id: ThemeId; label: string; swatch: string }[] = [
   { id: "comfort", label: "Comfort (warm, easy on the eyes)", swatch: "#f3ecd9" },
   { id: "calm", label: "Calm (soft green)", swatch: "#e3ede4" },
   { id: "light", label: "Light (bright white)", swatch: "#ffffff" },
+  { id: "dark", label: "Dark (night, for dashboards)", swatch: "#1d252b" },
 ];
+/** The public website has no dark theme; dashboards offer all four. */
+export const PUBLIC_THEMES = THEMES.filter(t => t.id !== "dark");
 const KEY = "tl-theme";
 const ids = THEMES.map(t => t.id) as string[];
 

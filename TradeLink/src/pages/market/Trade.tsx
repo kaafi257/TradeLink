@@ -6,7 +6,7 @@ import { useContact } from "../../lib/contact";
 import { applyCoupon } from "../../lib/coupon";
 import { IconFor } from "../../lib/icons";
 import { lookFor } from "../../lib/theme";
-import { THEMES, useTheme } from "../../lib/siteTheme";
+import { PUBLIC_THEMES, useTheme } from "../../lib/siteTheme";
 import { supabase, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../../lib/supabase";
 import { CleanCard, Reveal, type Mode, type Shelf } from "./Market";
 import "./trade.css";
@@ -22,7 +22,7 @@ function ThemeSwitch() {
   const { theme, setTheme } = useTheme();
   return (
     <div className="tl-theme" role="group" aria-label="Page colour">
-      {THEMES.map(t => (
+      {PUBLIC_THEMES.map(t => (
         <button key={t.id} type="button" className={theme === t.id ? "on" : ""} aria-pressed={theme === t.id} aria-label={t.label} title={t.label} onClick={() => setTheme(t.id)} style={{ background: t.swatch }} />
       ))}
     </div>
