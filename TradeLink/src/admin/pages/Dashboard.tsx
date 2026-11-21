@@ -9,7 +9,7 @@ import { RANGES, buildSeries, money, type Range } from "../../lib/format";
 import type { OrderRow, Product } from "../../lib/supabase";
 import { ProductModal } from "../modals";
 import { useAdmin } from "../AdminData";
-import { Delta, Sparkline, StockDonut } from "../DashWidgets";
+import { Delta, HeroChart, Sparkline, StockDonut } from "../DashWidgets";
 import { activityIcon, ago } from "../Records";
 import "./dashboard.css";
 
@@ -145,12 +145,13 @@ export default function Dashboard() {
         </div>
         {canSeeSales && (
           <div className="dx-hero-card">
-            <small>Sales this month</small>
-            <b>{salesDaily.length ? money(monthSales) : "—"}</b>
-            <div className="dx-hero-foot">
+            <div className="dx-hero-top">
+              <div><small>Sales this month</small><b>{salesDaily.length ? money(monthSales) : "—"}</b></div>
               {salesDelta !== null && <Delta pct={salesDelta} />}
-              <span className="dx-hero-spark"><Sparkline values={monthSpark} /></span>
             </div>
+            {monthSales > 0
+              ? <HeroChart data={monthSeries.slice(0, new Date().getDate())} />
+              : <div className="dx-hero-empty"><ChartNoAxesCombined size={28} /></div>}
           </div>
         )}
       </section>

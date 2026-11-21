@@ -75,3 +75,59 @@ export function StockDonut({ split }: { split: StockSplit }) {
 export function Chip({ tone, children }: { tone: "good" | "warn" | "bad" | "muted"; children: ReactNode }) {
   return <span className={`chip-dot ${tone}`}><i />{children}</span>;
 }
+
+const short = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${+(n / 1e3).toFixed(n >= 1e5 ? 0 : 1)}k` : String(Math.round(n)));
+
+/** Chart for the dashboard banner: smooth area, gridlines, day labels and a hover read-out. Real values only. */
+export function HeroChart({ data, unit = "ETB" }: { data: { day: string; sales: number }[]; unit?: string }) {
+  const id = useId().replace(/:/g, "");
+  const [hover, setHover] = useState<number | null>(null);
+  const W = 420, H = 170, L = 38, R = 8, T = 10, B = 22;
+  const n = data.length;
+  if (n < 2) return null;
+  const rawMax = Math.max(...data.map(d => d.sales), 1);
+  const step = Math.pow(10, Math.floor(Math.log10(rawMax)));
+  const max = Math.ceil(rawMax / step) * step;
+  const x = (i: number) => L + (i / (n - 1)) * (W - L - R);
+  const y = (v: number) => T + (1 - v / max) * (H - T - B);
+  const pts = data.map((d, i) => [x(i), y(d.sales)] as const);
+  // Smooth curve through the points without overshooting below zero.
+  const line = pts.map(([px, py], i) => {
+    if (!i) return `M${px.toFixed(1)} ${py.toFixed(1)}`;
+    const [qx, qy] = pts[i - 1], mx = (px + qx) / 2;
+    return `C${mx.toFixed(1)} ${qy.toFixed(1)} ${mx.toFixed(1)} ${py.toFixed(1)} ${px.toFixed(1)} ${py.toFixed(1)}`;
+  }).join(" ");
+  const base = H - B;
+  const area = `${line} L${x(n - 1).toFixed(1)} ${base} L${L} ${base} Z`;
+  const grid = [0, 1, 2, 3].map(k => (max / 3) * k);
+  const every = n > 20 ? 5 : n > 10 ? 3 : 1;
+  const bestI = data.reduce((b, d, i) => (d.sales > data[b].sales ? i : b), 0);
+  const at = (e: { clientX: number; currentTarget: SVGSVGElement }) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const px = ((e.clientX - r.left) / r.width) * W;
+    setHover(Math.max(0, Math.min(n - 1, Math.round(((px - L) / (W - L - R)) * (n - 1)))));
+  };
+  const h = hover ?? bestI, hp = pts[h];
+  const tipLeft = Math.min(Math.max((hp[0] / W) * 100, 16), 84);
+  return (
+    <div className="hc">
+      <div className="hc-tip" style={{ left: `${tipLeft}%` }}><small>Day {data[h].day}</small><b>{Math.round(data[h].sales).toLocaleString("en-US")} {unit}</b></div>
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Sales this month, day by day" onPointerMove={at} onPointerDown={at} onPointerLeave={() => setHover(null)}>
+        <defs>
+          <linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7fd0ff" stopOpacity=".55" /><stop offset="1" stopColor="#7fd0ff" stopOpacity="0" /></linearGradient>
+        </defs>
+        {grid.map((g, k) => (
+          <g key={k}>
+            <line x1={L} x2={W - R} y1={y(g)} y2={y(g)} className="hc-grid" />
+            <text x={L - 6} y={y(g) + 3.5} textAnchor="end" className="hc-t">{short(g)}</text>
+          </g>
+        ))}
+        <path d={area} fill={`url(#${id})`} />
+        <path d={line} className="hc-line" fill="none" pathLength={1} />
+        {data.map((d, i) => (i % every === 0 || i === n - 1) && <text key={i} x={x(i)} y={H - 6} textAnchor="middle" className="hc-t">{d.day}</text>)}
+        <line x1={hp[0]} x2={hp[0]} y1={T} y2={base} className="hc-cross" />
+        <circle cx={hp[0]} cy={hp[1]} r="4.5" className="hc-dot" />
+      </svg>
+    </div>
+  );
+}
