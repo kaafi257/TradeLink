@@ -50,7 +50,7 @@ export default function Orders() {
           const st = STATUS[o.status] ?? { label: o.status, icon: <Clock size={14} />, tone: "warn" as Tone };
           return (
             <RecCard key={o.id} i={i} tone={st.tone} lead={<ShoppingCart size={22} />} title={<span className="docno">{o.order_number}</span>} sub={o.customer_name}
-              facts={[{ icon: <Package size={14} />, text: items.length ? `${items.length} ${items.length === 1 ? "item" : "items"}` : "" }, { icon: <MapPin size={14} />, text: o.delivery_location }]}
+              facts={[{ icon: <Package size={14} />, text: items.length ? `${items.length} ${items.length === 1 ? "item" : "items"}` : "" }, { icon: <MapPin size={14} />, text: o.delivery_location, tone: "place" }]}
               amount={money(total)} meter={total > 0 ? paid / total : 0}
               status={<StatusChip tone={st.tone} icon={st.icon} pulse={o.status === "confirmed" || o.status === "ready"}>{st.label}</StatusChip>}
               actions={<>

@@ -85,7 +85,7 @@ export default function Communication() {
           const tel = q.phone.replace(/[^\d+]/g, "");
           return (
             <RecCard key={q.id} i={i} tone="info" initials={initialsOf(q.customer_name)} title={q.customer_name} sub={<span className="docno">{q.quote_number}</span>}
-              facts={[{ icon: <Phone size={14} />, text: q.phone }, { icon: <Clock size={14} />, text: ago(q.created_at) }]}
+              facts={[{ icon: <Phone size={14} />, text: q.phone }, { icon: <Clock size={14} />, text: ago(q.created_at), tone: "time" }]}
               actions={<>
                 <IconBtn tone="neutral" icon={<Phone size={17} />} label="Call" href={`tel:${tel}`} />
                 <IconBtn tone="wa" icon={<MessageCircle size={17} />} label="WhatsApp" external href={`https://wa.me/${waNumber(q.phone)}?text=${msg}`} />

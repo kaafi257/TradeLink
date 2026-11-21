@@ -26,7 +26,7 @@ export default function Customers() {
       <RecordList isEmpty={!rows.length} empty="No customers yet" icon={<Users />}>
         {rows.map((c, i) => (
           <RecCard key={c.phone} i={i} tone="info" initials={initialsOf(c.name)} title={c.name} sub={c.phone}
-            facts={[{ icon: <MapPin size={14} />, text: c.location }, { icon: <MessagesSquare size={14} />, text: String(c.count) }, { icon: <Clock size={14} />, text: ago(c.last) }]}
+            facts={[{ icon: <MapPin size={14} />, text: c.location, tone: "place" }, { icon: <MessagesSquare size={14} />, text: String(c.count) }, { icon: <Clock size={14} />, text: ago(c.last), tone: "time" }]}
             actions={<IconBtn primary tone="green" icon={<Phone size={17} />} label="Call" href={`tel:${c.phone.replace(/[^\d+]/g, "")}`} />}
             details={[["Email", c.email || "—"], ["First", shortDate(c.first)], ["Latest", shortDate(c.last)]]} />
         ))}

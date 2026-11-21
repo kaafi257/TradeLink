@@ -17,7 +17,7 @@ export default function SalesPage() {
           const full = paid >= total;
           return (
             <RecCard key={x.id} i={i} tone={full ? "good" : "warn"} lead={<Receipt size={22} />} title={<span className="docno">{x.receipt_number}</span>} sub={x.customer_name}
-              facts={[{ icon: <CreditCard size={14} />, text: x.payment_method || "" }, { icon: <Clock size={14} />, text: ago(x.sold_at) }]}
+              facts={[{ icon: <CreditCard size={14} />, text: x.payment_method || "" }, { icon: <Clock size={14} />, text: ago(x.sold_at), tone: "time" }]}
               amount={money(total)} meter={total > 0 ? paid / total : 0}
               status={<StatusChip tone={full ? "good" : "warn"} icon={full ? <Check size={14} /> : <Clock size={14} />}>{full ? "Paid" : "Part"}</StatusChip>}
               details={[["Paid", money(paid)], ["Date", shortDate(x.sold_at)]]} />

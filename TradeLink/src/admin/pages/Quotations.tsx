@@ -51,7 +51,7 @@ export default function Quotations() {
           return (
             <RecCard key={q.id} i={i} tone={QTONE[q.status] ?? "info"} lead={q.customer_type === "individual" ? <User size={22} /> : <FileText size={22} />}
               title={<span className="docno">{q.quote_number || q.id.slice(0, 8)}</span>} sub={q.customer_name}
-              facts={[{ icon: <Package size={14} />, text: n ? `${n} ${n === 1 ? "item" : "items"}` : "" }, { icon: <MapPin size={14} />, text: q.delivery_location }, { icon: <Clock size={14} />, text: ago(q.created_at) }]}
+              facts={[{ icon: <Package size={14} />, text: n ? `${n} ${n === 1 ? "item" : "items"}` : "" }, { icon: <MapPin size={14} />, text: q.delivery_location, tone: "place" }, { icon: <Clock size={14} />, text: ago(q.created_at), tone: "time" }]}
               control={
                 <select className={`status-select ${QTONE[q.status] ?? "info"}`} aria-label={`Status of ${q.quote_number}`} value={q.status} disabled={locked || busyId === q.id} onChange={e => void setStatus(q, e.target.value)}>
                   {!MANUAL.includes(q.status) && <option value={q.status} disabled>{cap(q.status)}</option>}
