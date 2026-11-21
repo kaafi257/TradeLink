@@ -145,3 +145,17 @@
 @keyframes lp-pf{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:none}}
 @keyframes lp-pc{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.lp-hero-promo figure,.lp-promo-cap{animation:none}}
+
+/* Footer: link groups as small blue pills, tighter and tidier */
+.public-site footer.mk-footer{margin-top:var(--lp-gap);padding-top:clamp(18px,2vw,26px)}
+.public-site footer.mk-footer .mk-fgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding-block:clamp(8px,1.4vw,16px)}
+.public-site footer.mk-footer .mk-fbrand{grid-column:auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid #e3eaf4}
+.public-site footer.mk-footer .mk-fbrand p{display:none}
+.public-site footer.mk-footer nav{display:grid;grid-template-columns:minmax(110px,150px) minmax(0,1fr);align-items:center;gap:6px 14px}
+.public-site footer.mk-footer nav h4{margin:0;font:700 10.5px 'Inter',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6a7f99;white-space:nowrap}
+.public-site footer.mk-footer nav ul{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0}
+.public-site footer.mk-footer li button,.public-site footer.mk-footer li a{display:inline-flex;align-items:center;min-height:30px;padding:0 13px;border:1px solid #cfe1f8;border-radius:999px;background:#eaf3ff;color:#0b5d99;font:600 12.5px/1 'Inter',sans-serif;white-space:nowrap;transition:background .2s,color .2s,border-color .2s,transform .2s,box-shadow .2s;transform:none}
+.public-site footer.mk-footer li button:hover,.public-site footer.mk-footer li a:hover,.public-site footer.mk-footer li button:focus-visible,.public-site footer.mk-footer li a:focus-visible{background:#0b5d99;border-color:#0b5d99;color:#fff;transform:translateY(-1px);box-shadow:0 6px 14px -8px #0b5d99}
+.public-site footer.mk-footer .mk-copy{padding-block:10px;gap:12px}
+@media(max-width:760px){.public-site footer.mk-footer nav{grid-template-columns:minmax(0,1fr);gap:6px}.public-site footer.mk-footer .mk-fbrand{padding-bottom:10px}}
+@media(prefers-reduced-motion:reduce){.public-site footer.mk-footer li button,.public-site footer.mk-footer li a{transition:none;transform:none}}
