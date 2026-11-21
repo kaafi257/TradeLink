@@ -412,12 +412,12 @@ export default function PublicHome() {
       <TradeNav mode={mode} industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} onRfq={() => setRfqOpen(true)} />
       <ModeToggle mode={mode} onMode={changeMode} className="mobile" />
       <LandingHero photos={heroPhotos} promos={[...liveHero, ...heroPromos].slice(0, 4)} offerPct={offerPct} onShop={() => go("public-products")} onQuote={() => setRfqOpen(true)} />
+      <PromoBanners offerCount={sale.length} offerPct={offerPct} onOffers={() => go("offers")} onQuote={() => setRfqOpen(true)} onSupplier={() => navigate("/supplier/register")} />
       <BrowseCategories items={catCards} onPick={openIndustry} onMore={() => setMenuOpen(true)} />
       <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
         industry={effIndustry} category={effCategory} setIndustry={setIndustryId} setCategory={setCategoryId}
         search={search} setSearch={setSearch} items={shown} emptyText={emptyMessage} />
       <TradeRow id="trending" title="Trending products" shelf={shelf} items={featured} max={5} onAll={() => go("public-products")} />
-      <PromoBanners offerCount={sale.length} offerPct={offerPct} onOffers={() => go("offers")} onQuote={() => setRfqOpen(true)} onSupplier={() => navigate("/supplier/register")} />
       <LivePromos items={promos} supplierName={supplierName} scopeText={promoScope} onOpen={openPromo} />
       <TradeRow id="featured" title="Featured picks" sub="Chosen by TradeLink" shelf={shelf} items={starList} max={6} />
       <TradeRow id="wholesale" title="Wholesale sourcing" sub="Buy in bulk. Minimum order shown." shelf={shelf} mode="business" items={wholesaleList} onAll={() => { changeMode("business"); go("public-products"); }} />

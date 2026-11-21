@@ -78,22 +78,22 @@ export function BrowseCategories({ items, onPick, onMore }: { items: { ind: Publ
 /** Three wide promotional banners. Offer figures come from live sale prices; the others describe how TradeLink really works. */
 export function PromoBanners({ offerCount, offerPct, onOffers, onQuote, onSupplier }: { offerCount: number; offerPct: number; onOffers: () => void; onQuote: () => void; onSupplier: () => void }) {
   return (
-    <Reveal className="lp-sec" as="section">
+    <Reveal className="lp-sec lp-strip" as="section">
       <div className="lp-wrap">
-        <div className="lp-promos">
-          <article className="lp-promo navy">
-            <span className="ico"><Package size={34} strokeWidth={1.6} /></span>
+        <div className="lp-pcs">
+          <article className="lp-pc navy">
+            <span className="ico"><Package size={22} strokeWidth={1.6} /></span>
             <div><h3>Delivery to your door</h3><p>Tell us where you are when you send a request. We arrange the delivery for you.</p>
               <button onClick={onQuote}>Request a quote <ArrowRight size={16} /></button></div>
           </article>
-          <article className="lp-promo blue">
-            <span className="ico"><BadgePercent size={34} strokeWidth={1.6} /></span>
+          <article className="lp-pc blue">
+            <span className="ico"><BadgePercent size={22} strokeWidth={1.6} /></span>
             <div><h3>Special offers</h3>
               <p>{offerCount > 0 ? `Save up to ${offerPct}% on ${offerCount} ${offerCount === 1 ? "product" : "products"} right now.` : "Ask for a bulk price on any product and we quote you directly."}</p>
               <button onClick={offerCount > 0 ? onOffers : onQuote}>{offerCount > 0 ? "See the offers" : "Ask for a price"} <ArrowRight size={16} /></button></div>
           </article>
-          <article className="lp-promo soft">
-            <span className="ico"><Gift size={34} strokeWidth={1.6} /></span>
+          <article className="lp-pc soft">
+            <span className="ico"><Gift size={22} strokeWidth={1.6} /></span>
             <div><h3>Member benefits</h3><p>Business buyers get wholesale prices and a written quote. Suppliers get their own dashboard to sell here.</p>
               <button onClick={onSupplier}>Become a supplier <ArrowRight size={16} /></button></div>
           </article>
