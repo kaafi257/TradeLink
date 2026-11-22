@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
 /** Tiny trend line drawn from real values. Draws itself once when it appears. */
@@ -82,7 +82,15 @@ const short = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)}M` : n >= 1e3 
 export function HeroChart({ data, unit = "ETB" }: { data: { day: string; sales: number }[]; unit?: string }) {
   const id = useId().replace(/:/g, "");
   const [hover, setHover] = useState<number | null>(null);
-  const W = 420, H = 170, L = 38, R = 8, T = 10, B = 22;
+  const box = useRef<HTMLDivElement>(null);
+  const [W, setW] = useState(700);
+  useEffect(() => {
+    const el = box.current; if (!el) return;
+    const ro = new ResizeObserver(() => setW(Math.max(260, Math.round(el.clientWidth))));
+    ro.observe(el); setW(Math.max(260, Math.round(el.clientWidth)));
+    return () => ro.disconnect();
+  }, []);
+  const H = W < 520 ? 200 : 250, L = 42, R = 10, T = 10, B = 24;
   const n = data.length;
   if (n < 2) return null;
   const rawMax = Math.max(...data.map(d => d.sales), 1);
@@ -100,7 +108,7 @@ export function HeroChart({ data, unit = "ETB" }: { data: { day: string; sales: 
   const base = H - B;
   const area = `${line} L${x(n - 1).toFixed(1)} ${base} L${L} ${base} Z`;
   const grid = [0, 1, 2, 3].map(k => (max / 3) * k);
-  const every = n > 20 ? 5 : n > 10 ? 3 : 1;
+  const every = W < 520 ? (n > 20 ? 5 : n > 10 ? 3 : 1) : n > 20 ? 2 : 1;
   const bestI = data.reduce((b, d, i) => (d.sales > data[b].sales ? i : b), 0);
   const at = (e: { clientX: number; currentTarget: SVGSVGElement }) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -110,9 +118,9 @@ export function HeroChart({ data, unit = "ETB" }: { data: { day: string; sales: 
   const h = hover ?? bestI, hp = pts[h];
   const tipLeft = Math.min(Math.max((hp[0] / W) * 100, 16), 84);
   return (
-    <div className="hc">
+    <div className="hc" ref={box}>
       <div className="hc-tip" style={{ left: `${tipLeft}%` }}><small>Day {data[h].day}</small><b>{Math.round(data[h].sales).toLocaleString("en-US")} {unit}</b></div>
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Sales this month, day by day" onPointerMove={at} onPointerDown={at} onPointerLeave={() => setHover(null)}>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Sales this month, day by day" onPointerMove={at} onPointerDown={at} onPointerLeave={() => setHover(null)}>
         <defs>
           <linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7fd0ff" stopOpacity=".55" /><stop offset="1" stopColor="#7fd0ff" stopOpacity="0" /></linearGradient>
         </defs>
