@@ -134,6 +134,27 @@ export function LivePromos({ items, supplierName, scopeText, onOpen, imageOf }: 
   );
 }
 
+/** Live promotions for the department or category the shopper has opened, shown just above the product list. */
+export function CategoryDeals({ items, onOpen, imageOf }: { items: PublicPromo[]; onOpen: (p: PublicPromo) => void; imageOf?: (p: PublicPromo) => string | undefined }) {
+  if (items.length === 0) return null;
+  return (
+    <section className="lp-sec lp-catdeals" aria-label="Offers in this category">
+      <div className="lp-wrap">
+        {items.slice(0, 3).map(p => {
+          const img = imageOf?.(p);
+          return (
+            <button key={p.id} className="lp-catdeal" onClick={() => onOpen(p)}>
+              <span className="pic">{img ? <img src={img} alt="" loading="lazy" decoding="async" /> : <Percent size={22} />}</span>
+              <span className="tx"><small>{KIND_LABEL[p.kind]}</small><b>{p.name}</b></span>
+              <em>{offerText(p)}</em>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 /** Wide picture banners from the admin's Homepage banner scenes. */
 export function WideBanners({ items }: { items: { id: string; src: string; title: string; run: () => void }[] }) {
   if (items.length === 0) return null;

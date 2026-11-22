@@ -148,3 +148,26 @@
 .mk-save{margin:0;display:flex;align-items:center;gap:8px;font-size:13px;color:#5b7085}.mk-save s{color:#8a96a8}.mk-save b{padding:2px 8px;border-radius:6px;background:#d0463a;color:#fff;font:800 12px 'Inter',sans-serif}
 .mk-per{color:#5b7085;font-size:13px}
 .mk-dbody .mk-price b{font-size:1.9rem}
+
+/* ===== Phase 4: category offers, accessibility, reduced motion ===== */
+.lp-catdeals .lp-wrap{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-block:4px}
+.lp-catdeal{flex:1 0 min(100%,280px);display:flex;align-items:center;gap:12px;padding:10px 14px 10px 10px;border:1px solid #cfe0f3;border-radius:16px;background:linear-gradient(135deg,#eef6ff,#fff);cursor:pointer;text-align:left;font:inherit;color:var(--tl-navy,#172b4d);transition:transform .2s,box-shadow .2s}
+.lp-catdeal:hover{transform:translateY(-2px);box-shadow:0 12px 20px -14px #0b4f86}.lp-catdeal:active{transform:scale(.98)}
+.lp-catdeal .pic{flex:none;width:52px;height:52px;border-radius:12px;background:#fff;border:1px solid #e3e8f0;display:grid;place-items:center;overflow:hidden;color:#1479c2}
+.lp-catdeal .pic img{width:100%;height:100%;object-fit:contain;padding:3px}
+.lp-catdeal .tx{display:grid;gap:1px;min-width:0;flex:1}.lp-catdeal .tx small{font:700 11px 'Inter',sans-serif;color:#5f6b7d;text-transform:uppercase;letter-spacing:.05em}.lp-catdeal .tx b{font:700 14.5px/1.25 'Inter',sans-serif}
+.lp-catdeal em{font:800 13px 'Inter',sans-serif;font-style:normal;padding:5px 10px;border-radius:99px;background:#d0463a;color:#fff;white-space:nowrap}
+
+/* Clearer secondary text (the old grey was below 4.5:1 on white) */
+.public-site{--tl-mute:#5b6678}
+/* Keyboard focus is always visible */
+.public-site a:focus-visible,.public-site button:focus-visible,.public-site select:focus-visible,.public-site summary:focus-visible,.public-site [tabindex]:focus-visible{outline:3px solid #1479c2;outline-offset:2px;border-radius:8px}
+.public-site .tl-card .cover:focus-visible{outline-offset:-3px;border-radius:12px}
+.public-site input:focus-visible,.public-site textarea:focus-visible{outline:3px solid #1479c255;outline-offset:1px}
+/* Phones: comfortable tap targets */
+@media(max-width:700px){.public-site .tl-card .heart{width:40px;height:40px}.public-site .tl-act{min-width:44px;min-height:44px}}
+/* Less motion for people who ask for it; content never depends on animation */
+@media(prefers-reduced-motion:reduce){
+  .public-site *,.public-site *::before,.public-site *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .tl-prods.rail{scroll-behavior:auto}
+}

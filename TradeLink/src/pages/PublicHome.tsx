@@ -13,7 +13,7 @@ import { applyCoupon } from "../lib/coupon";
 import { useWishlist } from "../lib/wishlist";
 import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TrackModal, TradeHeader, TradeNav, TradeRow } from "./market/Trade";
 import { isVideoUrl } from "../lib/promoMedia";
-import { BrowseCategories, LivePromos, LandingHero, type AdSlide, type HeroPromo, PromoBanners, TrustNewsletter, WideBanners } from "./market/Landing";
+import { BrowseCategories, LivePromos, LandingHero, type AdSlide, type HeroPromo, PromoBanners, TrustNewsletter, WideBanners, CategoryDeals } from "./market/Landing";
 import { KIND_LABEL, offerText, type PublicPromo } from "../lib/promo";
 import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
@@ -265,7 +265,7 @@ export default function PublicHome() {
       void supabase!.from("public_campaign").select("*").order("sort_order").then(r => { if (!r.error && r.data) setCampaign(r.data as CampaignSlide[]); });
       void supabase!.from("public_supplier_categories").select("*").then(r => { if (!r.error) setSupCats((r.data ?? []) as { supplier_id: string; category_id: string }[]); });
       // Live campaigns and featured picks (migration 0020). Without it these sections are simply not shown.
-      void supabase!.from("public_promotions").select("*").then(r => { if (!r.error) setPromos((r.data ?? []) as PublicPromo[]); });
+      void supabase!.from("public_promotions").select("*").then(r => { if (!r.error) { const t = Date.now(); setPromos(((r.data ?? []) as PublicPromo[]).filter(c => (!c.starts_at || new Date(c.starts_at).getTime() <= t) && (!c.ends_at || new Date(c.ends_at).getTime() > t))); } });
       void supabase!.from("public_promo_products").select("*").then(r => { if (!r.error) setPromoProds((r.data ?? []) as { promotion_id: string; product_id: string }[]); });
       void supabase!.from("featured_items").select("kind,ref_id").then(r => { if (!r.error) setStarred((r.data ?? []) as { kind: string; ref_id: string }[]); });
       void supabase!.from("public_best_sellers").select("*").order("rank").then(r => {
@@ -480,6 +480,7 @@ export default function PublicHome() {
       <TradeRow id="featured" title={starList.length ? "Featured picks" : "Fresh savers"} sub={starList.length ? "Chosen by TradeLink" : "Fresh finds from our suppliers"} shelf={shelf} items={starList.length ? starList : featured} max={10} rail onAll={() => go("public-products")} />
       <TradeRow id="new-arrivals" title="New arrivals" shelf={shelf} items={newest} max={8} onAll={() => go("public-products")} />
       <SupplierStrip items={suppliers} industries={inds} onOpen={setSupplier} starred={starSup} />
+      <CategoryDeals items={promos.filter(c => (effCategory !== "all" && c.scope === "category" && c.category_id === effCategory) || (effCategory === "all" && effIndustry !== "all" && c.scope === "category" && cats.find(x => x.id === c.category_id)?.industry_id === effIndustry))} onOpen={openPromo} imageOf={promoImage} />
       <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
         industry={effIndustry} category={effCategory} setIndustry={setIndustryId} setCategory={setCategoryId}
         search={search} setSearch={setSearch} items={shown} emptyText={emptyMessage} />
