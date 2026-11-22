@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { Link, useParams } from "react-router-dom";
 import { Check, Copy, FileUp, Loader2, Printer, Search, Truck } from "lucide-react";
 import { useAuth } from "../../lib/auth";
-import { METHOD_LABEL, myOrders, submitProof, trackOrder, uploadProof, type OrderView } from "../../lib/checkout";
+import { METHOD_LABEL, isTransfer, myOrders, submitProof, trackOrder, uploadProof, type OrderView } from "../../lib/checkout";
 import { CoShell, StatusBanner, StatusPill, etb, when } from "./parts";
 
 const phoneKey = (n: string) => `tl-order-phone-${n}`;
@@ -68,8 +68,8 @@ export default function Order() {
       <h1 className="co-h1">Order {order.order_number}</h1>
       {p && <StatusBanner payment={p} />}
 
-      {p?.bank && p.method === "bank_transfer" && ["pending", "failed"].includes(p.status) && <BankCard order={order} />}
-      {p?.method === "bank_transfer" && ["pending", "submitted", "failed"].includes(p.status) && order.status !== "cancelled" && (
+      {p?.bank && isTransfer(p.method) && ["pending", "failed"].includes(p.status) && <BankCard order={order} />}
+      {p && isTransfer(p.method) && ["pending", "submitted", "failed"].includes(p.status) && order.status !== "cancelled" && (
         <ProofForm order={order} phone={phone} onDone={o => setOrder(o)} />
       )}
 
@@ -106,10 +106,10 @@ export default function Order() {
 
 function BankCard({ order }: { order: OrderView }) {
   const b = order.payment!.bank!;
-  const rows: [string, string][] = [["Bank", b.bank_name], ["Account name", b.account_name], ["Account number", b.account_number], ["Amount to send", etb(order.payment!.amount)], ["Put this in the transfer note", order.payment!.reference]];
+  const rows: [string, string][] = [["Pay to", b.bank_name], ["Account name", b.account_name], ["Account number", b.account_number], ["Amount to send", etb(order.payment!.amount)], ["Put this in the payment note", order.payment!.reference]];
   return (
     <section className="co-card co-bank">
-      <h2>Send the transfer</h2>
+      <h2>Send the payment</h2>
       <dl className="co-facts">{rows.map(([k, v]) => <div key={k}><dt>{k}</dt><dd className="mono">{v} <Copy1 text={k === "Amount to send" ? String(order.payment!.amount) : v} label={k} /></dd></div>)}</dl>
       {b.note && <p className="co-note">{b.note}</p>}
       <p className="co-note">Your order is not paid until we see the money in our account.</p>
@@ -135,13 +135,13 @@ function ProofForm({ order, phone, onDone }: { order: OrderView; phone: string; 
   const again = order.payment!.status !== "pending";
   return (
     <section className="co-card">
-      <h2>{again ? "Send the details again" : "I have sent the transfer"}</h2>
-      <p className="co-note">Enter the transaction reference from your bank. A photo of the receipt helps but is never enough on its own: we always check the bank.</p>
+      <h2>{again ? "Send the details again" : "I have sent the payment"}</h2>
+      <p className="co-note">Enter the transaction number from your receipt (bank, Telebirr or eBirr) and attach a screenshot. The screenshot helps, but it is never proof on its own: we always check that the money arrived.</p>
       <form className="co-fields" onSubmit={submit}>
-        <label className="wide">Bank transaction reference<input name="txn" maxLength={40} autoComplete="off" placeholder="e.g. FT26323ABC12" /></label>
-        <label className="wide co-file"><span><FileUp size={16} /> Receipt photo or PDF <small>(optional, 5 MB)</small></span><input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label>
+        <label className="wide">Transaction reference<input name="txn" maxLength={40} autoComplete="off" placeholder="e.g. FT26323ABC12" /></label>
+        <label className="wide co-file"><span><FileUp size={16} /> Receipt screenshot or PDF <small>(optional, 5 MB)</small></span><input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label>
         {error && <p className="co-err wide" role="alert">{error}</p>}
-        <button className="btn green wide" type="submit" disabled={busy}>{busy ? "Sending…" : "Send transfer details"}</button>
+        <button className="btn green wide" type="submit" disabled={busy}>{busy ? "Sending…" : "Send payment details"}</button>
       </form>
     </section>
   );

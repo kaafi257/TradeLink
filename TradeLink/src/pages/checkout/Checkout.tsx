@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Banknote, Landmark, Loader2, Minus, Package, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { Banknote, Landmark, Loader2, Minus, Package, Plus, Smartphone, Trash2, ShoppingBag } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { supabase, withPhoto, type PublicProduct } from "../../lib/supabase";
 import { checkoutKey, clearCheckoutCart, fetchCheckoutOptions, loadCheckoutCart, placeOrder, resetCheckoutKey, saveCheckoutCart, type CheckoutItem, type CheckoutOptions, type PayMethod } from "../../lib/checkout";
@@ -37,7 +37,7 @@ export default function Checkout() {
         if (p.error) throw p.error;
         setOpts(o);
         setProducts(((p.data ?? []) as PublicProduct[]).map(withPhoto));
-        setMethod(m => m || (o.bank ? "bank_transfer" : o.cod ? "cod" : ""));
+        setMethod(m => m || (o.bank ? "bank_transfer" : o.telebirr ? "telebirr" : o.ebirr ? "ebirr" : o.cod ? "cod" : ""));
         setState("ready");
       } catch { if (live) setState("error"); }
     })();
@@ -55,7 +55,7 @@ export default function Checkout() {
   const saved = lines.reduce((s, l) => { const r = Number(l.p.retail_price ?? 0); return s + Math.max(0, r - unitPrice(l.p)) * l.quantity; }, 0);
   const setQty = (id: string, q: number) => setItems(it => it.map(i => (i.product_id === id ? { ...i, quantity: Math.max(1, Math.min(99, q)) } : i)));
   const remove = (id: string) => setItems(it => it.filter(i => i.product_id !== id));
-  const none = !opts || (!opts.bank && !opts.cod);
+  const none = !opts || (!opts.bank && !opts.cod && !opts.telebirr && !opts.ebirr);
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -134,6 +134,16 @@ export default function Checkout() {
                 <label className={`co-method${method === "bank_transfer" ? " on" : ""}`}>
                   <input type="radio" name="method" checked={method === "bank_transfer"} onChange={() => setMethod("bank_transfer")} />
                   <Landmark /><div><b>Bank transfer</b><small>Commercial Bank of Ethiopia. We confirm it once the money arrives.</small></div>
+                </label>)}
+              {opts?.telebirr && (
+                <label className={`co-method${method === "telebirr" ? " on" : ""}`}>
+                  <input type="radio" name="method" checked={method === "telebirr"} onChange={() => setMethod("telebirr")} />
+                  <Smartphone /><div><b>Telebirr</b><small>Send to our Telebirr number, then upload the receipt screenshot. We confirm it once the money arrives.</small></div>
+                </label>)}
+              {opts?.ebirr && (
+                <label className={`co-method${method === "ebirr" ? " on" : ""}`}>
+                  <input type="radio" name="method" checked={method === "ebirr"} onChange={() => setMethod("ebirr")} />
+                  <Smartphone /><div><b>eBirr</b><small>Send to our eBirr number, then upload the receipt screenshot. We confirm it once the money arrives.</small></div>
                 </label>)}
               {opts?.cod && (
                 <label className={`co-method${method === "cod" ? " on" : ""}`}>

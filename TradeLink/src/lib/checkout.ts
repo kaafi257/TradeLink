@@ -1,8 +1,10 @@
 import { requireSupabase } from "./supabase";
 
-export type PayMethod = "bank_transfer" | "cod";
+export type PayMethod = "bank_transfer" | "cod" | "telebirr" | "ebirr";
+/** Methods where the customer sends money to our account and staff then verify it. */
+export const isTransfer = (m: PayMethod) => m !== "cod";
 export type PayStatus = "pending" | "submitted" | "processing" | "paid" | "failed" | "expired" | "cancelled" | "refunded" | "partially_refunded";
-export type CheckoutOptions = { cod: boolean; bank: boolean; delivery_fee: number; free_delivery_over: number | null };
+export type CheckoutOptions = { cod: boolean; bank: boolean; telebirr: boolean; ebirr: boolean; delivery_fee: number; free_delivery_over: number | null };
 export type OrderPayment = {
   method: PayMethod; status: PayStatus; amount: number; currency: string; reference: string; customer_txn_ref: string | null; has_proof: boolean;
   review_note: string | null; paid_at: string | null; bank: { bank_name: string; account_name: string; account_number: string; note: string | null } | null;
@@ -18,17 +20,17 @@ export const STATUS_LABEL: Record<PayStatus, string> = {
   pending: "Pending", submitted: "Submitted", processing: "Processing", paid: "Paid", failed: "Failed", expired: "Expired", cancelled: "Cancelled",
   refunded: "Refunded", partially_refunded: "Partially refunded",
 };
-export const METHOD_LABEL: Record<PayMethod, string> = { bank_transfer: "Bank transfer (CBE)", cod: "Cash on Delivery" };
+export const METHOD_LABEL: Record<PayMethod, string> = { bank_transfer: "Bank transfer (CBE)", cod: "Cash on Delivery", telebirr: "Telebirr", ebirr: "eBirr" };
 export const STATUS_TONE = (s: PayStatus) => (s === "paid" ? "good" : s === "failed" || s === "expired" || s === "cancelled" ? "bad" : s === "refunded" || s === "partially_refunded" ? "info" : "warn");
 /** What the customer should understand about each status. */
 export const STATUS_HINT = (p: OrderPayment): string => {
   switch (p.status) {
-    case "pending": return p.method === "cod" ? "Pay the delivery person in cash when your order arrives." : "Send the transfer, then enter its reference below.";
-    case "submitted": return "We received your transfer details. We are checking them against the bank; this is not confirmed yet.";
+    case "pending": return p.method === "cod" ? "Pay the delivery person in cash when your order arrives." : "Send the payment, then enter its reference below.";
+    case "submitted": return "We received your payment details. We are checking that the money arrived; this is not confirmed yet.";
     case "processing": return "Your payment is being processed.";
     case "paid": return p.method === "cod" ? "Cash received. Thank you." : "Payment confirmed. Thank you.";
-    case "failed": return p.review_note ? `We could not confirm the transfer: ${p.review_note}` : "We could not confirm the transfer. Please send the details again.";
-    case "expired": return "No transfer was reported in time, so the order was cancelled. You can place a new order.";
+    case "failed": return p.review_note ? `We could not confirm the payment: ${p.review_note}` : "We could not confirm the payment. Please send the details again.";
+    case "expired": return "No payment was reported in time, so the order was cancelled. You can place a new order.";
     case "cancelled": return "This payment was cancelled.";
     case "refunded": return "This payment was refunded.";
     case "partially_refunded": return "Part of this payment was refunded.";
