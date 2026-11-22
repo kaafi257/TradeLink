@@ -81,6 +81,7 @@ export default function Dashboard() {
   const salesDelta = sameDaysLast > 0 ? ((monthSales - sameDaysLast) / sameDaysLast) * 100 : null;
   const rangeTotal = series.reduce((n, p) => n + p.sales, 0);
   const best = series.reduce((b, p) => (p.sales > b.sales ? p : b), { day: "", sales: 0 });
+  const best30 = monthSeries.slice(0, new Date().getDate()).reduce((b, p) => (p.sales > b.sales ? p : b), { day: "", sales: 0 });
   const monthSpark = monthSeries.slice(0, new Date().getDate()).map(p => p.sales);
 
   // Stock is in different units (bags, kg, tons...), so products are counted, never added together.
@@ -128,31 +129,21 @@ export default function Dashboard() {
   return (
     <div className="dash-page dx">
       <section className="dx-hero">
-        <div className="dx-hero-main">
-          <span className="dx-date">{today}</span>
-          <h1>{greeting()}, {firstName}</h1>
-          <div className="dx-pills">
-            {canSeeQuotes && <button onClick={() => navigate("/admin/quotations")} className={newQuoteCount ? "hot" : ""}><Inbox size={15} />{newQuoteCount} new quotes</button>}
-            {canSeeQuotes && <button onClick={() => navigate("/admin/orders")}><ShoppingCart size={15} />{openOrders} open orders</button>}
-            {canSeeDeliveries && <button onClick={() => navigate("/admin/deliveries")}><Truck size={15} />{activeDeliveries.length} deliveries</button>}
-            <button onClick={() => navigate("/admin/products")} className={lowCount + outCount ? "hot" : ""}><Boxes size={15} />{lowCount + outCount} low stock</button>
-          </div>
-          <div className="dx-actions">
-            {can("products.edit") && <button className="dx-btn solid" onClick={() => setProductModal(true)}><Plus size={17} /> Add product</button>}
-            {isLead && <button className="dx-btn ghost" aria-label="Invite staff" title="Invite staff" onClick={() => navigate("/admin/staff")}><UserPlus size={17} /> Staff</button>}
-            {canSeeQuotes && <button className="dx-btn ghost" aria-label="Quotations" title="Quotations" onClick={() => navigate("/admin/quotations")}><FileText size={17} /> Quotes</button>}
-          </div>
-        </div>
-        {canSeeSales && (
-          <div className="dx-hero-card">
+        {canSeeSales ? (
+          <>
             <div className="dx-hero-top">
               <div><small>Sales this month</small><b>{salesDaily.length ? money(monthSales) : "—"}</b></div>
-              {salesDelta !== null && <Delta pct={salesDelta} />}
+              <div className="dx-hero-meta">
+                {best30.sales > 0 && <span className="dx-best"><small>Best day</small><b>{best30.day} · {money(best30.sales)}</b></span>}
+                {salesDelta !== null && <Delta pct={salesDelta} />}
+              </div>
             </div>
             {monthSales > 0
               ? <HeroChart data={monthSeries.slice(0, new Date().getDate())} />
-              : <div className="dx-hero-empty"><ChartNoAxesCombined size={28} /></div>}
-          </div>
+              : <div className="dx-hero-empty"><ChartNoAxesCombined size={34} /></div>}
+          </>
+        ) : (
+          <div className="dx-hero-top"><div><small>{today}</small><b>{greeting()}, {firstName}</b></div></div>
         )}
       </section>
 
