@@ -47,9 +47,9 @@ export function AnnouncementBar({ products, wishCount = 0, onWishlist, onTrack }
           : <span key={b.id} style={{ fontWeight: 700 }}>{b.message}</span>)}
         {banners.length === 0 && <span>Wholesale and retail, one marketplace{products > 0 ? ` · ${products} products` : ""}</span>}
         <span className="tl-util" role="navigation" aria-label="Quick links">
-          {onWishlist && <button type="button" onClick={onWishlist}><Heart size={14} />Wishlist{wishCount > 0 ? ` (${wishCount})` : ""}</button>}
-          {onTrack && <button type="button" onClick={onTrack}><PackageSearch size={14} />Track request</button>}
-          <a href="#contact" onClick={e => { e.preventDefault(); nav("contact"); }}><Phone size={14} />Contact us{c.phone ? ` ${c.phone}` : ""}</a>
+          {onWishlist && <button type="button" onClick={onWishlist} aria-label={`Wishlist${wishCount > 0 ? `, ${wishCount} saved` : ""}`} title="Wishlist"><Heart size={16} /><span className="lbl">Wishlist</span>{wishCount > 0 && <i>{wishCount}</i>}</button>}
+          {onTrack && <button type="button" onClick={onTrack} aria-label="Track request" title="Track request"><PackageSearch size={16} /><span className="lbl">Track request</span></button>}
+          <a href="#contact" onClick={e => { e.preventDefault(); nav("contact"); }} aria-label="Contact us" title="Contact us"><Phone size={16} /><span className="lbl">Contact us</span></a>
         </span>
         <ThemeSwitch />
       </div>

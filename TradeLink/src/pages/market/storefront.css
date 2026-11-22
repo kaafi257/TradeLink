@@ -224,3 +224,35 @@
 .public-site .ad-stage.media .ad-bg img,.public-site .ad-stage.media .ad-bg video{width:100%;height:100%;object-fit:cover;object-position:50% 100%;transform-origin:50% 100%;animation:ad-fill-zoom 9s ease-out both}
 @keyframes ad-fill-zoom{from{transform:scale(1.16)}to{transform:scale(1.2)}}
 @media(prefers-reduced-motion:reduce){.public-site .ad-stage.media .ad-bg img,.public-site .ad-stage.media .ad-bg video{animation:none;transform:scale(1.16)}}
+
+/* ===== Header redesign: slim top bar with icon buttons, soft icon buttons, pill search, chip links ===== */
+.public-site .tl-ann{font-size:12.5px;background:linear-gradient(90deg,#0b1f3a,#0b4f86 60%,#0b1f3a)}
+.public-site .tl-ann .tl-wrap{min-height:40px;gap:12px;justify-content:flex-start}
+.public-site .tl-ann .tl-wrap>span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;display:block;opacity:.9}
+.tl-util{margin-left:auto;gap:6px}
+.tl-util button,.tl-util a{position:relative;gap:7px;padding:0;min-width:32px;height:32px;justify-content:center;border-radius:99px;background:#ffffff1c;border:1px solid #ffffff2e;color:#fff;transition:background .2s,transform .15s}
+.tl-util button:hover,.tl-util a:hover{background:#ffffff38;text-decoration:none;transform:translateY(-1px)}
+.tl-util button:active,.tl-util a:active{transform:scale(.92)}
+.tl-util svg{color:#cfe6ff}
+.tl-util .lbl{display:none}
+.tl-util i{position:absolute;top:-5px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:#f2b01e;color:#3a2a00;font:800 10px/16px 'Inter',sans-serif;text-align:center;font-style:normal}
+@media(min-width:900px){.tl-util button,.tl-util a{padding:0 14px 0 11px}.tl-util .lbl{display:inline;font:600 12.5px 'Inter',sans-serif}.tl-util i{position:static;margin-left:2px}}
+@media(max-width:620px){.public-site .tl-ann .tl-wrap>span:first-child{display:block}.tl-util a{max-width:none}}
+
+.public-site .tl-act{width:44px;height:44px;min-width:44px;padding:0;border-radius:50%;background:#fff;border:1px solid #d7e6f6;box-shadow:0 8px 16px -12px #0b3a6b;display:grid;place-items:center;transition:transform .18s,box-shadow .2s,background .2s}
+.public-site .tl-act:hover{background:#fff;transform:translateY(-2px);box-shadow:0 14px 20px -12px #0b3a6b}.public-site .tl-act:active{transform:scale(.92)}
+.public-site .tl-acts{gap:8px}
+.public-site .tl-act i{top:-3px;right:-3px;background:#f2b01e;color:#3a2a00}
+.public-site .tl-search form{border:1.5px solid #cfe0f3;box-shadow:0 12px 24px -16px #0b3a6b99;transition:border-color .2s,box-shadow .2s}
+.public-site .tl-search form:focus-within{border-color:#1479c2;box-shadow:0 0 0 4px #1479c222,0 12px 24px -16px #0b3a6b99}
+.public-site .tl-search .go{background:linear-gradient(135deg,#0b3a63,#1479c2);box-shadow:0 8px 14px -8px #0b3a63}
+.public-site .tl-allcat{border-radius:99px;height:42px;background:linear-gradient(135deg,#0b3a63,#1479c2);box-shadow:0 10px 18px -12px #0b3a63}
+.public-site .tl-nav-in{min-height:58px}
+.public-site .tl-links{gap:8px}
+.public-site .tl-links button{height:38px;padding:0 16px;border-radius:99px;background:#fff;border:1px solid #d7e6f6;font:600 13.5px 'Inter',sans-serif;box-shadow:0 6px 12px -10px #0b3a6b;transition:transform .15s,background .2s,box-shadow .2s}
+.public-site .tl-links button::after{display:none}
+.public-site .tl-links button:hover{background:#eaf4ff;transform:translateY(-1px)}.public-site .tl-links button:active{transform:scale(.96)}
+.public-site .tl-links .rfq,.public-site .tl-links button.rfq:hover{background:linear-gradient(135deg,#f2b01e,#e09a0b);border-color:transparent;color:#3a2a00;font-weight:800}
+.public-site .tl-links .rfq svg{color:#3a2a00}
+@media(max-width:760px){.public-site .tl-nav-in{min-height:52px}.public-site .tl-links{padding-inline:12px;gap:8px}.public-site .tl-links button{height:36px;font-size:13px}}
+html[data-theme=dark] .public-site .tl-act,html[data-theme=dark] .public-site .tl-links button{background:var(--surface,#1d252b);border-color:#2b363d;color:inherit}
