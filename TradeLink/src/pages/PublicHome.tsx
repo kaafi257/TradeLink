@@ -11,7 +11,7 @@ import { useAuth } from "../lib/auth";
 import { track, trackState } from "../lib/track";
 import { applyCoupon } from "../lib/coupon";
 import { useWishlist } from "../lib/wishlist";
-import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TradeHeader, TradeNav, TradeRow } from "./market/Trade";
+import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TrackModal, TradeHeader, TradeNav, TradeRow } from "./market/Trade";
 import { isVideoUrl } from "../lib/promoMedia";
 import { BrowseCategories, LivePromos, LandingHero, type AdSlide, type HeroPromo, PromoBanners, TrustNewsletter } from "./market/Landing";
 import { KIND_LABEL, offerText, type PublicPromo } from "../lib/promo";
@@ -19,6 +19,7 @@ import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
 import { supabase, withPhoto, type CampaignSlide, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
 import "./home.css";
+import "./market/storefront.css";
 
 export type Mode = "business" | "individual";
 export type Line = { key: string; productId: string; qty: string };
@@ -182,6 +183,7 @@ export default function PublicHome() {
   const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [rfqOpen, setRfqOpen] = useState(false);
+  const [trackOpen, setTrackOpen] = useState(false);
   const { session, loading: authLoading } = useAuth();
   // Staff browsing the public site are not counted as visitors. One visit per browser tab.
   useEffect(() => {
@@ -316,9 +318,9 @@ export default function PublicHome() {
     setCart(c => c.filter(l => { const p = products.find(x => x.id === l.productId); return !p || allows(p, m); }));
   };
   const inCart = (id: string) => cart.some(l => l.productId === id);
-  const addToRequest = (p: PublicProduct) => {
+  const addToRequest = (p: PublicProduct, qty?: number) => {
     if (inCart(p.id)) { setQuoteOpen(true); return; }
-    setCart(c => [...c, { key: newKey(), productId: p.id, qty: defaultQty(p, mode) }]);
+    setCart(c => [...c, { key: newKey(), productId: p.id, qty: qty && qty > 0 ? String(qty) : defaultQty(p, mode) }]);
   };
   const pickIndustry = (id: string) => { setIndustryId(id); setCategoryId("all"); };
 
@@ -355,11 +357,15 @@ export default function PublicHome() {
     const take = (list: PublicProduct[], n: number) => { const out = list.filter(p => !used.has(p.id)).slice(0, n); out.forEach(p => used.add(p.id)); return out; };
     const ok = products.filter(p => allows(p, mode));
     const ranked = [...bestIds.map(id => ok.find(p => p.id === id)).filter((p): p is PublicProduct => !!p), ...[...ok].sort(byNew)];
+    const newest = take([...ok].sort(byNew), 8);
     const featured = take(ranked, 6);
     const wholesaleList = take(products.filter(p => audienceOf(p) !== "b2c").sort((a, b) => Number(b.min_order_quantity) - Number(a.min_order_quantity)), 6);
-    const newest = take([...ok].sort(byNew), 6);
     return { featured, wholesaleList, newest };
   }, [products, bestIds, mode]);
+  const bestDeals = useMemo(() => {
+    const onSale = products.filter(p => allows(p, mode) && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price)).sort((a, b) => Number(a.sale_price) / Number(a.retail_price) - Number(b.sale_price) / Number(b.retail_price));
+    return [...new Map([...onSale, ...featured].map(p => [p.id, p])).values()].slice(0, 10);
+  }, [products, mode, featured]);
   const starList = useMemo(() => visible.filter(p => starIds.has(p.id)), [visible, starIds]);
   const offers = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0 && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price)).slice(0, 6), [products]);
   // One card per industry that has products for this buyer type, with a real product photo when there is one.
@@ -429,7 +435,7 @@ export default function PublicHome() {
 
   return (
     <div className={`public-site${hasCart ? " has-cart" : ""}`}>
-      <AnnouncementBar products={products.length} industries={mInds.filter(i => (indCount.get(i.id) ?? 0) > 0).length} />
+      <AnnouncementBar products={products.length} industries={mInds.filter(i => (indCount.get(i.id) ?? 0) > 0).length} wishCount={wishCount} onWishlist={() => setWishOpen(true)} onTrack={() => setTrackOpen(true)} />
       <TradeHeader shelf={shelf} suppliers={suppliers} wishCount={wishCount} requestCount={cart.length} signedIn={!!session}
         onWishlist={() => setWishOpen(true)} onRequest={() => setQuoteOpen(true)} onAccount={() => navigate(session ? "/admin" : "/login")}
         onSearch={(text, ind) => {
@@ -439,22 +445,21 @@ export default function PublicHome() {
         }}
         onPickIndustry={openIndustry} onPickCategory={openCategory} onSupplier={setSupplier} searchRef={searchRef}
         openMenu={() => setMenuOpen(v => !v)} menuOpen={menuOpen} />
-      <TradeNav mode={mode} industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} onRfq={() => setRfqOpen(true)} />
+      <TradeNav mode={mode} industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} onRfq={() => setRfqOpen(true)} signedIn={!!session} onAccount={() => navigate(session ? "/admin" : "/login")} onAll={() => go("public-products")} />
       <ModeToggle mode={mode} onMode={changeMode} className="mobile" />
       <LandingHero photos={heroPhotos} promos={[...heroPromos, ...liveHero].slice(0, 8)} slides={adSlides} offerPct={offerPct} onShop={() => go("public-products")} onQuote={() => setRfqOpen(true)} />
-      <PromoBanners offerCount={sale.length} offerPct={offerPct} onOffers={() => go("offers")} onQuote={() => setRfqOpen(true)} onSupplier={() => navigate("/supplier/register")} />
       <BrowseCategories items={catCards} onPick={openIndustry} onMore={() => setMenuOpen(true)} />
+      <LivePromos items={promos} supplierName={supplierName} scopeText={promoScope} onOpen={openPromo} />
+      <PromoBanners offerCount={sale.length} offerPct={offerPct} onOffers={() => go("offers")} onQuote={() => setRfqOpen(true)} onSupplier={() => navigate("/supplier/register")} />
+      <TradeRow id="offers" title="Best deals" sub={sale.length ? "Lowest prices right now" : "Popular right now"} shelf={shelf} items={bestDeals} max={10} rail onAll={() => go("public-products")} />
+      <RfqBanner onOpen={() => setRfqOpen(true)} />
+      <TradeRow id="new-arrivals" title="New arrivals" shelf={shelf} items={newest} max={8} onAll={() => go("public-products")} />
       <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
         industry={effIndustry} category={effCategory} setIndustry={setIndustryId} setCategory={setCategoryId}
         search={search} setSearch={setSearch} items={shown} emptyText={emptyMessage} />
-      <TradeRow id="trending" title="Trending products" shelf={shelf} items={featured} max={5} onAll={() => go("public-products")} />
-      <LivePromos items={promos} supplierName={supplierName} scopeText={promoScope} onOpen={openPromo} />
       <TradeRow id="featured" title="Featured picks" sub="Chosen by TradeLink" shelf={shelf} items={starList} max={6} />
       <TradeRow id="wholesale" title="Wholesale sourcing" sub="Buy in bulk. Minimum order shown." shelf={shelf} mode="business" items={wholesaleList} onAll={() => { changeMode("business"); go("public-products"); }} />
       <SupplierStrip items={suppliers} industries={inds} onOpen={setSupplier} starred={starSup} />
-      <TradeRow id="new-arrivals" title="New arrivals" shelf={shelf} items={newest} onAll={() => go("public-products")} />
-      <TradeRow id="offers" title="Special offers" sub="Active discounts" shelf={shelf} mode="individual" items={offers} />
-      <RfqBanner onOpen={() => setRfqOpen(true)} />
       <TrustNewsletter products={products.length} suppliers={suppliers.length} industries={catCards.length} />
       <MarketFooter industries={headerInds} onIndustry={openIndustry} onRequest={() => setQuoteOpen(true)} signedIn={!!session} onAccount={() => navigate(session ? "/admin" : "/login")} />
 
@@ -464,6 +469,7 @@ export default function PublicHome() {
           <button className="btn gold" onClick={() => setQuoteOpen(true)}>Send <ArrowRight size={15} /></button>
         </div>
       )}
+      {trackOpen && <TrackModal onClose={() => setTrackOpen(false)} />}
       {rfqOpen && <RfqModal products={products} industries={mInds} categories={cats} catOf={p => catById.get(catKey(p))} onClose={() => setRfqOpen(false)} />}
       <BottomNav wishCount={wishCount} requestCount={cart.length} onHome={() => go("top")} onCategories={() => setMenuOpen(true)} onSearch={() => { go("top"); window.setTimeout(() => searchRef.current?.focus(), 300); }} onWishlist={() => setWishOpen(true)} onRequest={() => setQuoteOpen(true)} />
       <FloatingContact />

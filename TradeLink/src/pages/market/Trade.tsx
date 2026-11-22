@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from "react";
-import { ArrowRight, Briefcase, Building2, Check, ChevronDown, ChevronRight, ClipboardList, Clock, Flame, Grid3x3, Headphones, Heart, Home, LogIn, MapPin, Menu, MessageCircle, Package, Percent, Search, ShoppingBag, ShieldCheck, Sparkles, Star, Store, Tag, Truck, User, X } from "lucide-react";
+import { ArrowRight, Briefcase, PackageSearch, Phone, Building2, Check, ChevronDown, ChevronRight, ClipboardList, Clock, Flame, Grid3x3, Headphones, Heart, Home, LogIn, MapPin, Menu, MessageCircle, Package, Percent, Search, ShoppingBag, ShieldCheck, Sparkles, Star, Store, Tag, Truck, User, X } from "lucide-react";
 import { Brand } from "../../components/Brand";
 import { ContactIcons } from "../../components/ContactActions";
 import { useContact } from "../../lib/contact";
@@ -29,7 +29,7 @@ function ThemeSwitch() {
   );
 }
 
-export function AnnouncementBar({ products }: { products: number; industries: number }) {
+export function AnnouncementBar({ products, wishCount = 0, onWishlist, onTrack }: { products: number; industries: number; wishCount?: number; onWishlist?: () => void; onTrack?: () => void }) {
   const c = useContact();
   // Live banners written in Admin → Website Management. If none (or the table is not set up yet) the usual line is shown.
   const [banners, setBanners] = useState<{ id: string; message: string; link: string | null }[]>([]);
@@ -46,7 +46,11 @@ export function AnnouncementBar({ products }: { products: number; industries: nu
           ? <a key={b.id} href={b.link} style={{ color: "inherit", fontWeight: 700 }}>{b.message}</a>
           : <span key={b.id} style={{ fontWeight: 700 }}>{b.message}</span>)}
         {banners.length === 0 && <span>Wholesale and retail, one marketplace{products > 0 ? ` · ${products} products` : ""}</span>}
-        {c.phone && <a className="hide-s" href={`tel:${c.phone.replace(/[^0-9+]/g, "")}`}>{c.phone}</a>}
+        <span className="tl-util" role="navigation" aria-label="Quick links">
+          {onWishlist && <button type="button" onClick={onWishlist}><Heart size={14} />Wishlist{wishCount > 0 ? ` (${wishCount})` : ""}</button>}
+          {onTrack && <button type="button" onClick={onTrack}><PackageSearch size={14} />Track request</button>}
+          <a href="#contact" onClick={e => { e.preventDefault(); nav("contact"); }}><Phone size={14} />Contact us{c.phone ? ` ${c.phone}` : ""}</a>
+        </span>
         <ThemeSwitch />
       </div>
     </div>
@@ -167,7 +171,8 @@ export function ModeToggle({ mode, onMode, className = "" }: { mode: Mode; onMod
   );
 }
 
-export function TradeNav({ mode, industries, categories, counts, onMode, onPickIndustry, onPickCategory, open, setOpen, onRfq }: {
+export function TradeNav({ mode, industries, categories, counts, onMode, onPickIndustry, onPickCategory, open, setOpen, onRfq, signedIn = false, onAccount, onAll }: {
+  signedIn?: boolean; onAccount?: () => void; onAll?: () => void;
   mode: Mode; industries: PublicIndustry[]; categories: PublicCategory[]; counts: Map<string, number>;
   onMode: (m: Mode) => void; onPickIndustry: (i: PublicIndustry) => void; onPickCategory: (c: PublicCategory) => void; open: boolean; setOpen: (v: boolean) => void; onRfq: () => void;
 }) {
@@ -181,7 +186,7 @@ export function TradeNav({ mode, industries, categories, counts, onMode, onPickI
   }, [open, setOpen]);
   const go = (m: Mode | null, id: string) => { if (m) onMode(m); setOpen(false); window.setTimeout(() => nav(id), 60); };
   return (
-    <nav className="tl-nav" aria-label="Marketplace" ref={ref}>
+    <nav className={`tl-nav${open ? " is-open" : ""}`} aria-label="Marketplace" ref={ref}>
       <div className="tl-wrap tl-nav-in">
         <button className={`tl-allcat${open ? " on" : ""}`} aria-expanded={open} onClick={() => setOpen(!open)}><Menu size={17} /><b>Categories</b></button>
         <div className="tl-links">
@@ -192,6 +197,9 @@ export function TradeNav({ mode, industries, categories, counts, onMode, onPickI
         </div>
         <ModeToggle mode={mode} onMode={onMode} />
       </div>
+      <CategoryDrawer open={open} onClose={() => setOpen(false)} industries={industries} categories={categories} counts={counts} signedIn={signedIn}
+        onAccount={() => { setOpen(false); onAccount?.(); }} onAll={() => { setOpen(false); onAll?.(); }}
+        onPickIndustry={i => { setOpen(false); onPickIndustry(i); }} onPickCategory={c => { setOpen(false); onPickCategory(c); }} />
       {open && (
         <div className="tl-mega" role="menu">
           <div className="tl-wrap tl-mega-in">
@@ -209,6 +217,83 @@ export function TradeNav({ mode, industries, categories, counts, onMode, onPickI
         </div>
       )}
     </nav>
+  );
+}
+
+/** Phone menu: slides in from the left. Departments open and close to show their categories. */
+export function CategoryDrawer({ open, onClose, industries, categories, counts, signedIn, onAccount, onAll, onPickIndustry, onPickCategory }: {
+  open: boolean; onClose: () => void; industries: PublicIndustry[]; categories: PublicCategory[]; counts: Map<string, number>; signedIn: boolean;
+  onAccount: () => void; onAll: () => void; onPickIndustry: (i: PublicIndustry) => void; onPickCategory: (c: PublicCategory) => void;
+}) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    if (window.matchMedia("(max-width:900px)").matches) document.body.style.overflow = "hidden";
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", k);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", k); };
+  }, [open, onClose]);
+  return (
+    <div className={`tl-drawer${open ? " open" : ""}`} aria-hidden={!open}>
+      <button className="tl-drawer-scrim" tabIndex={-1} aria-label="Close menu" onClick={onClose} />
+      <aside className="tl-drawer-panel" role="dialog" aria-modal="true" aria-label="Categories">
+        <header><span className="tl-drawer-logo"><Brand /></span><button className="tl-drawer-x" aria-label="Close menu" onClick={onClose}><X size={20} /></button></header>
+        <button className="tl-drawer-row" onClick={onAccount}><User size={20} /><b>{signedIn ? "My account" : "Login"}</b></button>
+        <button className="tl-drawer-row" onClick={onAll}><Grid3x3 size={20} /><b>All products</b></button>
+        <ul>
+          {industries.map(i => {
+            const cs = categories.filter(c => c.industry_id === i.id && (counts.get(c.id) ?? 0) > 0);
+            const on = openId === i.id;
+            return (
+              <li key={i.id} className={on ? "on" : ""} style={tone(i.name)}>
+                <div className="tl-drawer-ind">
+                  <button className="name" onClick={() => onPickIndustry(i)}><span className="ic"><IconFor name={i.icon} size={18} /></span><b>{i.name}</b></button>
+                  {cs.length > 0 && <button className="chev" aria-expanded={on} aria-label={`${on ? "Hide" : "Show"} ${i.name} categories`} onClick={() => setOpenId(on ? null : i.id)}><ChevronDown size={18} /></button>}
+                </div>
+                {cs.length > 0 && <div className="tl-drawer-sub"><div>{cs.map(c => <button key={c.id} onClick={() => onPickCategory(c)}>{c.name}<em>{counts.get(c.id)}</em></button>)}</div></div>}
+              </li>
+            );
+          })}
+        </ul>
+      </aside>
+    </div>
+  );
+}
+
+/** Look up a request with the reference and phone number from the confirmation. Only the status is shown. */
+export function TrackModal({ onClose }: { onClose: () => void }) {
+  const [num, setNum] = useState("");
+  const [phone, setPhone] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [res, setRes] = useState<{ quote_number: string; status: string; created_at: string } | null | undefined>(undefined);
+  const [err, setErr] = useState("");
+  const LABEL: Record<string, string> = { new: "Received", reviewing: "Being reviewed", quoted: "Price sent to you", accepted: "Accepted", rejected: "Closed", converted: "Turned into an order" };
+  const submit = async (e: FormEvent) => {
+    e.preventDefault(); setErr(""); setRes(undefined);
+    if (!supabase) { setErr("Tracking is not connected yet. Please contact us."); return; }
+    setBusy(true);
+    const { data, error } = await supabase.rpc("track_request", { p_number: num, p_phone: phone });
+    setBusy(false);
+    if (error) { setErr("We could not check right now. Please try again or contact us."); return; }
+    setRes((data as { quote_number: string; status: string; created_at: string }[] | null)?.[0] ?? null);
+  };
+  return (
+    <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal tl-track" role="dialog" aria-modal="true" aria-label="Track your request">
+        <button className="modal-x" aria-label="Close" onClick={onClose}><X /></button>
+        <small className="kicker">Track request</small>
+        <h2>Where is my request?</h2>
+        <form className="form-grid" onSubmit={submit}>
+          <label className="full">Reference<input value={num} onChange={e => setNum(e.target.value)} required placeholder="QTN-XXXXXXXX" autoCapitalize="characters" /></label>
+          <label className="full">Phone number you used<input value={phone} onChange={e => setPhone(e.target.value)} required inputMode="tel" placeholder="+251 ..." /></label>
+          {err && <p className="form-error full" role="alert">{err}</p>}
+          {res === null && <p className="form-error full" role="alert">No request matches that reference and phone number. Check both and try again.</p>}
+          {res && <p className="tl-track-ok full" role="status"><Check size={18} /><span><b>{res.quote_number}</b>: {LABEL[res.status] ?? res.status}<small>Sent {new Date(res.created_at).toLocaleDateString()}</small></span></p>}
+          <button className="btn green full" disabled={busy}>{busy ? "Checking…" : "Track request"} <ArrowRight /></button>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -282,15 +367,15 @@ export function TradeHero({ shelf, slides, counts, onPickIndustry, onPickCategor
 
 /* ------------------------------------------------------------ product rows */
 
-export function TradeRow({ id, title, sub, shelf, items, mode, onAll, max = 6 }: {
-  id: string; title: string; sub?: string; shelf: Shelf; items: PublicProduct[]; mode?: Mode; onAll?: () => void; max?: number;
+export function TradeRow({ id, title, sub, shelf, items, mode, onAll, max = 6, rail = false }: {
+  id: string; title: string; sub?: string; shelf: Shelf; items: PublicProduct[]; mode?: Mode; onAll?: () => void; max?: number; rail?: boolean;
 }) {
   if (items.length === 0) return null;
   return (
     <Reveal className="tl-sec" as="section">
       <div className="tl-wrap" id={id}>
         <div className="tl-sh"><div><h2>{title}</h2>{sub && <small>{sub}</small>}</div>{onAll && <button onClick={onAll}>View all<ArrowRight size={15} /></button>}</div>
-        <div className="tl-prods">{[...new Map(items.map(p => [p.id, p])).values()].slice(0, max).map(p => <CleanCard key={p.id} p={p} shelf={shelf} mode={mode} />)}</div>
+        <div className={`tl-prods${rail ? " rail" : ""}`}>{[...new Map(items.map(p => [p.id, p])).values()].slice(0, max).map(p => <CleanCard key={p.id} p={p} shelf={shelf} mode={mode} />)}</div>
       </div>
     </Reveal>
   );

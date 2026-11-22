@@ -24,7 +24,7 @@ export type Shelf = {
   isFashion: (p: PublicProduct) => boolean;
   bestIds: string[];
   inRequest: (id: string) => boolean;
-  addToRequest: (p: PublicProduct) => void;
+  addToRequest: (p: PublicProduct, qty?: number) => void;
   wished: (id: string) => boolean;
   toggleWish: (id: string) => void;
   open: (p: PublicProduct) => void;
@@ -345,12 +345,16 @@ export function CleanCard({ p, shelf, mode }: { p: PublicProduct; shelf: Shelf; 
   const { now, was } = priceOf(p);
   const off = m === "individual" && now !== null && was !== null ? Math.round((1 - now / was) * 100) : 0;
   const moq = Number(p.min_order_quantity);
+  const isNew = !!p.created_at && Date.now() - new Date(p.created_at).getTime() < 30 * 864e5;
+  const added = shelf.inRequest(p.id);
+  const fashion = shelf.isFashion(p);
   return (
     <article className="tl-card">
       <div className="media">
         {p.image_url ? <img src={p.image_url} alt="" loading="lazy" /> : <span className="ph"><IconFor name={shelf.indOf(p)?.icon} size={34} /></span>}
         {off > 0 && <span className="off">-{off}%</span>}
         {off === 0 && shelf.tagOf?.(p.id) && <span className="mk-tag">{shelf.tagOf(p.id)}</span>}
+        {off === 0 && !shelf.tagOf?.(p.id) && isNew && <span className="new">New</span>}
         {p.stock_status === "out" && <span className="out">Sold out</span>}
       </div>
       <div className="info">
@@ -361,6 +365,8 @@ export function CleanCard({ p, shelf, mode }: { p: PublicProduct; shelf: Shelf; 
         <p className="moq">{m === "business" && moq > 1 ? `Min. order ${moq} ${p.unit}` : p.package_size ?? shelf.catName(p)}</p>
       </div>
       <button className="cover" aria-label={`Details: ${p.name}`} onClick={() => shelf.open(p)} />
+      {!fashion && p.stock_status !== "out" && <button className={`qadd${added ? " done" : ""}`} aria-label={added ? "Added to request" : `Add ${p.name} to request`} title={added ? "Added" : "Add to request"}
+        onClick={e => { if (!added) flyToBag(e.currentTarget); shelf.addToRequest(p); }}>{added ? <Check size={17} /> : <Plus size={17} />}</button>}
       <button className={`heart${wished ? " on" : ""}`} aria-pressed={wished} aria-label={wished ? "Remove from wishlist" : "Save to wishlist"} onClick={() => shelf.toggleWish(p.id)}><Heart size={16} /></button>
     </article>
   );
@@ -447,7 +453,7 @@ export function MarketShop({ shelf, onMode, industries, categories, counts, indu
           {sorted.length === 0 ? <p className="mk-empty">{emptyText}</p> : (
             <>
               <div className="mk-grid mk-shop-grid">{sorted.slice(0, limit).map(p => <CleanCard key={p.id} p={p} shelf={shelf} />)}</div>
-              {sorted.length > limit && <button className="mk-more" onClick={() => setLimit(l => l + PAGE)}><Plus size={18} /><b>{sorted.length - limit}</b></button>}
+              {sorted.length > limit && <button className="mk-similar" onClick={() => setLimit(l => l + PAGE)}><Plus size={18} /><b>{sorted.length - limit}</b></button>}
             </>
           )}
         </div>
@@ -583,7 +589,7 @@ export function Popular({ shelf }: { shelf: Shelf }) {
           </div>
         )}
         <div className="mk-grid" key={active}>{shown.map(p => <MiniCard key={p.id} p={p} shelf={shelf} />)}</div>
-        {shown.length < list.length && <div className="mk-more"><button aria-label="Show more" title="Show more" onClick={() => setMore(m => m + 1)}><Plus size={18} /></button></div>}
+        {shown.length < list.length && <div className="mk-similar"><button aria-label="Show more" title="Show more" onClick={() => setMore(m => m + 1)}><Plus size={18} /></button></div>}
       </div>
     </Reveal>
   );
@@ -611,6 +617,12 @@ export function ProductDialog({ p, shelf, onClose, onStore }: { p: PublicProduct
   const fashion = shelf.isFashion(p);
   const photos = useProductImages(p);
   const sup = shelf.supplierOf?.(p);
+  const moq = Math.max(1, Number(p.min_order_quantity) || 1);
+  const startQty = shelf.mode === "business" ? moq : 1;
+  const [qty, setQty] = useState(startQty);
+  const out = p.stock_status === "out";
+  const more = shelf.products.filter(x => x.id !== p.id && x.category_id && x.category_id === p.category_id).slice(0, 8);
+  const stockText = p.stock_status === "in" ? "In stock" : p.stock_status === "low" ? "Few left" : out ? "Out of stock" : "";
   return (
     <div className="mk-layer" role="dialog" aria-modal="true" aria-label={p.name}>
       <button className="mk-scrim" aria-label="Close" onClick={onClose} />
@@ -618,23 +630,33 @@ export function ProductDialog({ p, shelf, onClose, onStore }: { p: PublicProduct
         <button className="mk-x" aria-label="Close" onClick={onClose}><X size={18} /></button>
         <div className={`mk-dmedia${photos.length > 1 ? " gal" : ""}`}><ProductGallery urls={photos} name={p.name} fallback={<span className="ph"><IconFor name={ind?.icon} size={44} /></span>} /></div>
         <div className="mk-dbody">
-          <small className="mk-cat">{[ind?.name, shelf.catName(p)].filter(Boolean).join(" · ")}</small>
+          <nav className="mk-crumbs" aria-label="Breadcrumb"><span>Home</span>{ind && <><ChevronRight size={12} /><span>{ind.name}</span></>}<ChevronRight size={12} /><span>{shelf.catName(p)}</span></nav>
           <h3>{p.name}</h3>
           {p.brand && <p className="mk-brand">{p.brand}</p>}
-          <div className="mk-row"><Price p={p} mode={shelf.mode} /><Stock p={p} /></div>
+          <div className="mk-row"><Price p={p} mode={shelf.mode} /><Stock p={p} />{stockText && <b className={`mk-stock-t ${p.stock_status}`}>{stockText}</b>}</div>
           {p.description && <p className="mk-desc">{p.description}</p>}
           <div className="mk-facts">
             {sup && <button type="button" className="mk-sup" title="Supplier" onClick={() => { onClose(); shelf.openSupplier?.(sup); }}><Building2 size={14} />{sup.name}</button>}
             <span><Package size={14} />{p.package_size || p.unit}</span>
             {shelf.mode === "business" && <span title={`Minimum order ${Number(p.min_order_quantity)} ${p.unit}`}><Layers size={14} />{Number(p.min_order_quantity)}</span>}
           </div>
+          {!fashion && (
+            <div className="mk-qty" role="group" aria-label="Quantity">
+              <span>Quantity{shelf.mode === "business" && moq > 1 ? ` · minimum ${moq} ${p.unit}` : ` (${p.unit})`}</span>
+              <div><button type="button" aria-label="Less" disabled={out || qty <= startQty} onClick={() => setQty(q => Math.max(startQty, q - 1))}>−</button>
+                <input type="number" min={startQty} value={qty} disabled={out} aria-label="Quantity" onChange={e => setQty(Math.max(startQty, Number(e.target.value) || startQty))} />
+                <button type="button" aria-label="More" disabled={out} onClick={() => setQty(q => q + 1)}>+</button></div>
+            </div>
+          )}
           <div className="mk-dact">
             {fashion
               ? <button className="mk-primary" aria-label="Open in store" title="Open in store" onClick={() => onStore(p)}><Store size={20} /><ArrowRight size={18} /></button>
-              : <button className="mk-primary" aria-label={added ? "Added to request" : "Add to request"} title={added ? "Added" : "Add to request"} onClick={() => { shelf.addToRequest(p); if (!added) onClose(); }}>{added ? <Check size={20} /> : <><Plus size={20} /><ClipboardList size={20} /></>}</button>}
+              : <button className="mk-primary wide" disabled={out} aria-label={out ? "Out of stock" : added ? "Added to request" : "Add to request"} onClick={() => { shelf.addToRequest(p, qty); if (!added) onClose(); }}>{out ? "Out of stock" : added ? <><Check size={20} /> Added</> : <><Plus size={20} /> Add to request</>}</button>}
             <button className={`mk-sq${wished ? " on" : ""}`} aria-pressed={wished} aria-label={wished ? "Remove from wishlist" : "Save to wishlist"} onClick={() => shelf.toggleWish(p.id)}><Heart size={18} /></button>
           </div>
           <ContactIcons message={`Hello TradeLink, I would like ${shelf.mode === "individual" ? "a price" : "a wholesale price"} for ${p.name}.`} />
+          {more.length > 0 && <div className="mk-similar"><h4>More from this category</h4><div>{more.map(x => (
+            <button key={x.id} onClick={() => shelf.open(x)}><span>{x.image_url ? <img src={x.image_url} alt="" loading="lazy" /> : <IconFor name={shelf.indOf(x)?.icon} size={22} />}</span><b>{x.name}</b></button>))}</div></div>}
         </div>
       </div>
     </div>
