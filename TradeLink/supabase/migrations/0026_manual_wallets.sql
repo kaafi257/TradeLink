@@ -221,7 +221,7 @@ language plpgsql stable security definer set search_path = public as $$
 declare s public.checkout_settings%rowtype;
 begin
   if auth.uid() is null or not (coalesce(public.has_permission('payments.view'), false) or public.is_tl_staff()) then raise exception 'You do not have permission to view payments.'; end if;
-  select * into s from public.checkout_settings where id;
+  s := (select c from public.checkout_settings c where c.id);
   return jsonb_build_array(
     jsonb_build_object('key', 'bank_transfer', 'name', 'CBE bank transfer', 'state', case when s.bank_enabled and s.account_number is not null then 'live' else 'off' end, 'detail', 'Manual verification by staff'),
     jsonb_build_object('key', 'cod', 'name', 'Cash on Delivery', 'state', case when s.cod_enabled then 'live' else 'off' end, 'detail', 'Paid when cash is confirmed collected'),

@@ -60,6 +60,13 @@ export const placeOrder = (a: { items: CheckoutItem[]; name: string; phone: stri
     p_items: a.items, p_name: a.name, p_phone: a.phone, p_email: a.email, p_location: a.location, p_notes: a.notes, p_method: a.method, p_key: a.key, p_website: a.website,
   });
 export const trackOrder = (number: string, phone: string) => rpc<OrderView>("track_order", { p_number: number, p_phone: phone });
+/** Who this device ordered as. Kept so a refresh, or coming back later, still shows the customer's orders. */
+const WHO = "tradelink-customer";
+export type Identity = { name: string; phone: string };
+export const saveIdentity = (i: Identity) => { try { localStorage.setItem(WHO, JSON.stringify(i)); } catch { /* storage unavailable */ } };
+export const loadIdentity = (): Identity | null => { try { const v = JSON.parse(localStorage.getItem(WHO) ?? "null"); return v && typeof v.name === "string" && typeof v.phone === "string" ? v : null; } catch { return null; } };
+export const clearIdentity = () => { try { localStorage.removeItem(WHO); } catch { /* storage unavailable */ } };
+export const ordersByContact = (name: string, phone: string) => rpc<OrderView[]>("orders_by_contact", { p_name: name, p_phone: phone });
 export const myOrders = () => rpc<OrderView[]>("my_orders");
 export const submitProof = (number: string, phone: string, txn: string, proof: string | null) => rpc<OrderView>("submit_payment_proof", { p_number: number, p_phone: phone, p_txn_ref: txn, p_proof: proof });
 

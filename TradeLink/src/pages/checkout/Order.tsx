@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { Link, useParams } from "react-router-dom";
 import { Check, Copy, FileUp, Loader2, Printer, Search, Truck } from "lucide-react";
 import { useAuth } from "../../lib/auth";
-import { METHOD_LABEL, isTransfer, myOrders, submitProof, trackOrder, uploadProof, type OrderView } from "../../lib/checkout";
+import { METHOD_LABEL, isTransfer, loadIdentity, myOrders, submitProof, trackOrder, uploadProof, type OrderView } from "../../lib/checkout";
 import { CoShell, StatusBanner, StatusPill, etb, when } from "./parts";
 
 const phoneKey = (n: string) => `tl-order-phone-${n}`;
-const readPhone = (n: string) => { try { return sessionStorage.getItem(phoneKey(n)) ?? ""; } catch { return ""; } };
+const readPhone = (n: string) => { try { return sessionStorage.getItem(phoneKey(n)) || loadIdentity()?.phone || ""; } catch { return loadIdentity()?.phone ?? ""; } };
 
 function Copy1({ text, label }: { text: string; label: string }) {
   const [ok, setOk] = useState(false);
@@ -64,7 +64,7 @@ export default function Order() {
 
   const p = order.payment;
   return (
-    <CoShell back={{ to: session ? "/account" : "/", label: session ? "My orders" : "Back to shop" }}>
+    <CoShell back={{ to: "/account", label: "My orders" }}>
       <h1 className="co-h1">Order {order.order_number}</h1>
       {p && <StatusBanner payment={p} />}
 

@@ -15,6 +15,7 @@ export function CoShell({ children, back }: { children: ReactNode; back?: { to: 
         <Link to="/" aria-label="TradeLink home"><Brand /></Link>
         <span className="co-secure"><Lock size={15} /> Secure checkout</span>
         {back && <Link className="co-back" to={back.to}>{back.label}</Link>}
+        {!back && <Link className="co-back" to="/account">My orders</Link>}
       </header>
       <main className="co-main">{children}</main>
     </div>
