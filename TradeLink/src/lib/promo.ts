@@ -7,7 +7,7 @@ export type Promo = {
   supplier_id: string | null; category_id: string | null; product_id: string | null;
   discount_type: "percent" | "fixed"; percent: number | null; amount: number | null; max_discount: number | null; buy_qty: number | null; get_qty: number | null;
   starts_at: string | null; ends_at: string | null; started_at: string | null; status: PromoStatus; note: string | null; review_note: string | null;
-  show_banner: boolean; banner_text: string | null; paused_by: string | null; created_at: string; submitted_at: string | null;
+  show_banner: boolean; banner_text: string | null; media_url?: string | null; paused_by: string | null; created_at: string; submitted_at: string | null;
   promotion_items?: { product_id: string }[];
 };
 export type Coupon = {
@@ -18,7 +18,7 @@ export type Coupon = {
 export type PromoResult = { promotion_id: string; units: number; revenue: number; orders: number; free_units: number };
 export type CouponResult = { coupon_id: string; uses: number; orders: number; discount: number; revenue: number };
 /** What the public site may see of a live campaign. */
-export type PublicPromo = Pick<Promo, "id" | "name" | "kind" | "scope" | "supplier_id" | "category_id" | "product_id" | "discount_type" | "percent" | "amount" | "max_discount" | "buy_qty" | "get_qty" | "starts_at" | "ends_at" | "started_at" | "show_banner" | "banner_text">;
+export type PublicPromo = Pick<Promo, "id" | "name" | "kind" | "scope" | "supplier_id" | "category_id" | "product_id" | "discount_type" | "percent" | "amount" | "max_discount" | "buy_qty" | "get_qty" | "starts_at" | "ends_at" | "started_at" | "show_banner" | "banner_text" | "media_url">;
 
 export const STATUS_LABEL: Record<PromoStatus, string> = { draft: "Draft", pending: "Pending approval", scheduled: "Scheduled", active: "Active", paused: "Paused", expired: "Expired" };
 export const KIND_LABEL: Record<PromoKind, string> = { sale: "Sale", flash: "Flash sale", bogo: "Buy X Get Y" };

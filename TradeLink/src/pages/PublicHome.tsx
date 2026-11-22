@@ -12,7 +12,8 @@ import { track, trackState } from "../lib/track";
 import { applyCoupon } from "../lib/coupon";
 import { useWishlist } from "../lib/wishlist";
 import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TradeHeader, TradeNav, TradeRow } from "./market/Trade";
-import { BrowseCategories, LivePromos, LandingHero, type HeroPromo, PromoBanners, TrustNewsletter } from "./market/Landing";
+import { isVideoUrl } from "../lib/promoMedia";
+import { BrowseCategories, LivePromos, LandingHero, type AdSlide, type HeroPromo, PromoBanners, TrustNewsletter } from "./market/Landing";
 import { KIND_LABEL, offerText, type PublicPromo } from "../lib/promo";
 import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
@@ -388,6 +389,35 @@ export default function PublicHome() {
   })), [campaign, navigate, changeMode, go]);
   const sale = useMemo(() => products.filter(p => allows(p, "individual") && Number(p.retail_price) > 0 && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price)), [products]);
   const offerPct = sale.length ? Math.max(...sale.map(p => Math.round((1 - Number(p.sale_price) / Number(p.retail_price)) * 100))) : 0;
+  // The advertising area: live campaigns first (with their countdown and any picture or video an admin added), then the biggest real sale prices, then admin banner pictures.
+  const adSlides = useMemo<AdSlide[]>(() => {
+    const out: AdSlide[] = []; const used = new Set<string>();
+    const onSale = (p?: PublicProduct) => !!p && Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price);
+    for (const c of promos) {
+      const ids = c.scope === "product" && c.product_id ? [c.product_id] : promoProds.filter(x => x.promotion_id === c.id).map(x => x.product_id);
+      const prods = ids.map(id => products.find(p => p.id === id)).filter((p): p is PublicProduct => !!p);
+      const pr = prods.find(p => p.image_url)
+        ?? (c.scope === "category" ? products.find(p => p.category_id === c.category_id && p.image_url) : c.scope === "all" ? (sale.find(p => p.image_url) ?? products.find(p => p.image_url)) : undefined);
+      const video = isVideoUrl(c.media_url) ? (c.media_url as string) : undefined;
+      const cover = c.media_url && !video ? c.media_url : undefined;
+      if (!pr && !video && !cover) continue;
+      const single = c.scope === "product" || ids.length === 1;
+      out.push({
+        id: `live-${c.id}`, tag: KIND_LABEL[c.kind], title: offerText(c), name: single && pr ? pr.name : c.name, body: c.banner_text || (single ? c.name : ""),
+        image: pr?.image_url ?? "", cover, video, price: single && onSale(pr) ? Number(pr!.sale_price) : null, was: single && onSale(pr) ? Number(pr!.retail_price) : null,
+        endsAt: c.ends_at, cta: "Shop now", run: () => openPromo(c),
+      });
+      prods.forEach(p => used.add(p.id));
+    }
+    const deals = sale.filter(p => p.image_url && !used.has(p.id))
+      .sort((a, b) => Number(b.sale_price) / Number(b.retail_price) - Number(a.sale_price) / Number(a.retail_price)).slice(0, 3);
+    for (const p of deals) {
+      const pct = Math.round((1 - Number(p.sale_price) / Number(p.retail_price)) * 100);
+      out.push({ id: `deal-${p.id}`, tag: "Deal", title: `${pct}% off`, name: p.name, image: p.image_url as string, price: Number(p.sale_price), was: Number(p.retail_price), cta: "View", run: () => setQuick(p) });
+    }
+    for (const h of heroPromos) if (h.src) out.push({ id: `ban-${h.id}`, tag: h.tag, title: h.title, name: "", body: h.body, image: "", cover: h.src, cta: h.cta, run: h.run });
+    return out.slice(0, 8);
+  }, [promos, promoProds, products, sale, heroPromos]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const emptyMessage =
     status === "loading" ? "Loading our products…"
@@ -411,7 +441,7 @@ export default function PublicHome() {
         openMenu={() => setMenuOpen(v => !v)} menuOpen={menuOpen} />
       <TradeNav mode={mode} industries={headerInds} categories={cats} counts={counts} onMode={changeMode} onPickIndustry={openIndustry} onPickCategory={openCategory} open={menuOpen} setOpen={setMenuOpen} onRfq={() => setRfqOpen(true)} />
       <ModeToggle mode={mode} onMode={changeMode} className="mobile" />
-      <LandingHero photos={heroPhotos} promos={[...heroPromos, ...liveHero].slice(0, 8)} offerPct={offerPct} onShop={() => go("public-products")} onQuote={() => setRfqOpen(true)} />
+      <LandingHero photos={heroPhotos} promos={[...heroPromos, ...liveHero].slice(0, 8)} slides={adSlides} offerPct={offerPct} onShop={() => go("public-products")} onQuote={() => setRfqOpen(true)} />
       <PromoBanners offerCount={sale.length} offerPct={offerPct} onOffers={() => go("offers")} onQuote={() => setRfqOpen(true)} onSupplier={() => navigate("/supplier/register")} />
       <BrowseCategories items={catCards} onPick={openIndustry} onMore={() => setMenuOpen(true)} />
       <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}

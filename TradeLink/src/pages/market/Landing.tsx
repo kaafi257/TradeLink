@@ -1,9 +1,9 @@
-import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
-import { ArrowRight, BadgePercent, Check, FileText, Gift, Percent, Zap, Grid3x3, Mail, Package, Send, ShieldCheck, Star, Store, Truck } from "lucide-react";
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
+import { ArrowRight, BadgePercent, Check, ChevronLeft, ChevronRight, FileText, Gift, Percent, Zap, Grid3x3, Mail, Package, Send, ShieldCheck, Star, Store, Truck } from "lucide-react";
 import { IconFor } from "../../lib/icons";
 import { lookFor } from "../../lib/theme";
 import { supabase, type PublicIndustry, type PublicProduct } from "../../lib/supabase";
-import { KIND_LABEL, offerSub, offerText, timeLeft, type PublicPromo } from "../../lib/promo";
+import { KIND_LABEL, etb, offerSub, offerText, timeLeft, type PublicPromo } from "../../lib/promo";
 import { Reveal } from "./Market";
 import "./landing.css";
 
@@ -11,11 +11,12 @@ const tone = (name: string) => { const l = lookFor(name); return { "--ta": l.a, 
 
 /** Reference-style hero: words on the left, real product photos on the right. Nothing here is invented: the discount badge only shows while a real sale price exists. */
 export type HeroPromo = { id: string; src: string; tag: string; title: string; body: string; cta: string; run: () => void };
-export function LandingHero({ photos, offerPct, promos = [], onShop, onQuote }: { photos: { id: string; src: string; name: string }[]; offerPct: number; promos?: HeroPromo[]; onShop: () => void; onQuote: () => void }) {
+export function LandingHero({ photos, offerPct, promos = [], slides = [], onShop, onQuote }: { photos: { id: string; src: string; name: string }[]; offerPct: number; promos?: HeroPromo[]; slides?: AdSlide[]; onShop: () => void; onQuote: () => void }) {
   const [pi, setPi] = useState(0);
   useEffect(() => { if (promos.length < 2) return; const t = window.setInterval(() => setPi(i => (i + 1) % promos.length), 6000); return () => window.clearInterval(t); }, [promos.length]);
   const promo = promos.length ? promos[pi % promos.length] : null;
   const [a, b, c] = photos;
+  if (slides.length) return <AdStage slides={slides} onShop={onShop} onQuote={onQuote} />;
   return (
     <section className="lp-hero" id="top" aria-label="Welcome">
       <div className="lp-wrap lp-hero-in">
@@ -190,5 +191,104 @@ export function TrustNewsletter({ products, suppliers, industries }: { products:
         </div>
       </div>
     </Reveal>
+  );
+}
+
+
+/** One advertisement in the homepage stage. Everything in it comes from a live promotion, a real sale price or an admin banner. */
+export type AdSlide = {
+  id: string; tag: string; title: string; name: string; body?: string;
+  /** Sharp product photo, shown large on a soft backdrop. */
+  image: string;
+  /** A picture or video an admin added for this campaign: shown edge to edge instead. */
+  cover?: string; video?: string;
+  price?: number | null; was?: number | null; endsAt?: string | null;
+  cta: string; run: () => void;
+};
+
+const useNow = (on: boolean) => {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { if (!on) return; const t = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(t); }, [on]);
+  return now;
+};
+
+function Countdown({ endsAt }: { endsAt: string }) {
+  const now = useNow(true);
+  const ms = new Date(endsAt).getTime() - now;
+  if (!(ms > 0)) return null;
+  const sec = Math.floor(ms / 1000), d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600), m = Math.floor((sec % 3600) / 60), x = sec % 60;
+  const cells: [number, string][] = d > 0 ? [[d, "days"], [h, "hrs"], [m, "min"], [x, "sec"]] : [[h, "hrs"], [m, "min"], [x, "sec"]];
+  return (
+    <div className="ad-time" role="timer" aria-label="Time left">
+      {cells.map(([n, l]) => <span key={l}><b>{String(n).padStart(2, "0")}</b><small>{l}</small></span>)}
+    </div>
+  );
+}
+
+const SLIDE_MS = 8000;
+/** The big advertising area: full-width HD picture or video, the offer, a live countdown and one button. Rotates by itself. */
+export function AdStage({ slides, onShop, onQuote }: { slides: AdSlide[]; onShop: () => void; onQuote: () => void }) {
+  const [i, setI] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const n = slides.length;
+  const at = i % n;
+  useEffect(() => {
+    if (n < 2 || paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const t = window.setTimeout(() => setI(v => (v + 1) % n), SLIDE_MS);
+    return () => window.clearTimeout(t);
+  }, [n, paused, at]);
+  const s = slides[at];
+  const pct = s.price && s.was && s.was > s.price ? Math.round((1 - s.price / s.was) * 100) : 0;
+  const go = (d: number) => setI(v => (v + d + n) % n);
+  const touch = useRef(0);
+  return (
+    <section className="ad" id="top" aria-label="Offers">
+      <div className="lp-wrap">
+        <div className={`ad-stage${s.video || s.cover ? " media" : ""}`} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}
+          onTouchStart={e => { touch.current = e.touches[0].clientX; }} onTouchEnd={e => { const d = e.changedTouches[0].clientX - touch.current; if (n > 1 && Math.abs(d) > 50) go(d < 0 ? 1 : -1); }}>
+          <div className="ad-bg" key={`b${s.id}`} aria-hidden="true">
+            {s.video ? <video src={s.video} poster={s.image || s.cover} autoPlay muted loop playsInline preload="auto" />
+              : <img src={s.cover || s.image} alt="" />}
+          </div>
+          <div className="ad-shade" aria-hidden="true" />
+          {!s.video && !s.cover && s.image && <figure className="ad-pic" key={`p${s.id}`}><img src={s.image} alt={s.name} decoding="async" /></figure>}
+          <div className="ad-copy" key={`c${s.id}`}>
+            <span className="ad-tag">{s.tag}</span>
+            <h2 className="ad-off">{s.title}</h2>
+            {s.name && <p className="ad-name">{s.name}</p>}
+            {s.body && s.body !== s.name && <p className="ad-body">{s.body}</p>}
+            {s.price != null && s.price > 0 && (
+              <p className="ad-price"><b>{etb(s.price)}</b>{s.was != null && s.was > s.price && <><s>{etb(s.was)}</s>{pct > 0 && <em>-{pct}%</em>}</>}</p>
+            )}
+            {s.endsAt && <Countdown endsAt={s.endsAt} />}
+            <button className="ad-cta" onClick={s.run}>{s.cta} <ArrowRight size={18} /></button>
+          </div>
+          {n > 1 && (
+            <>
+              <button className="ad-arrow prev" onClick={() => go(-1)} aria-label="Previous offer"><ChevronLeft size={22} /></button>
+              <button className="ad-arrow next" onClick={() => go(1)} aria-label="Next offer"><ChevronRight size={22} /></button>
+              <div className="ad-dots" role="tablist" aria-label="Offers">
+                {slides.map((x, k) => (
+                  <button key={x.id} role="tab" aria-selected={k === at} aria-label={`Offer ${k + 1}`} className={k === at ? "on" : ""} onClick={() => setI(k)}>
+                    <i className={k === at && !paused ? "run" : ""} style={{ animationDuration: `${SLIDE_MS}ms` }} />
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        <div className="ad-strip">
+          <div className="lp-cta">
+            <button className="lp-btn solid" onClick={onShop}>Shop now</button>
+            <button className="lp-btn line" onClick={onQuote}>Request a quote</button>
+          </div>
+          <ul className="lp-assure" aria-label="Why TradeLink">
+            <li><Truck size={22} /><span><b>Delivery</b><small>Arranged for you</small></span></li>
+            <li><FileText size={22} /><span><b>Written quotes</b><small>For every order</small></span></li>
+            <li><ShieldCheck size={22} /><span><b>Checked suppliers</b><small>Reviewed by our team</small></span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
   );
 }

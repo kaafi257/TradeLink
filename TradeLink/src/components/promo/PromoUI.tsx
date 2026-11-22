@@ -1,5 +1,6 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { CalendarClock, Dices, Gift, Percent, Ticket, Zap } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { CalendarClock, Dices, Film, Gift, Percent, Ticket, Upload, X, Zap } from "lucide-react";
+import { MEDIA_ACCEPT, checkMedia, isVideoUrl, removePromoMedia, uploadPromoMedia } from "../../lib/promoMedia";
 import { KIND_LABEL, STATUS_LABEL, couponOffer, couponStatus, etb, fromLocalInput, offerSub, offerText, rpc, toLocalInput, windowText, type Coupon, type CouponResult, type Promo, type PromoKind, type PromoResult, type PromoStatus } from "../../lib/promo";
 import "./promo.css";
 
@@ -91,6 +92,11 @@ export function CampaignForm({ role, initial, products, categories = [], supplie
     starts: toLocalInput(initial?.starts_at), ends: toLocalInput(initial?.ends_at), banner: initial?.show_banner ?? false, btext: initial?.banner_text ?? "",
   }));
   const [busy, setBusy] = useState(false); const [err, setErr] = useState("");
+  const [file, setFile] = useState<File | null>(null); const [dropMedia, setDropMedia] = useState(false);
+  const filePreview = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  useEffect(() => () => { if (filePreview) URL.revokeObjectURL(filePreview); }, [filePreview]);
+  const shownMedia = filePreview ?? (dropMedia ? null : initial?.media_url ?? null);
+  const shownIsVideo = file ? file.type.startsWith("video/") : isVideoUrl(shownMedia);
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF(s => ({ ...s, [k]: v }));
   useEffect(() => { if (f.kind === "flash" && !f.ends) { const d = new Date(Date.now() + 24 * 36e5); set("ends", toLocalInput(d.toISOString())); } /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [f.kind]);
   const pickable = products.filter(p => f.kind === "bogo" || p.retail !== false);
@@ -104,6 +110,11 @@ export function CampaignForm({ role, initial, products, categories = [], supplie
         buy_qty: f.kind === "bogo" ? f.buy : null, get_qty: f.kind === "bogo" ? f.get : null, starts_at: fromLocalInput(f.starts), ends_at: fromLocalInput(f.ends),
         show_banner: admin && f.banner, banner_text: admin && f.banner ? f.btext : null,
       } });
+      if (admin && (file || dropMedia)) {
+        const url = file ? await uploadPromoMedia(file) : null;
+        await rpc("set_promotion_media", { p_id: id, p_url: url });
+        if (initial?.media_url) void removePromoMedia(initial.media_url);
+      }
       onDone(id);
     } catch (x) { setErr((x as Error).message); } finally { setBusy(false); }
   };
@@ -147,6 +158,22 @@ export function CampaignForm({ role, initial, products, categories = [], supplie
         <div className="pm-banner">
           <label className="pm-check"><input type="checkbox" checked={f.banner} onChange={e => set("banner", e.target.checked)} /> Feature on the homepage</label>
           {f.banner && <input maxLength={80} value={f.btext} onChange={e => set("btext", e.target.value)} placeholder="One short line under the offer (optional)" aria-label="Banner text" />}
+        </div>
+      )}
+      {admin && (
+        <div className="pm-banner pm-media">
+          <span className="pm-media-h"><Film size={16} /> Homepage picture or video <small>(optional)</small></span>
+          {shownMedia ? (
+            <div className="pm-media-prev">
+              {shownIsVideo ? <video src={shownMedia} muted loop playsInline autoPlay /> : <img src={shownMedia} alt="" />}
+              <button type="button" className="pm-media-x" aria-label="Remove" onClick={() => { setFile(null); setDropMedia(true); }}><X size={16} /></button>
+            </div>
+          ) : (
+            <label className="pm-media-pick"><Upload size={20} /><span>Add a sharp picture or an MP4 video</span>
+              <input type="file" accept={MEDIA_ACCEPT} onChange={e => { const fl = e.target.files?.[0]; if (!fl) return; const bad = checkMedia(fl); if (bad) { setErr(bad); return; } setErr(""); setFile(fl); setDropMedia(false); e.target.value = ""; }} />
+            </label>
+          )}
+          <small className="pm-hint">Shown in the big advertising area while the campaign is live. Without one, the product photo is used.</small>
         </div>
       )}
       <p className="pm-hint">{f.kind === "flash" ? "Flash sales run up to 72 hours. " : ""}{admin ? "Saved as a draft. Start it, or give it a start time and it begins by itself." : "Saved as a draft. Submit it for TradeLink approval when you are ready."} A product can be in only one promotion at a time.</p>
