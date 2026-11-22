@@ -13,7 +13,7 @@ import { applyCoupon } from "../lib/coupon";
 import { useWishlist } from "../lib/wishlist";
 import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TrackModal, TradeHeader, TradeNav, TradeRow } from "./market/Trade";
 import { isVideoUrl } from "../lib/promoMedia";
-import { BrowseCategories, LivePromos, LandingHero, type AdSlide, type HeroPromo, PromoBanners, TrustNewsletter } from "./market/Landing";
+import { BrowseCategories, LivePromos, LandingHero, type AdSlide, type HeroPromo, PromoBanners, TrustNewsletter, WideBanners } from "./market/Landing";
 import { KIND_LABEL, offerText, type PublicPromo } from "../lib/promo";
 import { MarketFooter, MarketShop, ProductDialog, SupplierDialog, WishlistDrawer, type Shelf } from "./market/Market";
 import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/theme";
@@ -425,6 +425,15 @@ export default function PublicHome() {
     return out.slice(0, 8);
   }, [promos, promoProds, products, sale, heroPromos]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // A picture for each live campaign: what an admin uploaded, else the photo of a product it covers.
+  const promoImage = (c: PublicPromo) => {
+    if (c.media_url && !isVideoUrl(c.media_url)) return c.media_url;
+    const ids = c.scope === "product" && c.product_id ? [c.product_id] : promoProds.filter(x => x.promotion_id === c.id).map(x => x.product_id);
+    const hit = ids.map(id => products.find(p => p.id === id)).find(p => p?.image_url)
+      ?? (c.scope === "category" ? products.find(p => p.category_id === c.category_id && p.image_url) : c.scope === "store" ? products.find(p => p.supplier_id === c.supplier_id && p.image_url) : undefined);
+    return hit?.image_url ?? undefined;
+  };
+  const wideBanners = heroPromos.filter(h => h.src).slice(0, 2).map(h => ({ id: h.id, src: h.src, title: h.title, run: h.run }));
   const emptyMessage =
     status === "loading" ? "Loading our products…"
     : status === "offline" ? "The product catalogue is not connected yet."
@@ -449,17 +458,17 @@ export default function PublicHome() {
       <ModeToggle mode={mode} onMode={changeMode} className="mobile" />
       <LandingHero photos={heroPhotos} promos={[...heroPromos, ...liveHero].slice(0, 8)} slides={adSlides} offerPct={offerPct} onShop={() => go("public-products")} onQuote={() => setRfqOpen(true)} />
       <BrowseCategories items={catCards} onPick={openIndustry} onMore={() => setMenuOpen(true)} />
-      <LivePromos items={promos} supplierName={supplierName} scopeText={promoScope} onOpen={openPromo} />
-      <PromoBanners offerCount={sale.length} offerPct={offerPct} onOffers={() => go("offers")} onQuote={() => setRfqOpen(true)} onSupplier={() => navigate("/supplier/register")} />
-      <TradeRow id="offers" title="Best deals" sub={sale.length ? "Lowest prices right now" : "Popular right now"} shelf={shelf} items={bestDeals} max={10} rail onAll={() => go("public-products")} />
-      <RfqBanner onOpen={() => setRfqOpen(true)} />
+      <LivePromos items={promos} supplierName={supplierName} scopeText={promoScope} onOpen={openPromo} imageOf={promoImage} />
+      {wideBanners.length > 0 ? <WideBanners items={wideBanners} /> : <PromoBanners offerCount={sale.length} offerPct={offerPct} onOffers={() => go("offers")} onQuote={() => setRfqOpen(true)} onSupplier={() => navigate("/supplier/register")} />}
+      <TradeRow id="offers" title="Grab our best deals" sub={sale.length ? "Lowest prices right now" : "Popular right now"} shelf={shelf} items={bestDeals} max={10} rail onAll={() => go("public-products")} />
+      <TradeRow id="featured" title={starList.length ? "Featured picks" : "Fresh savers"} sub={starList.length ? "Chosen by TradeLink" : "Fresh finds from our suppliers"} shelf={shelf} items={starList.length ? starList : featured} max={10} rail onAll={() => go("public-products")} />
       <TradeRow id="new-arrivals" title="New arrivals" shelf={shelf} items={newest} max={8} onAll={() => go("public-products")} />
+      <SupplierStrip items={suppliers} industries={inds} onOpen={setSupplier} starred={starSup} />
       <MarketShop shelf={shelf} onMode={changeMode} industries={indTabs} categories={cats} counts={counts}
         industry={effIndustry} category={effCategory} setIndustry={setIndustryId} setCategory={setCategoryId}
         search={search} setSearch={setSearch} items={shown} emptyText={emptyMessage} />
-      <TradeRow id="featured" title="Featured picks" sub="Chosen by TradeLink" shelf={shelf} items={starList} max={6} />
       <TradeRow id="wholesale" title="Wholesale sourcing" sub="Buy in bulk. Minimum order shown." shelf={shelf} mode="business" items={wholesaleList} onAll={() => { changeMode("business"); go("public-products"); }} />
-      <SupplierStrip items={suppliers} industries={inds} onOpen={setSupplier} starred={starSup} />
+      <RfqBanner onOpen={() => setRfqOpen(true)} />
       <TrustNewsletter products={products.length} suppliers={suppliers.length} industries={catCards.length} />
       <MarketFooter industries={headerInds} onIndustry={openIndustry} onRequest={() => setQuoteOpen(true)} signedIn={!!session} onAccount={() => navigate(session ? "/admin" : "/login")} />
 
