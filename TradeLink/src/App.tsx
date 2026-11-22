@@ -14,6 +14,9 @@ const SupplierRegister = lazy(() => import("./pages/supplier/Register"));
 const SupplierPortal = lazy(() => import("./pages/supplier/Portal"));
 const Clothing = lazy(() => import("./pages/clothing/Clothing"));
 const IndustryStore = lazy(() => import("./pages/industry/IndustryStore"));
+const Checkout = lazy(() => import("./pages/checkout/Checkout"));
+const Order = lazy(() => import("./pages/checkout/Order"));
+const Account = lazy(() => import("./pages/checkout/Account"));
 
 /** Invite and reset emails land on the site root; send those visitors to choose a password first. */
 function EmailLinkGate() {
@@ -37,6 +40,9 @@ export default function App() {
           <Route path="/industry/:id" element={<IndustryStore />} />
           <Route path="/supplier/register" element={<SupplierRegister />} />
           <Route path="/supplier/*" element={<SupplierPortal />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/order/:number" element={<Order />} />
+          <Route path="/account" element={<Account />} />
           <Route path="/login" element={<Login />} />
           <Route path="/set-password" element={<SetPassword />} />
           <Route path="/admin/*" element={<AdminLayout />} />

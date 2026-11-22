@@ -6,16 +6,17 @@ import { money } from "../../lib/format";
 import { requireSupabase } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
 import { ErrorNote, Form, Modal, Tabs, callRpc, dateOf, dayRange, label, useAction, useLoad } from "../suite";
+import CustomerPayments from "./CustomerPayments";
 
 type Summary = { received: number; outstanding: number; sales: number; paid_out: number; by_method: { method: string; amount: number }[] };
 type Received = { sale_id: string; receipt_number: string; customer_name: string; total_amount: number; amount_paid: number; outstanding: number; payment_method: string | null; sold_at: string };
 type Balance = { supplier_id: string; supplier_name: string; earned: number; paid: number; balance: number; verified: boolean; last_paid: string | null };
 type Payout = { id: string; amount: number; method: string; reference: string | null; note: string | null; paid_at: string; suppliers: { name: string } | null };
-type Tab = "received" | "balances" | "history";
+type Tab = "customer" | "received" | "balances" | "history";
 
 export default function Payments() {
   const { can, search, notify } = useAdmin();
-  const [tab, setTab] = useState<Tab>("received");
+  const [tab, setTab] = useState<Tab>("customer");
   const [days, setDays] = useState(30);
   const [pay, setPay] = useState<Balance | null>(null);
   const range = useMemo(() => dayRange(days), [days]);
@@ -51,10 +52,13 @@ export default function Payments() {
         </div>
       )}
       <Tabs label="Payments views" value={tab} onChange={setTab} tabs={[
-        { id: "received", label: "Received", icon: <Receipt /> },
+        { id: "customer", label: "Customer payments", icon: <Banknote /> },
+        { id: "received", label: "Sales received", icon: <Receipt /> },
         { id: "balances", label: "Supplier balances", icon: <Wallet />, count: (bal.data ?? []).filter(b => Number(b.balance) > 0).length },
         { id: "history", label: "Payout history", icon: <HandCoins /> },
       ]} />
+
+      {tab === "customer" && <CustomerPayments />}
 
       {tab === "received" && <>
         <ErrorNote text={rec.error} />

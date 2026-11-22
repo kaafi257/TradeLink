@@ -526,6 +526,19 @@ grant execute on function public.verify_bank_payment(uuid, boolean, text), publi
   public.save_checkout_settings(jsonb), public.payment_list(text, text, text, timestamptz, timestamptz, int), public.payment_stats(), public.payment_audit(uuid),
   public.payment_reconciliation(), public.payment_providers() to authenticated;
 
+-- Delivery staff: only THEIR assigned deliveries that still have cash to collect (no other payment data).
+create or replace function public.my_cod_due() returns table (payment_id uuid, order_number text, customer_name text, delivery_location text, amount numeric, delivery_status text)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if auth.uid() is null then raise exception 'Please sign in.'; end if;
+  return query
+  select p.id, o.order_number, o.customer_name, o.delivery_location, p.amount, d.status
+  from public.payments p join public.orders o on o.id = p.order_id join public.deliveries d on d.order_id = o.id
+  where p.method = 'cod' and p.status in ('pending', 'processing') and d.assigned_to = auth.uid() and o.status <> 'cancelled';
+end $$;
+revoke execute on function public.my_cod_due() from public, anon;
+grant execute on function public.my_cod_due() to authenticated;
+
 -- ---------------------------------------------------------------------------
 -- 10. Receipts / proof of transfer: a private bucket. Anyone placing an order may upload a file; only staff who view payments can open one.
 -- ---------------------------------------------------------------------------

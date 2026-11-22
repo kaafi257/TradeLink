@@ -10,6 +10,7 @@ import { useInstall } from "../lib/install";
 import { useAuth } from "../lib/auth";
 import { track, trackState } from "../lib/track";
 import { applyCoupon } from "../lib/coupon";
+import { fetchCheckoutOptions, saveCheckoutCart } from "../lib/checkout";
 import { useWishlist } from "../lib/wishlist";
 import { AnnouncementBar, BottomNav, ModeToggle, RfqBanner, RfqModal, SupplierStrip, TrackModal, TradeHeader, TradeNav, TradeRow } from "./market/Trade";
 import { isVideoUrl } from "../lib/promoMedia";
@@ -47,6 +48,10 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
   const [couponMsg, setCouponMsg] = useState("");
   const [token, setToken] = useState("");
   const onToken = useCallback((t: string) => setToken(t), []);
+  const navigate = useNavigate();
+  // Paying online appears only when the owner has switched on a payment method (bank transfer or Cash on Delivery).
+  const [payOpen, setPayOpen] = useState(false);
+  useEffect(() => { if (!supabase) return; fetchCheckoutOptions().then(o => setPayOpen(!!(o.bank || o.cod))).catch(() => setPayOpen(false)); }, []);
 
   // Keep the request list in sync, so products added here are still there if the window is closed.
   useEffect(() => { onLines(lines.filter(l => l.productId)); }, [lines]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -69,6 +74,13 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
   const unitOf = (id: string) => { const p = byId.get(id); const r = Number(p?.retail_price ?? 0); const sp = Number(p?.sale_price ?? 0); return sp > 0 && r > 0 && sp < r ? sp : r; };
   const estimate = type === "individual" ? chosen.reduce((s, l) => s + Number(l.qty || 0) * unitOf(l.productId), 0) : 0;
   const estimateComplete = type === "individual" && chosen.length > 0 && chosen.every(l => Number(byId.get(l.productId)?.retail_price ?? 0) > 0);
+
+  const canPayNow = payOpen && type === "individual" && estimateComplete && chosen.every(l => Number(l.qty) > 0 && !extraNotes?.[l.productId]);
+  const payNow = () => {
+    if (new Set(chosen.map(l => l.productId)).size !== chosen.length) { setError("A product is listed twice. Please combine the quantities."); return; }
+    saveCheckoutCart(chosen.map(l => ({ product_id: l.productId, quantity: Number(l.qty) })));
+    navigate("/checkout");
+  };
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -163,6 +175,7 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
                 {lines.length < 20 && <button type="button" className="btn outline req-add" onClick={() => setLines(ls => [...ls, { key: newKey(), productId: "", qty: defaultQty(undefined, type) }])}><Plus size={15} /> Add another product</button>}
                 {type === "individual" && estimate > 0 && <p className="req-estimate cart-total"><span>Total{estimateComplete ? "" : " (so far)"}</span><b>{money(estimate)}</b></p>}
                 {type === "individual" && estimate > 0 && <small className="req-note">{estimateComplete ? "" : "Some items need a price from us. "}We confirm the final price before you pay.</small>}
+                {canPayNow && <button type="button" className="btn green req-add" onClick={payNow}><ShoppingBag size={16} /> Pay now · {money(estimate)}</button>}
                 <button type="button" className="btn outline req-add" onClick={onClose}>Continue shopping</button>
               </div>
               <label>{type === "individual" ? "Your name" : "Business / contact name"}<input name="name" required maxLength={120} placeholder={type === "individual" ? "Your name" : "Your name or business"} /></label>
