@@ -631,9 +631,10 @@ export function ProductDialog({ p, shelf, onClose, onStore }: { p: PublicProduct
         <div className={`mk-dmedia${photos.length > 1 ? " gal" : ""}`}><ProductGallery urls={photos} name={p.name} fallback={<span className="ph"><IconFor name={ind?.icon} size={44} /></span>} /></div>
         <div className="mk-dbody">
           <nav className="mk-crumbs" aria-label="Breadcrumb"><span>Home</span>{ind && <><ChevronRight size={12} /><span>{ind.name}</span></>}<ChevronRight size={12} /><span>{shelf.catName(p)}</span></nav>
-          <h3>{p.name}</h3>
-          {p.brand && <p className="mk-brand">{p.brand}</p>}
-          <div className="mk-row"><Price p={p} mode={shelf.mode} /><Stock p={p} />{stockText && <b className={`mk-stock-t ${p.stock_status}`}>{stockText}</b>}</div>
+          <div className="mk-titlerow"><h3>{p.name}</h3><button className={`mk-sq sm${wished ? " on" : ""}`} aria-pressed={wished} aria-label={wished ? "Remove from wishlist" : "Save to wishlist"} onClick={() => shelf.toggleWish(p.id)}><Heart size={18} /></button></div>
+          {p.brand && <p className="mk-brand">Brand: <b>{p.brand}</b></p>}
+          {(() => { const { now, was } = priceOf(p); return shelf.mode === "individual" && now !== null && was !== null ? <p className="mk-save"><s>{money(was)}</s><b>-{Math.round((1 - now / was) * 100)}%</b> You save {money(was - now)}</p> : null; })()}
+          <div className="mk-row"><Price p={p} mode={shelf.mode} />{shelf.mode === "individual" && <small className="mk-per">per {p.unit}</small>}<Stock p={p} />{stockText && <b className={`mk-stock-t ${p.stock_status}`}>{stockText}</b>}</div>
           {p.description && <p className="mk-desc">{p.description}</p>}
           <div className="mk-facts">
             {sup && <button type="button" className="mk-sup" title="Supplier" onClick={() => { onClose(); shelf.openSupplier?.(sup); }}><Building2 size={14} />{sup.name}</button>}
@@ -669,15 +670,24 @@ export function WishlistDrawer({ items, shelf, onClose }: { items: PublicProduct
     <div className="mk-layer side" role="dialog" aria-modal="true" aria-label="Wishlist">
       <button className="mk-scrim" aria-label="Close" onClick={onClose} />
       <aside className="mk-drawer">
-        <header><h2><Heart size={18} /><span className="sr-only">Wishlist</span>{items.length > 0 && <b className="cnt">{items.length}</b>}</h2><button className="mk-x" aria-label="Close" onClick={onClose}><X size={18} /></button></header>
+        <header><h2><Heart size={18} /> Wishlist{items.length > 0 && <b className="cnt">{items.length}</b>}</h2><button className="mk-x" aria-label="Close" onClick={onClose}><X size={18} /></button></header>
         {items.length === 0
-          ? <div className="mk-empty" role="img" aria-label="No saved products yet"><Heart size={34} /></div>
-          : <ul>{items.map(p => (
-              <li key={p.id}>
-                <button className="th" onClick={() => { onClose(); shelf.open(p); }}>{p.image_url ? <img src={p.image_url} alt="" /> : <IconFor name={shelf.indOf(p)?.icon} size={22} />}</button>
-                <div><b>{p.name}</b><Price p={p} mode={shelf.mode} /></div>
-                <button className="rm" aria-label={`Remove ${p.name}`} onClick={() => shelf.toggleWish(p.id)}><Trash2 size={16} /></button>
-              </li>))}</ul>}
+          ? <div className="mk-empty"><Heart size={34} /><b>Nothing saved yet</b><p>Tap the heart on any product to keep it here.</p><button className="btn green" onClick={onClose}>Start shopping</button></div>
+          : <ul className="wl-list">{items.map(p => {
+              const { now, was } = priceOf(p);
+              const added = shelf.inRequest(p.id);
+              const out = p.stock_status === "out";
+              return (
+                <li key={p.id}>
+                  <button className="th" onClick={() => { onClose(); shelf.open(p); }} aria-label={`Details: ${p.name}`}>{p.image_url ? <img src={p.image_url} alt="" /> : <IconFor name={shelf.indOf(p)?.icon} size={22} />}</button>
+                  <div className="tx"><b>{p.name}</b><Price p={p} mode={shelf.mode} />{out && <small className="wl-out">Out of stock</small>}</div>
+                  <div className="ac">
+                    {!shelf.isFashion(p) && <button className={`wl-add${added ? " done" : ""}`} disabled={out} onClick={() => shelf.addToRequest(p)}>{added ? <><Check size={15} /> Added</> : <><Plus size={15} /> Add</>}</button>}
+                    <button className="rm" aria-label={`Remove ${p.name}`} onClick={() => shelf.toggleWish(p.id)}><Trash2 size={16} /></button>
+                  </div>
+                  {was !== null && now !== null && <span className="wl-off">-{Math.round((1 - now / was) * 100)}%</span>}
+                </li>);
+            })}</ul>}
       </aside>
     </div>
   );

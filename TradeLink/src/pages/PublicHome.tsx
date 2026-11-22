@@ -66,7 +66,8 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
   const setLine = (key: string, patch: Partial<Line>) => setLines(ls => ls.map(l => (l.key === key ? { ...l, ...patch } : l)));
   const pickProduct = (key: string, id: string) => setLine(key, { productId: id, qty: defaultQty(byId.get(id), type) });
   const chosen = lines.filter(l => l.productId);
-  const estimate = type === "individual" ? chosen.reduce((s, l) => s + Number(l.qty || 0) * Number(byId.get(l.productId)?.retail_price ?? 0), 0) : 0;
+  const unitOf = (id: string) => { const p = byId.get(id); const r = Number(p?.retail_price ?? 0); const sp = Number(p?.sale_price ?? 0); return sp > 0 && r > 0 && sp < r ? sp : r; };
+  const estimate = type === "individual" ? chosen.reduce((s, l) => s + Number(l.qty || 0) * unitOf(l.productId), 0) : 0;
   const estimateComplete = type === "individual" && chosen.length > 0 && chosen.every(l => Number(byId.get(l.productId)?.retail_price ?? 0) > 0);
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
@@ -121,8 +122,8 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
           </div>
         ) : (
           <>
-            <small className="kicker">Price request</small>
-            <h2>Tell us what you need</h2>
+            <small className="kicker">Your request</small>
+            <h2>Review and send</h2>
             {!lockType && <div className="seg" role="group" aria-label="I am buying as">
               <button type="button" className={type === "business" ? "on" : ""} onClick={() => switchType("business")}><Briefcase size={15} /> Business (wholesale)</button>
               <button type="button" className={type === "individual" ? "on" : ""} onClick={() => switchType("individual")}><User size={15} /> Individual (retail)</button>
@@ -131,6 +132,22 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
               <div className="full req-lines">
                 {lines.map(l => {
                   const p = byId.get(l.productId);
+                  const unit = p && type === "individual" && Number(p.retail_price) > 0 ? (Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price) ? Number(p.sale_price) : Number(p.retail_price)) : null;
+                  const min = type === "individual" ? 1 : Number(p?.min_order_quantity ?? 1);
+                  const q = Number(l.qty) || 0;
+                  if (p) return (
+                    <div className="cart-line" key={l.key}>
+                      <span className="th">{p.image_url ? <img src={p.image_url} alt="" /> : <Package size={22} />}</span>
+                      <div className="nm"><b>{p.name}</b><small>{unit !== null ? `${money(unit)} / ${p.unit}` : "Ask for price"}{type === "business" && min > 1 ? ` · min ${min} ${p.unit}` : ""}</small></div>
+                      <div className="qty" role="group" aria-label={`Quantity of ${p.name}`}>
+                        <button type="button" aria-label="Less" disabled={q <= min} onClick={() => setLine(l.key, { qty: String(Math.max(min, q - 1)) })}>−</button>
+                        <input type="number" required step="any" min={min} value={l.qty} onChange={e => setLine(l.key, { qty: e.target.value })} aria-label="Quantity" />
+                        <button type="button" aria-label="More" onClick={() => setLine(l.key, { qty: String(q + 1) })}>+</button>
+                      </div>
+                      <b className="sub">{unit !== null ? money(unit * q) : ""}</b>
+                      <button type="button" className="req-remove" aria-label={`Remove ${p.name}`} onClick={() => setLines(ls => ls.length > 1 ? ls.filter(x => x.key !== l.key) : [{ key: newKey(), productId: "", qty: defaultQty(undefined, type) }])}><Trash2 size={16} /></button>
+                    </div>
+                  );
                   return (
                     <div className="req-line" key={l.key}>
                       <label>Product
@@ -139,15 +156,14 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
                           {groups.map(([cat, ps]) => <optgroup key={cat} label={cat}>{ps.map(x => <option key={x.id} value={x.id}>{productLabel(x)}</option>)}</optgroup>)}
                         </select>
                       </label>
-                      <label>Quantity{p ? ` (${p.unit})` : ""}
-                        <input type="number" required step="any" min={type === "individual" ? 1 : Number(p?.min_order_quantity ?? 1)} value={l.qty} onChange={e => setLine(l.key, { qty: e.target.value })} placeholder={p && type === "business" ? `Min ${Number(p.min_order_quantity)}` : "1"} />
-                      </label>
-                      {lines.length > 1 && <button type="button" className="req-remove" aria-label="Remove this product" onClick={() => setLines(ls => ls.filter(x => x.key !== l.key))}><Trash2 size={16} /></button>}
+                      {lines.length > 1 && <button type="button" className="req-remove" aria-label="Remove this line" onClick={() => setLines(ls => ls.filter(x => x.key !== l.key))}><Trash2 size={16} /></button>}
                     </div>
                   );
                 })}
                 {lines.length < 20 && <button type="button" className="btn outline req-add" onClick={() => setLines(ls => [...ls, { key: newKey(), productId: "", qty: defaultQty(undefined, type) }])}><Plus size={15} /> Add another product</button>}
-                {type === "individual" && estimate > 0 && <p className="req-estimate">Estimated total: <b>{money(estimate)}</b>{estimateComplete ? "" : " (some items need a price from us)"}. We confirm the final price.</p>}
+                {type === "individual" && estimate > 0 && <p className="req-estimate cart-total"><span>Total{estimateComplete ? "" : " (so far)"}</span><b>{money(estimate)}</b></p>}
+                {type === "individual" && estimate > 0 && <small className="req-note">{estimateComplete ? "" : "Some items need a price from us. "}We confirm the final price before you pay.</small>}
+                <button type="button" className="btn outline req-add" onClick={onClose}>Continue shopping</button>
               </div>
               <label>{type === "individual" ? "Your name" : "Business / contact name"}<input name="name" required maxLength={120} placeholder={type === "individual" ? "Your name" : "Your name or business"} /></label>
               <label>Phone / WhatsApp<input name="phone" required maxLength={30} placeholder="+251 ..." /></label>
