@@ -15,7 +15,8 @@ type Stats = { awaiting_verification: number; cod_to_collect: number; refunded: 
 type Provider = { key: string; name: string; state: "live" | "off" | "not_configured"; detail: string };
 type Audit = { created_at: string; actor_kind: string; actor_name: string | null; event: string; from_status: string | null; to_status: string | null; note: string | null };
 type Recon = { order_number: string; customer_name: string; order_total: number; amount_paid: number; payments_paid: number; difference: number };
-type Settings = { cod_enabled: boolean; bank_enabled: boolean; bank_name: string | null; account_name: string | null; account_number: string | null; bank_note: string | null; delivery_fee: number; free_delivery_over: number | null; bank_hold_hours: number };
+type Settings = { cod_enabled: boolean; bank_enabled: boolean; bank_name: string | null; account_name: string | null; account_number: string | null; bank_note: string | null; delivery_fee: number; free_delivery_over: number | null; bank_hold_hours: number;
+  telebirr_enabled: boolean; telebirr_name: string | null; telebirr_number: string | null; ebirr_enabled: boolean; ebirr_name: string | null; ebirr_number: string | null };
 
 const etb = (n: number) => `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(Number(n) || 0)} ETB`;
 const tone = (s: PayStatus) => (s === "paid" ? "good" : s === "failed" || s === "expired" || s === "cancelled" ? "bad" : s === "refunded" || s === "partially_refunded" ? "info" : "warn");
@@ -60,7 +61,7 @@ export default function CustomerPayments() {
 
       <div className="inline-form" role="search">
         <label>Search<input value={q} onChange={e => setQ(e.target.value)} placeholder="Order number, payment or transfer reference, name, phone" /></label>
-        <label>Method<select value={method} onChange={e => setMethod(e.target.value)}><option value="">All</option><option value="bank_transfer">Bank transfer</option><option value="cod">Cash on Delivery</option></select></label>
+        <label>Method<select value={method} onChange={e => setMethod(e.target.value)}><option value="">All</option><option value="bank_transfer">Bank transfer</option><option value="telebirr">Telebirr</option><option value="ebirr">eBirr</option><option value="cod">Cash on Delivery</option></select></label>
         <label>Status<select value={status} onChange={e => setStatus(e.target.value)}><option value="">All</option>{STATUSES.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}</select></label>
         <label>Period<select value={days} onChange={e => setDays(Number(e.target.value))}><option value={7}>Last 7 days</option><option value={30}>Last 30 days</option><option value={90}>Last 90 days</option><option value={365}>Last 12 months</option></select></label>
       </div>
@@ -114,15 +115,15 @@ function Detail({ row, onClose, onDone }: { row: Row; onClose: () => void; onDon
     <Modal title={`${row.order_number} · ${etb(row.amount)}`} kicker={METHOD_LABEL[row.method].toUpperCase()} onClose={onClose}>
       <p className="su-muted">{row.customer_name} · {row.phone} · <b>{STATUS_LABEL[row.status]}</b> · payment {row.reference}{row.customer_txn_ref ? ` · customer reference ${row.customer_txn_ref}` : ""}</p>
       {row.review_note && <p className="su-muted">Note: {row.review_note}</p>}
-      {row.proof_path && <p><button className="btn outline" onClick={() => void viewProof()}><FileText size={15} /> Open receipt file</button>{proofUrl && <small> opened in a new tab</small>}<br /><small className="su-muted">A receipt file is only a hint. Mark a transfer as verified only after you see the money in the bank account.</small></p>}
+      {row.proof_path && <p><button className="btn outline" onClick={() => void viewProof()}><FileText size={15} /> Open receipt file</button>{proofUrl && <small> opened in a new tab</small>}<br /><small className="su-muted">A receipt file or screenshot is only a hint and can be faked. Mark it paid only after you see the money in the bank account or in the Telebirr / eBirr app.</small></p>}
 
-      {row.method === "bank_transfer" && row.status === "submitted" && can("payments.verify") && (
+      {row.method !== "cod" && row.status === "submitted" && can("payments.verify") && (
         <Form onSubmit={() => act(() => callRpc("verify_bank_payment", { p_payment: row.id, p_approve: true, p_note: note }), "Transfer verified. The order is paid.")} busy={busy} submit="I see the money. Mark as paid">
           <label>Note or reason (a reason is required to reject)<input maxLength={300} value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. matches statement line 4012 / amount does not match" /></label>
           <button type="button" className="btn outline" disabled={busy || !note.trim()} onClick={() => act(() => callRpc("verify_bank_payment", { p_payment: row.id, p_approve: false, p_note: note }), "Transfer rejected. The customer can send new details.")}>Reject transfer</button>
         </Form>
       )}
-      {row.method === "bank_transfer" && row.status === "submitted" && !can("payments.verify") && <div className="info-banner">You can view this transfer, but only people with permission to verify transfers can mark it paid.</div>}
+      {row.method !== "cod" && row.status === "submitted" && !can("payments.verify") && <div className="info-banner">You can view this transfer, but only people with permission to verify transfers can mark it paid.</div>}
 
       {row.method === "cod" && ["pending", "processing"].includes(row.status) && can("payments.collect") && (
         <Form onSubmit={() => act(() => callRpc("confirm_cod_collection", { p_payment: row.id, p_amount: Number(cash), p_note: note }), "Cash collection confirmed.")} busy={busy} submit="Cash received. Mark as paid">
@@ -168,7 +169,7 @@ function SettingsModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
   return (
     <Modal title="Checkout settings" kicker="PAYMENT METHODS" onClose={onClose}>
       <ErrorNote text={cur.error} />
-      <p className="su-muted">Customers see only the methods you switch on here. Mobile-money providers (Telebirr, CBE Birr, eBirr) are not connected yet.</p>
+      <p className="su-muted">Customers see only the methods you switch on here. Telebirr and eBirr here are manual: the customer sends money to your number and you check it in the app. They are not connected to the providers by API. CBE Birr is not set up.</p>
       <Form onSubmit={() => void run(() => callRpc("save_checkout_settings", { p_settings: v }), "Settings saved.").then(ok => { if (ok) onSaved(); })} busy={busy || cur.loading} submit="Save settings">
         <label className="checkbox-label"><input type="checkbox" checked={!!v.bank_enabled} onChange={e => set({ bank_enabled: e.target.checked })} /> Accept bank transfer (CBE)</label>
         <div className="two">
@@ -177,6 +178,16 @@ function SettingsModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
         </div>
         <label>Account number<input maxLength={40} value={v.account_number ?? ""} onChange={e => set({ account_number: e.target.value })} inputMode="numeric" /></label>
         <label>Note shown with the account (optional)<input maxLength={300} value={v.bank_note ?? ""} onChange={e => set({ bank_note: e.target.value })} /></label>
+        <label className="checkbox-label"><input type="checkbox" checked={!!v.telebirr_enabled} onChange={e => set({ telebirr_enabled: e.target.checked })} /> Accept Telebirr (customer pays your number, you verify)</label>
+        <div className="two">
+          <label>Telebirr account name<input maxLength={120} value={v.telebirr_name ?? ""} onChange={e => set({ telebirr_name: e.target.value })} /></label>
+          <label>Telebirr number<input maxLength={20} inputMode="tel" value={v.telebirr_number ?? ""} onChange={e => set({ telebirr_number: e.target.value })} /></label>
+        </div>
+        <label className="checkbox-label"><input type="checkbox" checked={!!v.ebirr_enabled} onChange={e => set({ ebirr_enabled: e.target.checked })} /> Accept eBirr (customer pays your number, you verify)</label>
+        <div className="two">
+          <label>eBirr account name<input maxLength={120} value={v.ebirr_name ?? ""} onChange={e => set({ ebirr_name: e.target.value })} /></label>
+          <label>eBirr number<input maxLength={20} inputMode="tel" value={v.ebirr_number ?? ""} onChange={e => set({ ebirr_number: e.target.value })} /></label>
+        </div>
         <label className="checkbox-label"><input type="checkbox" checked={!!v.cod_enabled} onChange={e => set({ cod_enabled: e.target.checked })} /> Accept Cash on Delivery</label>
         <div className="two">
           <label>Delivery fee (ETB)<input type="number" min="0" step="0.01" value={v.delivery_fee ?? 0} onChange={e => set({ delivery_fee: Number(e.target.value) })} /></label>

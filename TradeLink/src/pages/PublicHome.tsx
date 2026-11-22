@@ -51,7 +51,7 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
   const navigate = useNavigate();
   // Paying online appears only when the owner has switched on a payment method (bank transfer or Cash on Delivery).
   const [payOpen, setPayOpen] = useState(false);
-  useEffect(() => { if (!supabase) return; fetchCheckoutOptions().then(o => setPayOpen(!!(o.bank || o.cod))).catch(() => setPayOpen(false)); }, []);
+  useEffect(() => { if (!supabase) return; fetchCheckoutOptions().then(o => setPayOpen(!!(o.bank || o.cod || o.telebirr || o.ebirr))).catch(() => setPayOpen(false)); }, []);
 
   // Keep the request list in sync, so products added here are still there if the window is closed.
   useEffect(() => { onLines(lines.filter(l => l.productId)); }, [lines]); // eslint-disable-line react-hooks/exhaustive-deps
