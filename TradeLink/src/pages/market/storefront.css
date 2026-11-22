@@ -218,3 +218,9 @@
 .tl-card .shop{margin-top:auto}
 .tl-card .moq{margin-bottom:6px}
 @media(min-width:1100px){#new-arrivals .tl-prods{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}}
+
+/* Full-picture slides: the picture fills the card to every edge. It is anchored at the bottom and slightly enlarged,
+   so a blank strip along the top or sides of an uploaded image is cropped away instead of showing as empty space. */
+.public-site .ad-stage.media .ad-bg img,.public-site .ad-stage.media .ad-bg video{width:100%;height:100%;object-fit:cover;object-position:50% 100%;transform-origin:50% 100%;animation:ad-fill-zoom 9s ease-out both}
+@keyframes ad-fill-zoom{from{transform:scale(1.16)}to{transform:scale(1.2)}}
+@media(prefers-reduced-motion:reduce){.public-site .ad-stage.media .ad-bg img,.public-site .ad-stage.media .ad-bg video{animation:none;transform:scale(1.16)}}
