@@ -363,10 +363,10 @@ export function CleanCard({ p, shelf, mode }: { p: PublicProduct; shelf: Shelf; 
           ? <p className="price"><b>{money(now)}</b>{was !== null && <s>{money(was)}</s>}<small>/ {p.unit}</small></p>
           : <p className="price ask">Ask for price</p>}
         <p className="moq">{m === "business" && moq > 1 ? `Min. order ${moq} ${p.unit}` : p.package_size ?? shelf.catName(p)}</p>
+        {!fashion && p.stock_status !== "out" && <button className={`shop${added ? " done" : ""}`} aria-label={added ? `${p.name} is in your request` : `Add ${p.name} to request`}
+          onClick={e => { if (!added) flyToBag(e.currentTarget); shelf.addToRequest(p); }}>{added ? <><Check size={14} /> Added</> : <><ShoppingBag size={14} /> Shop</>}</button>}
       </div>
       <button className="cover" aria-label={`Details: ${p.name}`} onClick={() => shelf.open(p)} />
-      {!fashion && p.stock_status !== "out" && <button className={`qadd${added ? " done" : ""}`} aria-label={added ? "Added to request" : `Add ${p.name} to request`} title={added ? "Added" : "Add to request"}
-        onClick={e => { if (!added) flyToBag(e.currentTarget); shelf.addToRequest(p); }}>{added ? <Check size={17} /> : <Plus size={17} />}</button>}
       <button className={`heart${wished ? " on" : ""}`} aria-pressed={wished} aria-label={wished ? "Remove from wishlist" : "Save to wishlist"} onClick={() => shelf.toggleWish(p.id)}><Heart size={16} /></button>
     </article>
   );

@@ -191,3 +191,30 @@
   .public-site .ad-stage:not(.media) .ad-dots{bottom:14px}.public-site .ad-stage:not(.media) .ad-dots button{width:24px;height:5px}
 }
 @media(max-width:360px){.public-site .ad-stage:not(.media) .ad-copy{padding-left:12px}.public-site .ad-stage:not(.media) .ad-cta{padding:0 12px;font-size:13.5px}}
+
+/* ===== Compact product cards: smaller, tighter, a "Shop" button, clearer text and price colours ===== */
+.tl-card{border-radius:14px;border-color:#e3e8f0}
+.tl-card .media img{object-fit:contain;padding:6px}
+.tl-card .media{aspect-ratio:1/1}
+.tl-card .info{padding:8px 9px 9px!important;gap:3px!important}
+.public-site .tl-card h3{font:600 12.5px/1.3 'Inter',sans-serif;color:#1b2a41;min-height:2.6em}
+.tl-card .moq{font-size:11.5px;color:#6a7788}
+.tl-card .price{margin-top:1px}
+.tl-card .price b{font:800 15px/1.1 'Inter',sans-serif;color:var(--price-green,#16803c)}
+.tl-card .price s{font-size:11.5px;color:#d0463a}
+.tl-card .price.ask{font:700 12.5px 'Inter',sans-serif;color:#44526a}
+.tl-card .shop{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:32px;margin-top:5px;border:0;border-radius:9px;background:linear-gradient(135deg,#0b3a63,#1479c2);color:#fff;font:700 12.5px 'Inter',sans-serif;cursor:pointer;box-shadow:0 8px 14px -10px #0b3a63;transition:transform .15s,box-shadow .2s,filter .2s}
+.tl-card .shop:hover{filter:brightness(1.08);box-shadow:0 12px 18px -10px #0b3a63}
+.tl-card .shop:active{transform:scale(.96)}
+.tl-card .shop.done{background:linear-gradient(135deg,#0c7a4d,#18a36a)}
+.tl-card .heart{width:28px;height:28px;right:6px;top:6px}
+.tl-card .off,.tl-card .new{left:6px;top:6px;font-size:10.5px;padding:2px 6px}
+/* Best deals / featured: narrower cards so more are visible */
+.tl-prods.rail>.tl-card{flex:0 0 clamp(124px,36vw,160px)}
+@media(max-width:640px){#new-arrivals .tl-prods{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tl-card .price{flex-wrap:wrap}}
+@media(min-width:641px){.public-site .tl-card h3{font-size:13.5px}.tl-card .price b{font-size:16.5px}.tl-card .shop{height:34px;font-size:13px}}
+/* Shop buttons line up along the bottom of every row */
+.tl-card .info{display:flex!important;flex-direction:column;flex:1}
+.tl-card .shop{margin-top:auto}
+.tl-card .moq{margin-bottom:6px}
+@media(min-width:1100px){#new-arrivals .tl-prods{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}}
