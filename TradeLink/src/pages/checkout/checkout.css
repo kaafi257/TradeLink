@@ -74,3 +74,6 @@
   .co-receipt{display:block!important;color:#000;font-family:Arial,sans-serif}.co-receipt table{width:100%;border-collapse:collapse;margin:12px 0}.co-receipt td,.co-receipt th{padding:6px 0;border-bottom:1px solid #ccc;text-align:left;font-size:13px}.co-receipt td:last-child,.co-receipt th:last-child{text-align:right}
 }
 @media (prefers-reduced-motion:reduce){.co-spin{animation:none}}
+.co-seg.three{grid-template-columns:repeat(3,1fr)}.co-seg button{display:flex;align-items:center;justify-content:center;gap:5px}
+.co-wait{border-color:#f0d48c;background:#fffaf0}.co-wait h2{color:#7a5410}.co-wait .co-hrow{margin-top:8px}
+.co-sech{font:800 15px Manrope,sans-serif;margin:8px 0 0;color:#09385e}

@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Banknote, Landmark, Loader2, Minus, Package, Plus, Smartphone, Trash2, ShoppingBag } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { supabase, withPhoto, type PublicProduct } from "../../lib/supabase";
-import { checkoutKey, clearCheckoutCart, fetchCheckoutOptions, loadCheckoutCart, placeOrder, resetCheckoutKey, saveCheckoutCart, type CheckoutItem, type CheckoutOptions, type PayMethod } from "../../lib/checkout";
+import { checkoutKey, clearCheckoutCart, fetchCheckoutOptions, loadCheckoutCart, saveIdentity, placeOrder, resetCheckoutKey, saveCheckoutCart, type CheckoutItem, type CheckoutOptions, type PayMethod } from "../../lib/checkout";
 import { CoShell, etb } from "./parts";
 
 const unitPrice = (p: PublicProduct) => {
@@ -70,7 +70,7 @@ export default function Checkout() {
         items: lines.map(l => ({ product_id: l.product_id, quantity: l.quantity })), name: String(f.get("name") ?? ""), phone, email: String(f.get("email") ?? ""),
         location: String(f.get("location") ?? ""), notes: String(f.get("notes") ?? ""), method, key: checkoutKey(), website: String(f.get("website") ?? ""),
       });
-      clearCheckoutCart(); resetCheckoutKey();
+      clearCheckoutCart(); resetCheckoutKey(); saveIdentity({ name: String(f.get("name") ?? "").trim(), phone });
       try { sessionStorage.setItem(`tl-order-phone-${r.order_number}`, phone); } catch { /* storage unavailable */ }
       navigate(`/order/${r.order_number}`, { replace: true });
     } catch (err) {
