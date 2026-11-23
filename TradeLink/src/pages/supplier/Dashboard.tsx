@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, Boxes, CheckCircle2, ClipboardList, Hourglass, Package, PackageCheck, Truck, Wallet } from "lucide-react";
 import { requireSupabase } from "../../lib/supabase";
+import { useSupplier } from "./context";
 import { Pill, Spinner, dateOf, money, qty, useLoad } from "./ops";
 
 type Dash = {
@@ -29,6 +30,7 @@ const TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZon
 
 export default function Dashboard() {
   const nav = useNavigate();
+  const { supplier } = useSupplier();
   const { data: d, error, loading } = useLoad(async () => {
     const { data, error } = await requireSupabase().rpc("supplier_dashboard", { p_tz: TZ });
     if (error) throw error; return data as Dash;
@@ -53,10 +55,25 @@ export default function Dashboard() {
     { Icon: Wallet, label: "Wholesale sales", value: money(d.sales_total), note: `${money(d.sales_open)} in open orders`, to: "/supplier/orders" },
     ...(earn ? [{ Icon: Wallet, label: "Marketplace earnings", value: money(earn.earning), note: `${money(earn.commission)} commission · ${Math.round(earn.units)} sold, 30 days`, to: "/supplier" }] : []),
   ];
+  const attn = [
+    d.orders_new > 0 && { Icon: Hourglass, text: `${d.orders_new} new ${d.orders_new === 1 ? "order" : "orders"} waiting`, to: "/supplier/orders" },
+    d.products_pending > 0 && { Icon: Package, text: `${d.products_pending} awaiting approval`, to: "/supplier/products" },
+    d.low_stock.length > 0 && { Icon: AlertTriangle, text: `${d.low_stock.length} low on stock`, to: "/supplier/inventory" },
+  ].filter(Boolean) as { Icon: typeof Package; text: string; to: string }[];
   return (
     <div className="sp-dash">
+      <section className="dh">
+        <div className="dh-top"><small>Welcome back</small><h2>{supplier?.name ?? "Your business"}</h2></div>
+        <div className="dh-kpis">
+          {earn && <div><small>Marketplace earnings · 30 days</small><b>{money(earn.earning)}</b><em>{Math.round(earn.units)} sold · {money(earn.commission)} commission</em></div>}
+          <div><small>Wholesale sales</small><b>{money(d.sales_total)}</b><em>{money(d.sales_open)} in open orders</em></div>
+          <div><small>Products</small><b>{d.products_total}</b><em>{d.products_active} active</em></div>
+        </div>
+        {attn.length > 0 ? <div className="dh-attn">{attn.map(a => <button key={a.text} onClick={() => nav(a.to)}><a.Icon size={15} />{a.text}</button>)}</div>
+          : <p className="dh-ok"><CheckCircle2 size={16} /> Nothing needs your attention.</p>}
+      </section>
       <div className="sp-stats">
-        {cards.map(c => (
+        {cards.filter(c => !["Products", "Wholesale sales", "Marketplace earnings"].includes(c.label)).map(c => (
           <button key={c.label} className={`sp-stat${c.hot ? " hot" : ""}`} onClick={() => nav(c.to)}>
             <span className="ico"><c.Icon size={18} /></span><small>{c.label}</small><b>{c.value}</b><em>{c.note}</em>
           </button>
@@ -71,7 +88,6 @@ export default function Dashboard() {
             <ul className="sp-list">{d.low_stock.map(p => (
               <li key={p.id}><AlertTriangle size={16} className="warn" /><span><b>{p.name}</b><small>{qty(p.available)} left · alert at {qty(p.level)}</small></span></li>))}
             </ul>)}
-          <p className="sp-muted">Payments and invoices will appear here once the finance update is added.</p>
         </section>
       </div>
       <section className="sp-card"><div className="sp-card-head"><h3>Recent orders</h3><button className="sp-link" onClick={() => nav("/supplier/orders")}>All orders</button></div>
