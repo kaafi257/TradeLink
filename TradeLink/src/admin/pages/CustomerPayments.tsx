@@ -3,7 +3,7 @@ import { AlertTriangle, Banknote, CheckCircle2, Clock, FileText, Landmark, Plug,
 import { DataTable, SummaryStrip } from "../../components/ui";
 import { StatusChip } from "../Records";
 import { METHOD_LABEL, STATUS_LABEL, type PayMethod, type PayStatus } from "../../lib/checkout";
-import { requireSupabase } from "../../lib/supabase";
+import { errorText, requireSupabase } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
 import { ErrorNote, Form, Modal, callRpc, dateOf, dayRange, useAction, useLoad } from "../suite";
 
@@ -156,8 +156,21 @@ function Detail({ row, onClose, onDone }: { row: Row; onClose: () => void; onDon
   );
 }
 
+const WALLET = /^[0-9+ -]{6,20}$/;
+/** Checks the form before sending, and says exactly what to fix. */
+function problem(v: Partial<Settings>): string {
+  if (v.bank_enabled && !(v.bank_name?.trim() && v.account_name?.trim() && v.account_number?.trim())) return "Bank transfer is ticked: enter the bank name, account name and account number.";
+  for (const [on, name, num, label] of [[v.telebirr_enabled, v.telebirr_name, v.telebirr_number, "Telebirr"], [v.ebirr_enabled, v.ebirr_name, v.ebirr_number, "eBirr"]] as const) {
+    if (on && !(name?.trim() && num?.trim())) return `${label} is ticked: enter the ${label} account name and number.`;
+    if (num?.trim() && !WALLET.test(num.trim())) return `The ${label} number must be 6 to 20 digits (a + or spaces are fine). Letters like X are not allowed.`;
+  }
+  return "";
+}
+
 function SettingsModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
-  const { busy, run } = useAction();
+  const { notify } = useAdmin();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
   const cur = useLoad(async () => {
     const { data, error } = await requireSupabase().from("checkout_settings").select("*").maybeSingle();
     if (error) throw error;
@@ -170,7 +183,15 @@ function SettingsModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
     <Modal title="Checkout settings" kicker="PAYMENT METHODS" onClose={onClose}>
       <ErrorNote text={cur.error} />
       <p className="su-muted">Customers see only the methods you switch on here. Telebirr and eBirr here are manual: the customer sends money to your number and you check it in the app. They are not connected to the providers by API. CBE Birr is not set up.</p>
-      <Form onSubmit={() => void run(() => callRpc("save_checkout_settings", { p_settings: v }), "Settings saved.").then(ok => { if (ok) onSaved(); })} busy={busy || cur.loading} submit="Save settings">
+      <Form onSubmit={() => {
+        const bad = problem(v);
+        if (bad) { setErr(bad); return; }
+        setErr(""); setBusy(true);
+        callRpc("save_checkout_settings", { p_settings: v })
+          .then(() => { notify("Settings saved."); onSaved(); })
+          .catch(e => setErr(errorText(e, "Could not save. Please try again.")))
+          .finally(() => setBusy(false));
+      }} busy={busy || cur.loading} submit="Save settings">
         <label className="checkbox-label"><input type="checkbox" checked={!!v.bank_enabled} onChange={e => set({ bank_enabled: e.target.checked })} /> Accept bank transfer (CBE)</label>
         <div className="two">
           <label>Bank name<input maxLength={80} value={v.bank_name ?? ""} onChange={e => set({ bank_name: e.target.value })} placeholder="Commercial Bank of Ethiopia" /></label>
@@ -193,7 +214,8 @@ function SettingsModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
           <label>Delivery fee (ETB)<input type="number" min="0" step="0.01" value={v.delivery_fee ?? 0} onChange={e => set({ delivery_fee: Number(e.target.value) })} /></label>
           <label>Free delivery over (ETB, optional)<input type="number" min="0" step="0.01" value={v.free_delivery_over ?? ""} onChange={e => set({ free_delivery_over: e.target.value === "" ? null : Number(e.target.value) })} /></label>
         </div>
-        <label>Hours to wait for a bank transfer before the order expires<input type="number" min="1" max="720" value={v.bank_hold_hours ?? 72} onChange={e => set({ bank_hold_hours: Number(e.target.value) })} /></label>
+        <label>Hours to wait for a payment before the order expires (72 is usual)<input type="number" min="1" max="720" value={v.bank_hold_hours ?? 72} onChange={e => set({ bank_hold_hours: Number(e.target.value) })} /></label>
+        <ErrorNote text={err} />
       </Form>
     </Modal>
   );
