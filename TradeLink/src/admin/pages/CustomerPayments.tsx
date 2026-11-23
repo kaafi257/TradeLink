@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, Banknote, CheckCircle2, Clock, FileText, Landmark, Plug, RotateCcw, ShieldCheck, Undo2 } from "lucide-react";
-import { DataTable, SummaryStrip } from "../../components/ui";
-import { StatusChip } from "../Records";
+import { AlertTriangle, Banknote, CheckCircle2, ChevronRight, FileText, Inbox, Landmark, Plug, RotateCcw, Search, Settings, ShieldCheck, Smartphone } from "lucide-react";
 import { METHOD_LABEL, STATUS_LABEL, type PayMethod, type PayStatus } from "../../lib/checkout";
 import { errorText, requireSupabase } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
@@ -22,7 +20,13 @@ const etb = (n: number) => `${new Intl.NumberFormat("en-US", { maximumFractionDi
 const tone = (s: PayStatus) => (s === "paid" ? "good" : s === "failed" || s === "expired" || s === "cancelled" ? "bad" : s === "refunded" || s === "partially_refunded" ? "info" : "warn");
 const STATUSES: PayStatus[] = ["pending", "submitted", "processing", "paid", "failed", "expired", "cancelled", "refunded", "partially_refunded"];
 
-export default function CustomerPayments() {
+const MethodIcon = ({ m }: { m: PayMethod }) => (m === "cod" ? <Banknote /> : m === "bank_transfer" ? <Landmark /> : <Smartphone />);
+const FILTERS: { id: string; label: string; hot?: boolean }[] = [
+  { id: "", label: "All" }, { id: "submitted", label: "To verify", hot: true }, { id: "pending", label: "Pending" },
+  { id: "paid", label: "Paid" }, { id: "failed", label: "Failed" }, { id: "refunded", label: "Refunded" },
+];
+
+export default function CustomerPayments({ onChanged }: { onChanged?: () => void }) {
   const { can, search } = useAdmin();
   const [days, setDays] = useState(30);
   const [method, setMethod] = useState("");
@@ -36,60 +40,72 @@ export default function CustomerPayments() {
   const stats = useLoad(() => callRpc<Stats>("payment_stats"), []);
   const prov = useLoad(() => callRpc<Provider[]>("payment_providers"), []);
   const recon = useLoad(() => callRpc<Recon[]>("payment_reconciliation"), []);
-  const refresh = () => { list.reload(); stats.reload(); recon.reload(); };
+  const refresh = () => { list.reload(); stats.reload(); recon.reload(); onChanged?.(); };
   const rows = list.data ?? [];
-  const failed = rows.filter(r => r.status === "failed" || r.status === "expired");
+  const by = stats.data?.by_status ?? {};
+  const total = Object.values(by).reduce((a, c) => a + Number(c.count), 0);
+  const countOf = (id: string) => (id === "" ? total : Number(by[id]?.count ?? 0));
 
   return (
     <>
       <ErrorNote text={list.error || stats.error} />
-      <SummaryStrip items={[
-        { icon: <Clock />, tone: "gold", value: stats.data?.awaiting_verification ?? 0, label: "Transfers to verify" },
-        { icon: <Banknote />, tone: "blue", value: etb(stats.data?.cod_to_collect ?? 0), label: "Cash to collect" },
-        { icon: <CheckCircle2 />, tone: "mint", value: stats.data?.by_status?.paid?.count ?? 0, label: "Paid" },
-        { icon: <Undo2 />, tone: "red", value: etb(stats.data?.refunded ?? 0), label: "Refunded" },
-      ]} />
 
-      <div className="su-row" style={{ margin: "0 0 14px" }} aria-label="Payment providers">
+      <section className="pm-providers" aria-label="Ways customers can pay">
         {(prov.data ?? []).map(p => (
-          <StatusChip key={p.key} tone={p.state === "live" ? "good" : p.state === "off" ? "muted" : "info"} icon={p.state === "live" ? <ShieldCheck size={14} /> : <Plug size={14} />}>
-            {p.name} · {p.state === "live" ? "On" : p.state === "off" ? "Off" : "Not set up"}
-          </StatusChip>
+          <div key={p.key} className={`pm-prov ${p.state}`}>
+            <span className="pm-prov-ic">{p.key === "cod" ? <Banknote /> : p.key === "bank_transfer" ? <Landmark /> : p.state === "not_configured" ? <Plug /> : <Smartphone />}</span>
+            <div><b>{p.name}</b><small>{p.state === "live" ? "On" : p.state === "off" ? "Off" : "Not set up"}</small></div>
+            <i aria-hidden="true" />
+          </div>
         ))}
-        {can("payments.manage") && <button className="btn outline" onClick={() => setSettings(true)}><Landmark size={15} /> Checkout settings</button>}
+        {can("payments.manage") && <button className="pm-prov set" onClick={() => setSettings(true)}><span className="pm-prov-ic"><Settings /></span><div><b>Checkout settings</b><small>Accounts, fees, methods</small></div></button>}
+      </section>
+
+      <div className="pm-filters" role="group" aria-label="Filter by status">
+        {FILTERS.map(f => (
+          <button key={f.id} className={`${status === f.id ? "on" : ""}${f.hot && countOf(f.id) > 0 ? " hot" : ""}`} onClick={() => setStatus(f.id)} aria-pressed={status === f.id}>
+            {f.label}<i>{countOf(f.id)}</i>
+          </button>
+        ))}
       </div>
 
-      <div className="inline-form" role="search">
-        <label>Search<input value={q} onChange={e => setQ(e.target.value)} placeholder="Order number, payment or transfer reference, name, phone" /></label>
-        <label>Method<select value={method} onChange={e => setMethod(e.target.value)}><option value="">All</option><option value="bank_transfer">Bank transfer</option><option value="telebirr">Telebirr</option><option value="ebirr">eBirr</option><option value="cod">Cash on Delivery</option></select></label>
-        <label>Status<select value={status} onChange={e => setStatus(e.target.value)}><option value="">All</option>{STATUSES.map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}</select></label>
-        <label>Period<select value={days} onChange={e => setDays(Number(e.target.value))}><option value={7}>Last 7 days</option><option value={30}>Last 30 days</option><option value={90}>Last 90 days</option><option value={365}>Last 12 months</option></select></label>
+      <div className="pm-toolbar" role="search">
+        <label className="pm-search"><Search size={17} /><input value={q} onChange={e => setQ(e.target.value)} placeholder="Order number, reference, name or phone" aria-label="Search payments" /></label>
+        <select value={method} onChange={e => setMethod(e.target.value)} aria-label="Method"><option value="">All methods</option><option value="bank_transfer">Bank transfer</option><option value="telebirr">Telebirr</option><option value="ebirr">eBirr</option><option value="cod">Cash on Delivery</option></select>
+        <select value={days} onChange={e => setDays(Number(e.target.value))} aria-label="Period"><option value={7}>Last 7 days</option><option value={30}>Last 30 days</option><option value={90}>Last 90 days</option><option value={365}>Last 12 months</option></select>
       </div>
 
-      <DataTable headers={["Order", "Customer", "Method", "Amount", "Status", "Reference", "Date", ""]} isEmpty={!rows.length} empty={list.loading ? "Loading…" : "No customer payments match. Orders placed at checkout appear here."}>
+      <div className="pm-list">
         {rows.map(r => (
-          <tr key={r.id}>
-            <td><span className="docno">{r.order_number}</span></td><td>{r.customer_name}<br /><small>{r.phone}</small></td><td>{METHOD_LABEL[r.method]}</td>
-            <td><b>{etb(r.amount)}</b>{Number(r.refunded) > 0 && <><br /><small>refunded {etb(r.refunded)}</small></>}</td>
-            <td><span className={`status ${tone(r.status) === "good" ? "good" : tone(r.status) === "bad" ? "muted" : "warn"}`}>{STATUS_LABEL[r.status]}</span></td>
-            <td><small>{r.reference}</small>{r.customer_txn_ref && <><br /><small>Txn {r.customer_txn_ref}</small></>}</td>
-            <td>{dateOf(r.created_at)}</td>
-            <td><button className="btn outline" onClick={() => setOpen(r)}>{r.status === "submitted" && can("payments.verify") ? "Verify" : "Open"}</button></td>
-          </tr>
+          <button key={r.id} className={`pm-card ${r.status === "submitted" ? "attn" : ""}`} onClick={() => setOpen(r)}>
+            <span className={`pm-ic ${r.method}`}><MethodIcon m={r.method} /></span>
+            <span className="pm-main">
+              <b>{r.order_number} <em>{r.customer_name}</em></b>
+              <small>{METHOD_LABEL[r.method]} · {dateOf(r.created_at)}{r.customer_txn_ref ? ` · ${r.customer_txn_ref}` : ""}</small>
+            </span>
+            <span className="pm-end">
+              <b>{etb(r.amount)}</b>
+              <span className={`pm-pill ${tone(r.status)}`}>{STATUS_LABEL[r.status]}</span>
+              {Number(r.refunded) > 0 && <small>refunded {etb(r.refunded)}</small>}
+            </span>
+            {r.status === "submitted" && can("payments.verify") ? <span className="pm-go hot">Verify</span> : <ChevronRight className="pm-chev" size={18} />}
+          </button>
         ))}
-      </DataTable>
+        {!rows.length && <div className="pm-empty"><Inbox /><b>{list.loading ? "Loading…" : "No customer payments here"}</b><small>{list.loading ? "" : "Orders placed at checkout appear here, with the payment method and status."}</small></div>}
+      </div>
 
-      {failed.length > 0 && <p className="inline-note"><AlertTriangle size={14} /> {failed.length} failed or expired {failed.length === 1 ? "payment" : "payments"} in this list. Filter by status to review them.</p>}
-
-      <h3 style={{ margin: "22px 0 8px" }}>Reconciliation</h3>
-      {(recon.data ?? []).length === 0
-        ? <div className="info-banner"><CheckCircle2 /> {recon.loading ? "Checking…" : "Every checkout order's paid amount matches its verified payments."}</div>
-        : <DataTable headers={["Order", "Customer", "Total", "Recorded paid", "Verified payments", "Difference"]} isEmpty={false} empty="">
-            {(recon.data ?? []).map(r => <tr key={r.order_number}><td><span className="docno">{r.order_number}</span></td><td>{r.customer_name}</td><td>{etb(r.order_total)}</td><td>{etb(r.amount_paid)}</td><td>{etb(r.payments_paid)}</td><td><span className="status warn">{etb(r.difference)}</span></td></tr>)}
-          </DataTable>}
+      <section className="pm-panel" aria-label="Reconciliation">
+        <header><span className="pm-ic blue"><ShieldCheck /></span><div><b>Reconciliation</b><small>Does each order's paid amount match its verified payments?</small></div></header>
+        {(recon.data ?? []).length === 0
+          ? <p className="pm-ok"><CheckCircle2 size={18} /> {recon.loading ? "Checking…" : "All matched. Nothing to fix."}</p>
+          : <div className="pm-list">{(recon.data ?? []).map(r => (
+              <div key={r.order_number} className="pm-card static"><span className="pm-ic warn"><AlertTriangle /></span>
+                <span className="pm-main"><b>{r.order_number} <em>{r.customer_name}</em></b><small>Recorded {etb(r.amount_paid)} · verified {etb(r.payments_paid)}</small></span>
+                <span className="pm-end"><b>{etb(r.difference)}</b><span className="pm-pill warn">Difference</span></span></div>))}</div>}
+      </section>
 
       {open && <Detail row={open} onClose={() => setOpen(null)} onDone={() => { setOpen(null); refresh(); }} />}
-      {settings && <SettingsModal onClose={() => setSettings(false)} onSaved={() => { setSettings(false); prov.reload(); }} />}
+      {settings && <SettingsModal onClose={() => setSettings(false)} onSaved={() => { setSettings(false); prov.reload(); onChanged?.(); }} />}
     </>
   );
 }
