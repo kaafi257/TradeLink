@@ -1,5 +1,7 @@
 /* Payments & Payouts: navy overview, attention strip, filter pills, card rows. Scoped to .pm. White / deep navy / soft blue. */
-.admin-layout .pm{--pm-navy:#0b1f3a;--pm-blue:#1479c2;--pm-line:#e3ebf5;--pm-ink:#0f2c4c;--pm-mute:#5b7890;display:grid;gap:16px;color:var(--pm-ink)}
+.admin-layout .pm{--pm-navy:#0b1f3a;--pm-blue:#1479c2;--pm-line:#e3ebf5;--pm-ink:#0f2c4c;--pm-mute:#5b7890;display:grid;grid-template-columns:minmax(0,1fr);gap:16px;color:var(--pm-ink);width:100%;max-width:100%;min-width:0}
+.admin-layout .pm>*{min-width:0;max-width:100%}
+.admin-layout .pm .su-tabs{flex-wrap:nowrap;width:100%;overflow-x:auto;scrollbar-width:none;max-width:100%}.admin-layout .pm .su-tabs::-webkit-scrollbar{display:none}.admin-layout .pm .su-tabs button{flex:none;white-space:nowrap}
 .admin-layout .pm *{box-sizing:border-box}
 
 /* Overview */
@@ -93,3 +95,5 @@
   .admin-layout .pm .pm-ic,.admin-layout .pm .pm-av{width:40px;height:40px;border-radius:13px}
 }
 @media(prefers-reduced-motion:reduce){.admin-layout .pm .pm-a,.admin-layout .pm .pm-card{transition:none}}
+
+@media(max-width:560px){.admin-layout .pm .pm-providers{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-layout .pm .pm-hero select{width:100%}.admin-layout .pm .pm-hero-top>div{min-width:0}.admin-layout .pm .pm-toolbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.admin-layout .pm .pm-toolbar select{min-width:0;width:100%}}
