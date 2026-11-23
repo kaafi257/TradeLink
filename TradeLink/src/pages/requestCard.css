@@ -1,0 +1,43 @@
+/* "Your order" card (cart review + pay now / price request). White, deep navy, soft blue. Scoped to .rq so other modals are untouched. */
+.modal.quote-modal.rq{width:min(100%,560px);padding:22px 20px 20px;background:#fff;border-radius:24px;box-shadow:0 30px 70px -30px #04243d99;color:#0f3a5d}
+.rq .modal-x{background:#eaf3fb;color:#0b4f86;border:0;border-radius:50%}
+.rq-head{display:flex;align-items:center;gap:14px;margin:0 44px 16px 0}
+.rq-ic{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;flex-shrink:0;background:linear-gradient(145deg,#0b4f86,#1b7fc4);color:#fff;box-shadow:0 10px 20px -10px #0b4f86}
+.rq-head h2{margin:0!important;font:800 22px/1.15 Manrope,'Archivo',sans-serif!important;color:#09385e;letter-spacing:-.01em}
+.rq-head p{margin:2px 0 0;font-size:13px;color:#5b7890;font-weight:600}
+.rq .seg{display:grid!important;grid-template-columns:1fr 1fr;width:100%;background:#eaf3fb!important;color:#0b4f86!important;border-radius:16px!important;padding:4px!important;margin:0 0 16px!important;gap:4px!important}
+.rq .seg button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border-radius:12px!important;padding:8px 6px!important;font-size:13px!important;white-space:nowrap!important;line-height:1.2;color:#0b4f86}
+.rq .seg button.on{background:#0b4f86!important;color:#fff!important;box-shadow:0 8px 16px -10px #0b4f86}
+.rq-form{display:grid;gap:14px}
+.rq .req-lines{display:grid;gap:10px}
+.rq .cart-line{border:1px solid #dfe9f2;border-radius:18px;background:#fff;padding:12px;box-shadow:0 6px 18px -14px #0b375c66;grid-template-columns:64px minmax(0,1fr) auto;grid-template-areas:"th nm rm" "th qty sub"}
+.rq .cart-line .th{width:64px;height:64px;border-radius:14px;background:#f3f8fd;border:1px solid #e2ecf5}
+.rq .cart-line .nm b{font:700 15px/1.25 Manrope,'Inter',sans-serif;color:#09385e}.rq .cart-line .nm small{color:#5b7890}
+.rq .cart-line .qty{border:1px solid #cfdeeb;border-radius:999px;background:#fff}
+.rq .cart-line .qty button{background:transparent;color:#0b4f86;width:40px;height:40px;font-size:20px;font-weight:700}
+.rq .cart-line .qty input{width:46px;height:40px;color:#09385e}
+.rq .cart-line .sub{color:#09385e;font:800 16px Manrope,'Inter',sans-serif}
+.rq .cart-line .req-remove{width:38px;height:38px;border:0;background:#f3f8fd;color:#8aa3b8;border-radius:50%}.rq .cart-line .req-remove:hover{background:#fdecea;color:#b42318}
+.rq .req-line{border-radius:16px;background:#f3f8fd;border:1px dashed #b8d4ec}
+.rq-add{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;border:1.5px dashed #9ec3e3;border-radius:16px;background:#f7fbff;color:#0b4f86;font:700 14px Manrope,'Inter',sans-serif;cursor:pointer}
+.rq-add:hover{background:#eaf3fb}
+.rq-total{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:2px 12px;padding:16px 18px;border-radius:18px;color:#fff;background:linear-gradient(135deg,#09385e,#0b5a99 70%,#1b7fc4);box-shadow:0 16px 30px -20px #0b4f86}
+.rq-total span{font-size:13px;font-weight:700;opacity:.85;letter-spacing:.04em;text-transform:uppercase}
+.rq-total b{font:800 26px Manrope,'Inter',sans-serif;color:#fff!important}
+.rq-total small{grid-column:1/-1;font-size:12.5px;opacity:.8}
+.rq-pay{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:58px;border:0;border-radius:18px;background:#fff;color:#09385e;font:800 16px Manrope,'Inter',sans-serif;cursor:pointer;border:2px solid #0b4f86;box-shadow:0 14px 26px -18px #0b4f86;transition:transform .15s,background .15s}
+.rq-pay b{color:#0b4f86;font-weight:800}.rq-pay:hover{background:#f3f8fd}.rq-pay:active{transform:scale(.99)}
+.rq-secure{margin:-6px 0 0;text-align:center;font-size:12.5px;color:#5b7890}
+.rq-alt{border:1px solid #dfe9f2;border-radius:18px;background:#f9fbfe;overflow:hidden}
+.rq-alt summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;min-height:52px;cursor:pointer;font:700 14px Manrope,'Inter',sans-serif;color:#0b4f86}
+.rq-alt summary::-webkit-details-marker{display:none}.rq-alt summary svg{transition:transform .2s;flex-shrink:0}.rq-alt[open] summary svg{transform:rotate(180deg)}
+.rq-alt .rq-fields{padding:4px 16px 16px}
+.rq-details{display:grid;gap:10px;padding:16px;border:1px solid #dfe9f2;border-radius:18px;background:#f9fbfe}
+.rq-details h3{margin:0;font:800 15px Manrope,'Inter',sans-serif;color:#09385e}
+.rq-fields label{font-size:12px!important;font-weight:800!important;color:#1c4d76}
+.rq-fields input,.rq-fields textarea,.rq-fields select{border:1px solid #cfdeeb!important;border-radius:12px!important;background:#fff!important;min-height:46px;color:#0f3a5d}
+.rq-fields input:focus,.rq-fields textarea:focus{border-color:#0b6bb0!important;box-shadow:0 0 0 3px #0b6bb01f!important;outline:none}
+.rq-fields .btn.green{background:#0b4f86;border-color:#0b4f86;min-height:52px;border-radius:16px}
+.rq-keep{justify-self:center;border:0;background:none;color:#5b7890;font:700 13.5px 'Inter',sans-serif;padding:8px 14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+@media(max-width:520px){.modal.quote-modal.rq{padding:18px 14px calc(18px + env(safe-area-inset-bottom,0px));border-radius:24px 24px 0 0}.rq-head h2{font-size:20px!important}.rq-total b{font-size:23px}}
+@media(prefers-reduced-motion:reduce){.rq-pay,.rq-alt summary svg{transition:none}}
