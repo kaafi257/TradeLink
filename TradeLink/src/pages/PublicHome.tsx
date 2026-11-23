@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Briefcase, Check, ClipboardList, Package, Percent, Plus, Search, ShoppingBag, Sparkles, Tag, Trash2, User, X, Layers } from "lucide-react";
+import { ArrowRight, Briefcase, Check, ChevronDown, Lock, ClipboardList, Package, Percent, Plus, Search, ShoppingBag, Sparkles, Tag, Trash2, User, X, Layers } from "lucide-react";
 
 import { ContactIcons, ContactPills, FloatingContact } from "../components/ContactActions";
 import { TURNSTILE_SITE_KEY, Turnstile } from "../components/Turnstile";
@@ -21,6 +21,7 @@ import { MODE_LOOK, lookFor, styleFor, type Look, type ShopStyle } from "../lib/
 import { supabase, withPhoto, type CampaignSlide, type PublicCategory, type PublicIndustry, type PublicProduct, type PublicSupplier } from "../lib/supabase";
 import "./home.css";
 import "./market/storefront.css";
+import "./requestCard.css";
 
 export type Mode = "business" | "individual";
 export type Line = { key: string; productId: string; qty: string };
@@ -122,7 +123,7 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
 
   return (
     <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal quote-modal" role="dialog" aria-modal="true" aria-label="Request a price">
+      <div className="modal quote-modal rq" role="dialog" aria-modal="true" aria-label="Request a price">
         <button className="modal-x" aria-label="Close" onClick={onClose}><X /></button>
         {quoteNumber ? (
           <div className="success-state">
@@ -134,14 +135,16 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
           </div>
         ) : (
           <>
-            <small className="kicker">Your request</small>
-            <h2>Review and send</h2>
+            <header className="rq-head">
+              <span className="rq-ic"><ShoppingBag size={22} /></span>
+              <div><h2>Your order</h2><p>{chosen.length ? `${chosen.length} ${chosen.length === 1 ? "item" : "items"}` : "Add a product to begin"}</p></div>
+            </header>
             {!lockType && <div className="seg" role="group" aria-label="I am buying as">
               <button type="button" className={type === "business" ? "on" : ""} onClick={() => switchType("business")}><Briefcase size={15} /> Business (wholesale)</button>
               <button type="button" className={type === "individual" ? "on" : ""} onClick={() => switchType("individual")}><User size={15} /> Individual (retail)</button>
             </div>}
-            <form className="form-grid" onSubmit={submit}>
-              <div className="full req-lines">
+            <form className="rq-form" onSubmit={submit}>
+              <div className="req-lines">
                 {lines.map(l => {
                   const p = byId.get(l.productId);
                   const unit = p && type === "individual" && Number(p.retail_price) > 0 ? (Number(p.sale_price) > 0 && Number(p.sale_price) < Number(p.retail_price) ? Number(p.sale_price) : Number(p.retail_price)) : null;
@@ -172,12 +175,23 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
                     </div>
                   );
                 })}
-                {lines.length < 20 && <button type="button" className="btn outline req-add" onClick={() => setLines(ls => [...ls, { key: newKey(), productId: "", qty: defaultQty(undefined, type) }])}><Plus size={15} /> Add another product</button>}
-                {type === "individual" && estimate > 0 && <p className="req-estimate cart-total"><span>Total{estimateComplete ? "" : " (so far)"}</span><b>{money(estimate)}</b></p>}
-                {type === "individual" && estimate > 0 && <small className="req-note">{estimateComplete ? "" : "Some items need a price from us. "}We confirm the final price before you pay.</small>}
-                {canPayNow && <button type="button" className="btn green req-add" onClick={payNow}><ShoppingBag size={16} /> Pay now · {money(estimate)}</button>}
-                <button type="button" className="btn outline req-add" onClick={onClose}>Continue shopping</button>
+                {lines.length < 20 && <button type="button" className="rq-add" onClick={() => setLines(ls => [...ls, { key: newKey(), productId: "", qty: defaultQty(undefined, type) }])}><Plus size={16} /> Add another product</button>}
               </div>
+
+              {type === "individual" && estimate > 0 && (
+                <div className="rq-total">
+                  <span>Total{estimateComplete ? "" : " (so far)"}</span>
+                  <b>{money(estimate)}</b>
+                  <small>{estimateComplete ? "" : "Some items need a price from us. "}Delivery is added at checkout.</small>
+                </div>)}
+
+              {canPayNow ? (
+                <>
+                  <button type="button" className="rq-pay" onClick={payNow}><Lock size={18} /> Pay now <b>{money(estimate)}</b> <ArrowRight size={18} /></button>
+                  <p className="rq-secure">Secure checkout. Choose how to pay on the next step.</p>
+                  <details className="rq-alt">
+                    <summary><span>Prefer a price request? Send your details</span><ChevronDown size={18} /></summary>
+                    <div className="form-grid rq-fields">
               <label>{type === "individual" ? "Your name" : "Business / contact name"}<input name="name" required maxLength={120} placeholder={type === "individual" ? "Your name" : "Your name or business"} /></label>
               <label>Phone / WhatsApp<input name="phone" required maxLength={30} placeholder="+251 ..." /></label>
               <label>Email (optional)<input name="email" type="email" maxLength={160} placeholder="name@email.com" /></label>
@@ -189,6 +203,28 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
               {error && <p className="form-error full" role="alert">{error}</p>}
               {products.length === 0 && <p className="form-error full" role="alert">No products are available right now. Please check back soon.</p>}
               <button className="btn green full" type="submit" disabled={busy || products.length === 0}>{busy ? "Sending…" : "Send request"} <ArrowRight /></button>
+                    </div>
+                  </details>
+                </>
+              ) : (
+                <section className="rq-details" aria-label="Your details">
+                  <h3>Your details</h3>
+                  <div className="form-grid rq-fields">
+              <label>{type === "individual" ? "Your name" : "Business / contact name"}<input name="name" required maxLength={120} placeholder={type === "individual" ? "Your name" : "Your name or business"} /></label>
+              <label>Phone / WhatsApp<input name="phone" required maxLength={30} placeholder="+251 ..." /></label>
+              <label>Email (optional)<input name="email" type="email" maxLength={160} placeholder="name@email.com" /></label>
+              <label>Delivery location<input name="location" required maxLength={120} placeholder="City / town" /></label>
+              <label className="full">Additional details<textarea name="notes" rows={2} maxLength={1000} placeholder="Timing or other requirements" /></label>
+              <label className="full">Coupon code (optional)<input name="coupon" maxLength={20} autoComplete="off" autoCapitalize="characters" placeholder="e.g. WELCOME10" /></label>
+              <div className="honeypot" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
+              {TURNSTILE_SITE_KEY && <Turnstile onToken={onToken} />}
+              {error && <p className="form-error full" role="alert">{error}</p>}
+              {products.length === 0 && <p className="form-error full" role="alert">No products are available right now. Please check back soon.</p>}
+              <button className="btn green full" type="submit" disabled={busy || products.length === 0}>{busy ? "Sending…" : "Send request"} <ArrowRight /></button>
+                  </div>
+                </section>
+              )}
+              <button type="button" className="rq-keep" onClick={onClose}>Continue shopping</button>
             </form>
           </>
         )}
