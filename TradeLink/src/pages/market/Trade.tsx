@@ -127,6 +127,7 @@ export function TradeHeader({ shelf, suppliers, wishCount, requestCount, signedI
   return (
     <header className={`tl-head${solid ? " solid" : ""}`}>
       <div className="tl-wrap tl-head-in">
+        <button className="tl-act tl-burger" onClick={openMenu} aria-label="Categories" aria-expanded={menuOpen}><Menu size={22} /></button>
         <a href="#top" className="tl-logo" aria-label="TradeLink home" onClick={e => { e.preventDefault(); nav("top"); }}><Brand /></a>
         <div className="tl-search">
           <form role="search" onSubmit={submit}>
@@ -152,7 +153,6 @@ export function TradeHeader({ shelf, suppliers, wishCount, requestCount, signedI
           <button className="tl-act" onClick={onWishlist} title="Wishlist" aria-label="Wishlist"><Heart size={20} />{wishCount > 0 && <i key={wishCount}>{wishCount}</i>}</button>
           <button className="tl-act" onClick={onRequest} title="Price request" aria-label={`Price request, ${requestCount} ${requestCount === 1 ? "product" : "products"}`}><ShoppingBag size={20} />{requestCount > 0 && <i key={requestCount}>{requestCount}</i>}</button>
           <button className="tl-act" onClick={onAccount} title={signedIn ? "Admin" : "Sign in"} aria-label={signedIn ? "Admin" : "Sign in"}><User size={20} /></button>
-          <button className="tl-act tl-burger" onClick={openMenu} aria-label="Categories" aria-expanded={menuOpen}><Menu size={22} /></button>
         </div>
       </div>
     </header>

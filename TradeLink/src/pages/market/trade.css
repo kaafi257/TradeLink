@@ -718,3 +718,9 @@ html[data-theme=calm] .public-site .tl-nav{background:linear-gradient(180deg,#eb
 .tl-card .price s,.mk-price s,.fd-price s,.fx-price s{color:var(--price-red);text-decoration-color:var(--price-red)}
 .public-site .tl-card .off,.mk-off,.fx-badge:not(.out){background:var(--price-red);color:#fff}
 .fd-tech .fd-price b{color:#4ade80}.fd-tech .fd-price s{color:#ff6b6b}
+
+/* Menu (categories) button on the LEFT of the logo on phones. */
+@media(max-width:760px){
+  .public-site .tl-head .tl-burger{order:0;flex:none;margin-left:-4px}
+  .public-site .tl-logo{order:1}
+}
