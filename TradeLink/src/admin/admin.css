@@ -1074,3 +1074,5 @@
 .admin-layout .gs .gs-icon svg{color:#fff!important;stroke:#fff}
 .mk-bar{display:flex;justify-content:flex-end;margin:0 0 12px}
 .mk-img{display:grid;gap:8px}.mk-img img{width:100%;max-height:180px;object-fit:cover;border-radius:12px}.mk-img>div{display:flex;gap:8px;flex-wrap:wrap}.mk-up{cursor:pointer}
+
+.staff-sub{display:flex;align-items:center;gap:8px;margin:22px 0 10px;font:800 1.05rem Manrope,sans-serif;color:#073256}.staff-sub small{background:#eaf3fb;color:#0b4f86;border-radius:999px;padding:2px 9px;font-size:12px}
