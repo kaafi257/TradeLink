@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from "react";
-import { Check, Power, ShieldCheck, Users } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
+import { Check, Clock, Factory, Power, ShieldCheck, Users } from "lucide-react";
 import { PageHeading } from "../../components/ui";
 import { IconBtn, RecCard, RecordList, StatusChip, initialsOf } from "../Records";
-import { requireSupabase, type Profile, type Role } from "../../lib/supabase";
+import { requireSupabase, type Profile, type Role, type Supplier } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
 
 /** supabase-js hides the function's own message behind "non-2xx status code"; dig the real reason out. */
@@ -25,6 +26,10 @@ export default function Staff() {
   // Mirrors the database rule: only an owner can grant or change the manager/owner roles.
   const assignable: Role[] = isOwner ? ALL_ROLES : ALL_ROLES.filter(r => r !== "manager");
   const [busy, setBusy] = useState(false);
+  const [sups, setSups] = useState<Supplier[]>([]);
+  useEffect(() => {
+    void requireSupabase().from("suppliers").select("*").not("profile_id", "is", null).order("name").then(({ data }) => setSups((data ?? []) as Supplier[]));
+  }, []);
   const s = search.toLowerCase();
   const rows = staff.filter(m => `${m.full_name} ${m.email} ${m.role}`.toLowerCase().includes(s));
   const canEdit = (m: Profile) => m.id !== profile.id && (isOwner ? m.role !== "owner" : !["owner", "manager"].includes(m.role));
@@ -78,6 +83,18 @@ export default function Staff() {
             status={<StatusChip tone={m.active ? "good" : "muted"} icon={m.active ? <Check size={14} /> : <Power size={14} />}>{m.active ? "Active" : "Off"}</StatusChip>}
             actions={canEdit(m) ? <IconBtn tone={m.active ? "red" : "green"} icon={<Power size={17} />} label={m.active ? "Deactivate" : "Activate"} onClick={() => void change(m, { active: !m.active })} /> : undefined} />
         ))}
+      </RecordList>
+      <h3 className="staff-sub"><Factory size={18} /> Suppliers <small>{sups.length}</small></h3>
+      <RecordList isEmpty={!sups.length} empty="No supplier accounts yet" icon={<Factory />}>
+        {sups.filter(x => `${x.name} ${x.email ?? ""} ${x.owner_name ?? ""}`.toLowerCase().includes(s)).map((x, i) => {
+          const st = x.status ?? "pending";
+          const tone = st === "approved" ? "good" : st === "pending" ? "warn" : "muted";
+          return (
+            <RecCard key={x.id} i={i} tone={tone} initials={initialsOf(x.name)} title={x.name} sub={x.email || x.owner_name || "—"}
+              control={<span className="role-pill"><Factory size={14} />supplier</span>}
+              status={<StatusChip tone={tone} icon={st === "approved" ? <Check size={14} /> : st === "pending" ? <Clock size={14} /> : <Power size={14} />}>{st === "approved" ? "Approved" : st === "pending" ? "Pending" : st}</StatusChip>}
+              actions={<Link className="role-pill" to="/admin/verification">Review</Link>} />);
+        })}
       </RecordList>
     </>
   );
