@@ -46,21 +46,39 @@ function ProductForm({ row, cats, supplierId, rates, ownRate, onClose, onDone }:
   };
   return (
     <Modal title={row ? "Edit product" : "Add a product"} onClose={onClose} wide>
-      <form className="sp-form" onSubmit={e => void submit(e)}>
-        <div className="sp-fgrid">
-          <label className="span2">Product name<input value={f.name} onChange={e => set("name", e.target.value)} required minLength={2} maxLength={120} /></label>
-          <label>Brand<input value={f.brand} onChange={e => set("brand", e.target.value)} maxLength={60} /></label>
-          <label>SKU<input value={f.sku} onChange={e => set("sku", e.target.value)} maxLength={40} /></label>
-          <div className="cp-field"><span>Category <small>({cats.length} available — type to search)</small></span><CategoryPicker options={cats} value={f.category_id} onChange={v => set("category_id", v)} required />
+      <form className="sp-form pf" onSubmit={e => void submit(e)}>
+        <section className="pf-sec">
+          <h4><span>1</span>Product</h4>
+          <label>Product name<input value={f.name} onChange={e => set("name", e.target.value)} required minLength={2} maxLength={120} placeholder="e.g. Sunflower oil 5L" /></label>
+          <div className="cp-field"><span>Category</span><CategoryPicker options={cats} value={f.category_id} onChange={v => set("category_id", v)} required />
             {f.category_id && <small className="cp-rate">Commission for this category: <b>{rates.has(f.category_id) ? rates.get(f.category_id) : ownRate}%</b>{rates.has(f.category_id) ? "" : " (your standard rate)"}</small>}</div>
-          <label>Subcategory<input value={f.subcategory} onChange={e => set("subcategory", e.target.value)} maxLength={60} /></label>
-          <label>Unit<input value={f.unit} onChange={e => set("unit", e.target.value)} maxLength={20} placeholder="bag, carton, kg…" /></label>
-          <label>Wholesale price (ETB)<input type="number" inputMode="decimal" min="0" step="0.01" value={f.price} onChange={e => set("price", e.target.value)} required /></label>
-          <label>Minimum order quantity<input type="number" inputMode="decimal" min="0.001" step="any" value={f.min_order_qty} onChange={e => set("min_order_qty", e.target.value)} required /></label>
-          <label>Low-stock alert at<input type="number" inputMode="decimal" min="0" step="any" value={f.reorder_level} onChange={e => set("reorder_level", e.target.value)} /><small>0 turns the alert off</small></label>
-          <label className="span2">Description<textarea rows={3} value={f.description} onChange={e => set("description", e.target.value)} maxLength={1000} /></label>
-        </div>
-        <fieldset className="sp-fset"><legend>Bulk discounts</legend>
+          <div className="sp-photos">
+            {f.images.map(p => (
+              <span key={p} className="ph"><img src={productImageUrl(p)} alt="" /><button type="button" aria-label="Remove photo" onClick={() => set("images", f.images.filter(x => x !== p))}><Trash2 size={13} /></button></span>))}
+            {f.images.length < 8 && (
+              <label className="ph add">{up ? "Uploading…" : <><Upload size={18} />Photo</>}<input type="file" accept={IMAGE_ACCEPT} multiple hidden disabled={up} onChange={e => { void addImages(e.target.files); e.target.value = ""; }} /></label>)}
+          </div>
+        </section>
+        <section className="pf-sec">
+          <h4><span>2</span>Price and quantity</h4>
+          <div className="pf-row3">
+            <label>Price (ETB)<input type="number" inputMode="decimal" min="0" step="0.01" value={f.price} onChange={e => set("price", e.target.value)} required /></label>
+            <label>Unit<input value={f.unit} onChange={e => set("unit", e.target.value)} maxLength={20} placeholder="bag, carton, kg…" /></label>
+            <label>Minimum order<input type="number" inputMode="decimal" min="0.001" step="any" value={f.min_order_qty} onChange={e => set("min_order_qty", e.target.value)} required /></label>
+          </div>
+        </section>
+        <details className="pf-more">
+          <summary>More details <small>optional</small></summary>
+          <div className="sp-fgrid">
+            <label>Brand<input value={f.brand} onChange={e => set("brand", e.target.value)} maxLength={60} /></label>
+            <label>SKU<input value={f.sku} onChange={e => set("sku", e.target.value)} maxLength={40} /></label>
+            <label>Subcategory<input value={f.subcategory} onChange={e => set("subcategory", e.target.value)} maxLength={60} /></label>
+            <label>Low-stock alert at<input type="number" inputMode="decimal" min="0" step="any" value={f.reorder_level} onChange={e => set("reorder_level", e.target.value)} /><small>0 turns the alert off</small></label>
+            <label className="span2">Description<textarea rows={3} value={f.description} onChange={e => set("description", e.target.value)} maxLength={1000} /></label>
+          </div>
+        </details>
+        <details className="pf-more" open={f.tiers.length > 0}>
+          <summary>Bulk discounts <small>{f.tiers.length ? `${f.tiers.length} set` : "optional"}</small></summary>
           {f.tiers.map((t, i) => (
             <div className="sp-tier" key={i}>
               <label>From quantity<input type="number" min="0" step="any" value={t.min_qty} onChange={e => set("tiers", f.tiers.map((x, j) => j === i ? { ...x, min_qty: e.target.value } : x))} /></label>
@@ -68,15 +86,7 @@ function ProductForm({ row, cats, supplierId, rates, ownRate, onClose, onDone }:
               <button type="button" className="sp-icon" aria-label="Remove discount" onClick={() => set("tiers", f.tiers.filter((_, j) => j !== i))}><Trash2 size={16} /></button>
             </div>))}
           <button type="button" className="sp-btn line sm" onClick={() => set("tiers", [...f.tiers, { min_qty: "", price: "" }])}><Plus size={15} /> Add a discount</button>
-        </fieldset>
-        <fieldset className="sp-fset"><legend>Photos <small>up to 8</small></legend>
-          <div className="sp-photos">
-            {f.images.map(p => (
-              <span key={p} className="ph"><img src={productImageUrl(p)} alt="" /><button type="button" aria-label="Remove photo" onClick={() => set("images", f.images.filter(x => x !== p))}><Trash2 size={13} /></button></span>))}
-            {f.images.length < 8 && (
-              <label className="ph add">{up ? "Uploading…" : <><Upload size={18} />Add</>}<input type="file" accept={IMAGE_ACCEPT} multiple hidden disabled={up} onChange={e => { void addImages(e.target.files); e.target.value = ""; }} /></label>)}
-          </div>
-        </fieldset>
+        </details>
         <label className="sp-check"><input type="checkbox" checked={f.active} onChange={e => set("active", e.target.checked)} /> Available to order</label>
         {row && row.status !== "pending" && <p className="sp-note warn">Changing the name, description, brand, category or unit sends this product back to TradeLink for approval.</p>}
         {err && <p className="sp-note err" role="alert">{err}</p>}
