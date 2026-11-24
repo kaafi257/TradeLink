@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { ArrowRight, Briefcase, PackageSearch, Phone, Building2, Check, ChevronDown, ChevronRight, ClipboardList, Clock, Flame, Grid3x3, Headphones, Heart, Home, LogIn, MapPin, Menu, MessageCircle, Package, Percent, Search, ShoppingBag, ShieldCheck, Sparkles, Star, Store, Tag, Truck, User, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Brand } from "../../components/Brand";
+import { loadIdentity, ordersByContact, trackOrder, STATUS_LABEL, STATUS_TONE, type OrderView } from "../../lib/checkout";
 import { ContactIcons } from "../../components/ContactActions";
 import { useContact } from "../../lib/contact";
 import { applyCoupon } from "../../lib/coupon";
@@ -48,7 +50,7 @@ export function AnnouncementBar({ products, wishCount = 0, onWishlist, onTrack }
         {banners.length === 0 && <span>Wholesale and retail, one marketplace{products > 0 ? ` · ${products} products` : ""}</span>}
         <span className="tl-util" role="navigation" aria-label="Quick links">
           {onWishlist && <button type="button" onClick={onWishlist} aria-label={`Wishlist${wishCount > 0 ? `, ${wishCount} saved` : ""}`} title="Wishlist"><Heart size={16} /><span className="lbl">Wishlist</span>{wishCount > 0 && <i>{wishCount}</i>}</button>}
-          {onTrack && <button type="button" onClick={onTrack} aria-label="Track request" title="Track request"><PackageSearch size={16} /><span className="lbl">Track request</span></button>}
+          {onTrack && <button type="button" onClick={onTrack} aria-label="Track order" title="Track order"><PackageSearch size={16} /><span className="lbl">Track order</span></button>}
           <a href="#contact" onClick={e => { e.preventDefault(); nav("contact"); }} aria-label="Contact us" title="Contact us"><Phone size={16} /><span className="lbl">Contact us</span></a>
         </span>
         <ThemeSwitch />
@@ -261,36 +263,65 @@ export function CategoryDrawer({ open, onClose, industries, categories, counts, 
   );
 }
 
-/** Look up a request with the reference and phone number from the confirmation. Only the status is shown. */
+/** Find an order (ORD-…) or a price request (QTN-…) with the reference and phone number. Remembered customers also see their recent orders. */
 export function TrackModal({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
   const [num, setNum] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(() => loadIdentity()?.phone ?? "");
   const [busy, setBusy] = useState(false);
   const [res, setRes] = useState<{ quote_number: string; status: string; created_at: string } | null | undefined>(undefined);
   const [err, setErr] = useState("");
+  const [mine, setMine] = useState<OrderView[]>([]);
+  const who = loadIdentity();
+  useEffect(() => {
+    if (!who) return;
+    let live = true;
+    void ordersByContact(who.name, who.phone).then(o => { if (live) setMine((o ?? []).slice(0, 4)); }).catch(() => { /* list is optional */ });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const LABEL: Record<string, string> = { new: "Received", reviewing: "Being reviewed", quoted: "Price sent to you", accepted: "Accepted", rejected: "Closed", converted: "Turned into an order" };
+  const open = (n: string) => { onClose(); navigate(`/order/${n}`); };
   const submit = async (e: FormEvent) => {
     e.preventDefault(); setErr(""); setRes(undefined);
+    const ref = num.trim().toUpperCase();
+    if (ref.startsWith("ORD")) {
+      setBusy(true);
+      try { await trackOrder(ref, phone); try { sessionStorage.setItem(`tl-order-phone-${ref}`, phone); } catch { /* storage unavailable */ } open(ref); }
+      catch { setErr("No order matches that number and phone. Check both and try again."); }
+      finally { setBusy(false); }
+      return;
+    }
     if (!supabase) { setErr("Tracking is not connected yet. Please contact us."); return; }
     setBusy(true);
-    const { data, error } = await supabase.rpc("track_request", { p_number: num, p_phone: phone });
+    const { data, error } = await supabase.rpc("track_request", { p_number: ref, p_phone: phone });
     setBusy(false);
     if (error) { setErr("We could not check right now. Please try again or contact us."); return; }
     setRes((data as { quote_number: string; status: string; created_at: string }[] | null)?.[0] ?? null);
   };
   return (
     <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal tl-track" role="dialog" aria-modal="true" aria-label="Track your request">
+      <div className="modal tl-track" role="dialog" aria-modal="true" aria-label="Track your order or request">
         <button className="modal-x" aria-label="Close" onClick={onClose}><X /></button>
-        <small className="kicker">Track request</small>
-        <h2>Where is my request?</h2>
+        <small className="kicker">Track</small>
+        <h2>Where is my order?</h2>
+        {mine.length > 0 && (
+          <div className="tl-mine" aria-label="Your recent orders">
+            {mine.map(o => (
+              <button key={o.order_number} type="button" onClick={() => open(o.order_number)}>
+                <span><b>{o.order_number}</b><small>{new Date(o.created_at).toLocaleDateString()} · {Math.round(Number(o.total)).toLocaleString()} ETB</small></span>
+                {o.payment && <i className={`tone-${STATUS_TONE(o.payment.status)}`}>{STATUS_LABEL[o.payment.status]}</i>}
+                <ChevronRight size={16} />
+              </button>))}
+            <button type="button" className="all" onClick={() => { onClose(); navigate("/account"); }}>See all my orders <ArrowRight size={15} /></button>
+          </div>)}
         <form className="form-grid" onSubmit={submit}>
-          <label className="full">Reference<input value={num} onChange={e => setNum(e.target.value)} required placeholder="QTN-XXXXXXXX" autoCapitalize="characters" /></label>
+          <label className="full">Order or request number<input value={num} onChange={e => setNum(e.target.value)} required placeholder="ORD-XXXXXXXX or QTN-XXXXXXXX" autoCapitalize="characters" /></label>
           <label className="full">Phone number you used<input value={phone} onChange={e => setPhone(e.target.value)} required inputMode="tel" placeholder="+251 ..." /></label>
           {err && <p className="form-error full" role="alert">{err}</p>}
           {res === null && <p className="form-error full" role="alert">No request matches that reference and phone number. Check both and try again.</p>}
           {res && <p className="tl-track-ok full" role="status"><Check size={18} /><span><b>{res.quote_number}</b>: {LABEL[res.status] ?? res.status}<small>Sent {new Date(res.created_at).toLocaleDateString()}</small></span></p>}
-          <button className="btn green full" disabled={busy}>{busy ? "Checking…" : "Track request"} <ArrowRight /></button>
+          <button className="btn green full" disabled={busy}>{busy ? "Checking…" : "Track"} <ArrowRight /></button>
         </form>
       </div>
     </div>
