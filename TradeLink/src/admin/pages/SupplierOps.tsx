@@ -111,7 +111,7 @@ export default function SupplierOps() {
   const tone = (st: string) => st === "approved" || st === "delivered" || st === "accepted" || st === "preparing" || st === "ready_for_pickup" ? "good" : st === "rejected" || st === "cancelled" ? "bad" : st === "dispatched" ? "info" : "warn";
   const initial = (n: string) => (n.trim()[0] ?? "?").toUpperCase();
   return (
-    <div className="pm">
+    <div className="pm sop">
       <section className="pm-hero" aria-label="Supplier operations overview">
         <div className="pm-hero-top">
           <div><small>Supplier operations</small><h1>Products &amp; Purchase orders</h1><p>Approve what suppliers sell, and enter orders for their stores.</p></div>
