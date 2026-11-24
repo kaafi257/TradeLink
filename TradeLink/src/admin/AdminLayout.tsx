@@ -8,6 +8,7 @@ import "./admin.css";
 import "./adminPages.css";
 import "../appThemes.css";
 import ThemePicker from "../components/ThemePicker";
+import NotificationBell from "./NotificationBell";
 import { AdminDataProvider, useAdmin } from "./AdminData";
 import { NAV, NAV_GROUPS, allowed, currentItem } from "./nav";
 import Dashboard from "./pages/Dashboard";
@@ -170,11 +171,7 @@ function Shell() {
           <div className="top-actions">
             <ThemePicker />
             <button className="mobile-search" aria-label="Search this page" aria-expanded={searchOpen} onClick={() => setSearchOpen(o => !o)}><Search size={19} /></button>
-            {["owner", "manager", "sales"].includes(role) && (
-              <button className="notification-button" title="New quote requests" aria-label={`${newQuoteCount} new quote requests`} onClick={() => navigate("/admin/quotations")}>
-                <Bell />{newQuoteCount > 0 && <i>{newQuoteCount > 99 ? "99+" : newQuoteCount}</i>}
-              </button>
-            )}
+            <NotificationBell role={role} />
             <div className="user-menu">
               <div className="avatar">{(displayName || "A").slice(0, 1).toUpperCase()}</div>
               <div><b>{displayName}</b><small>{role}</small></div>

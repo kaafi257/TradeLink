@@ -1,12 +1,13 @@
-import { lazy, Suspense, useMemo, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  ShieldCheck, Smartphone,
   AlertTriangle, ArrowRight, Boxes, CheckCircle2, ChartNoAxesCombined, ClipboardList, FileText, Inbox, MapPin, Package,
   PackageCheck, Plus, Receipt, ShoppingCart, Truck, UserPlus, Users, Wallet,
 } from "lucide-react";
 import { PanelHead } from "../../components/ui";
 import { RANGES, buildSeries, money, type Range } from "../../lib/format";
-import type { OrderRow, Product } from "../../lib/supabase";
+import { requireSupabase, type OrderRow, type Product } from "../../lib/supabase";
 import { ProductModal } from "../modals";
 import { useAdmin } from "../AdminData";
 import { Delta, HeroChart, Sparkline, StockDonut } from "../DashWidgets";
@@ -96,6 +97,24 @@ export default function Dashboard() {
     return Math.max(3, Math.min(100, pct));
   };
 
+  // Bank, Telebirr and eBirr orders start as "waiting for payment", so they are counted here as well as in the bell.
+  const canPay = can("payments.view") || role === "owner";
+  const [payN, setPayN] = useState({ verify: 0, waiting: 0 });
+  useEffect(() => {
+    if (!canPay) return;
+    const load = async () => {
+      try {
+        const db = requireSupabase();
+        const [v, w] = await Promise.all([
+          db.from("payments").select("id", { count: "exact", head: true }).eq("status", "submitted"),
+          db.from("payments").select("id", { count: "exact", head: true }).eq("status", "pending").neq("method", "cod"),
+        ]);
+        setPayN({ verify: v.count ?? 0, waiting: w.count ?? 0 });
+      } catch { /* keep last numbers */ }
+    };
+    void load(); const t = window.setInterval(() => void load(), 30000); return () => window.clearInterval(t);
+  }, [canPay]);
+
   // Orders: pipeline counts, money still to collect, best sellers, newest first.
   const liveOrders = orders.filter(o => o.status !== "cancelled");
   const pipe = PIPE.map(s => ({ ...s, n: orders.filter(o => o.status === s.key).length }));
@@ -134,6 +153,8 @@ export default function Dashboard() {
           <div className="dx-pills">
             {canSeeQuotes && <button onClick={() => navigate("/admin/quotations")} className={newQuoteCount ? "hot" : ""}><Inbox size={15} />{newQuoteCount} new quotes</button>}
             {canSeeQuotes && <button onClick={() => navigate("/admin/orders")}><ShoppingCart size={15} />{openOrders} open orders</button>}
+            {canPay && <button onClick={() => navigate("/admin/payments")} className={payN.verify ? "hot" : ""}><ShieldCheck size={15} />{payN.verify} to verify</button>}
+            {canPay && <button onClick={() => navigate("/admin/payments")} className={payN.waiting ? "hot" : ""}><Smartphone size={15} />{payN.waiting} waiting for payment</button>}
             {canSeeDeliveries && <button onClick={() => navigate("/admin/deliveries")}><Truck size={15} />{activeDeliveries.length} deliveries</button>}
             <button onClick={() => navigate("/admin/products")} className={lowCount + outCount ? "hot" : ""}><Boxes size={15} />{lowCount + outCount} low stock</button>
           </div>
