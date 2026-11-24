@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Check, ChevronDown, Eye, EyeOff, Globe, Handshake, LogIn, Lock, Mail, ShieldCheck, Store, TrendingUp, User, UserPlus } from "lucide-react";
 import { useAuth } from "../lib/auth";
@@ -18,7 +18,6 @@ function useFit(): number {
   return z;
 }
 
-const StoreIntro = lazy(() => import("./StoreIntro"));
 const EMAIL_KEY = "tl-remember-email";
 
 function LangMenu({ lang, setLang, label }: { lang: Lang; setLang: (l: Lang) => void; label: string }) {
@@ -56,31 +55,23 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
-  const [intro, setIntro] = useState(false);       // a fresh, successful sign-in: play the store-opening animation
-  const [introDone, setIntroDone] = useState(false);
-  const fresh = useRef(false);
 
   const target = profile?.role === "supplier" ? "/supplier" : "/admin";
-  // Someone who is already signed in goes straight through. After a fresh sign-in we wait for the animation and for the profile (role) to load.
+  // Signed in (already, or just now) goes straight through.
   useEffect(() => {
     if (loading || !session) return;
-    if (!fresh.current || introDone) navigate(target, { replace: true });
-  }, [loading, session, target, navigate, introDone]);
-
-  useEffect(() => { if (!intro) return; const id = window.setTimeout(() => setIntroDone(true), 9000); return () => window.clearTimeout(id); }, [intro]); // safety net if the animation chunk cannot load
+    navigate(target, { replace: true });
+  }, [loading, session, target, navigate]);
 
   const login = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true); setError(""); setInfo("");
-    fresh.current = true;
     try {
       const { error: authError } = await requireSupabase().auth.signInWithPassword({ email: email.trim(), password });
       if (authError) throw authError;
       try { if (remember) localStorage.setItem(EMAIL_KEY, email.trim()); else localStorage.removeItem(EMAIL_KEY); } catch { /* storage blocked */ }
       void Promise.resolve(requireSupabase().rpc("log_login")).catch(() => {}); // sign-in history for the audit report
-      setIntro(true);
     } catch (err) {
-      fresh.current = false; // a failed sign-in shows the error only, never the animation
       setError(err instanceof Error ? err.message : "Unable to sign in");
     } finally { setBusy(false); }
   };
@@ -135,7 +126,7 @@ export default function Login() {
               <button type="button" className="lg-eye" onClick={() => setShow(s => !s)} aria-label={show ? t.hide : t.show} aria-pressed={show}>{show ? <Eye size={22} /> : <EyeOff size={22} />}</button></label>
             {error && <p className="lg-msg lg-err" role="alert">{error}</p>}
             {info && <p className="lg-msg lg-ok" role="status">{info}</p>}
-            <button className="lg-submit" disabled={busy || intro || !isSupabaseConfigured}><LogIn size={22} />{busy ? t.busy : t.submit}</button>
+            <button className="lg-submit" disabled={busy || !isSupabaseConfigured}><LogIn size={22} />{busy ? t.busy : t.submit}</button>
             <div className="lg-row">
               <label className="lg-check"><input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} /><i aria-hidden="true"><Check size={14} strokeWidth={3.5} /></i>{t.remember}</label>
               <button type="button" className="lg-link" onClick={() => void forgot()} disabled={!isSupabaseConfigured}>{t.forgot}</button>
@@ -148,7 +139,6 @@ export default function Login() {
         <p className="lg-foot"><i />{t.foot}<i /></p>
       </main>
 
-      {intro && <Suspense fallback={null}><StoreIntro t={t} onDone={() => setIntroDone(true)} /></Suspense>}
     </div>
   );
 }
