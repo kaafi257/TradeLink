@@ -7,12 +7,14 @@ import { AssignModal, SaleModal } from "../workflowModals";
 import "./orders.css";
 
 const STATUS: Record<string, { label: string; dot: string }> = {
-  confirmed: { label: "To sell", dot: "amber" },
-  ready: { label: "Ready", dot: "blue" },
-  dispatched: { label: "On the way", dot: "blue" },
+  pending: { label: "Pending", dot: "grey" },
+  confirmed: { label: "To sell", dot: "sky" },
+  ready: { label: "Ready", dot: "teal" },
+  dispatched: { label: "On the way", dot: "indigo" },
   completed: { label: "Done", dot: "green" },
   cancelled: { label: "Cancelled", dot: "grey" },
 };
+const initials = (n: string) => (n || "?").trim().split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
 const TABS: [string, string][] = [["all", "All"], ["confirmed", "To sell"], ["ready", "Ready"], ["dispatched", "On the way"], ["completed", "Done"], ["cancelled", "Cancelled"]];
 
 export default function Orders() {
@@ -59,10 +61,10 @@ export default function Orders() {
               <div key={o.id} className={`ord-item${isOpen ? " open" : ""}`} role="rowgroup">
                 <div className="ord-row" role="row">
                   <button className="ord-no" onClick={() => setOpen(isOpen ? null : o.id)} aria-expanded={isOpen} aria-label={`Details of ${o.order_number}`}><ChevronDown size={15} />{o.order_number}</button>
-                  <span className="ord-cu"><b>{o.customer_name}</b><small>{[items.length ? `${items.length} ${items.length === 1 ? "item" : "items"}` : "", o.delivery_location].filter(Boolean).join(" · ")}</small></span>
+                  <span className="ord-cu who"><i className="ord-av">{initials(o.customer_name)}</i><span><b>{o.customer_name}</b><small>{[items.length ? `${items.length} ${items.length === 1 ? "item" : "items"}` : "", o.delivery_location].filter(Boolean).join(" · ")}</small></span></span>
                   <span className="ord-dt">{shortDate(o.created_at)}</span>
-                  <span className="ord-am r"><b>{money(total)}</b><small>{due > 0 ? `${money(due)} unpaid` : total > 0 ? "Paid" : ""}</small></span>
-                  <span className="ord-st"><i className={st.dot} />{st.label}</span>
+                  <span className="ord-am r"><b>{money(total)}</b>{total > 0 && o.status !== "cancelled" && <small className={due > 0 ? "due" : "ok"}>{due > 0 ? `${money(due)} unpaid` : "Paid"}</small>}</span>
+                  <span className={`ord-st ${st.dot}`}><i />{st.label}</span>
                   <span className="ord-ac">
                     {canSell && <button className="ord-b main" onClick={() => setSale(o)}>Record sale</button>}
                     {canDeliver && <button className="ord-b main" onClick={() => setAssign(o)}>Assign delivery</button>}
