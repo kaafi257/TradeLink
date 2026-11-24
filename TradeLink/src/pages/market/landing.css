@@ -222,7 +222,9 @@
 
 /* ===== Advertising area: HD picture or video, offer, live countdown ===== */
 .public-site .ad{background:var(--surface,#fff);padding-top:clamp(14px,2vw,26px)}
-.public-site .ad-stage{position:relative;isolation:isolate;overflow:hidden;display:grid;align-items:center;min-height:clamp(480px,43vw,620px);border-radius:clamp(20px,2.4vw,32px);background:#0b1f3a;color:#fff;box-shadow:0 34px 60px -36px #0b1f3ab8}
+.public-site .ad-stage{position:relative;isolation:isolate;overflow:hidden;display:grid;align-items:center;min-height:clamp(340px,30vw,430px);border-radius:0;background:#0b1f3a;color:#fff}
+/* The offer banner runs the full width of the screen */
+.public-site .ad>.lp-wrap{max-width:none;width:100%;padding-inline:0;margin-inline:0}
 .public-site .ad-bg{position:absolute;inset:0;z-index:-3;background:#0b1f3a}
 .public-site .ad-bg img,.public-site .ad-bg video{display:block;width:100%;height:100%;object-fit:cover;animation:ad-zoom 10s ease-out both}
 .public-site .ad-stage:not(.media) .ad-bg img{filter:blur(42px) saturate(1.35) brightness(.8);transform:scale(1.35)}
@@ -230,11 +232,11 @@
 .public-site .ad-stage:not(.media) .ad-shade{background:linear-gradient(95deg,#06182fd9 0%,#0a2c52a6 55%,#0b5d9959 100%)}
 .public-site .ad-pic{position:absolute;z-index:-1;right:clamp(20px,4.5vw,72px);top:50%;transform:translateY(-50%);width:min(40%,520px);aspect-ratio:1;margin:0;overflow:hidden;border-radius:clamp(20px,2.2vw,30px);background:#fff;box-shadow:0 40px 70px -30px #000a,0 0 0 6px #ffffff26;animation:ad-pic .8s cubic-bezier(.2,.8,.2,1) both}
 .public-site .ad-pic img{display:block;width:100%;height:100%;object-fit:cover}
-.public-site .ad-copy{position:relative;display:grid;justify-items:start;gap:clamp(8px,1vw,14px);max-width:min(54%,640px);padding:clamp(26px,4.5vw,72px) clamp(22px,4.5vw,72px)}
+.public-site .ad-copy{position:relative;display:grid;justify-items:start;gap:clamp(8px,1vw,14px);max-width:min(54%,640px);padding:clamp(22px,3vw,48px) clamp(22px,5vw,88px)}
 .public-site .ad-copy>*{animation:ad-up .7s cubic-bezier(.2,.8,.2,1) both}
 .public-site .ad-copy>:nth-child(2){animation-delay:.06s}.public-site .ad-copy>:nth-child(3){animation-delay:.12s}.public-site .ad-copy>:nth-child(4){animation-delay:.18s}.public-site .ad-copy>:nth-child(5){animation-delay:.24s}.public-site .ad-copy>:nth-child(6){animation-delay:.3s}
 .public-site .ad-tag{padding:6px 14px;border:1px solid #ffffff40;border-radius:999px;background:#ffffff1f;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font:700 12px 'Inter',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#e4f1ff}
-.public-site .ad-off{margin:0;font:800 clamp(44px,7.2vw,104px)/.95 'Inter',sans-serif;letter-spacing:-.04em;color:#fff;text-wrap:balance}
+.public-site .ad-off{margin:0;font:800 clamp(40px,6vw,84px)/.95 'Inter',sans-serif;letter-spacing:-.04em;color:#fff;text-wrap:balance}
 .public-site .ad-name{margin:0;font:600 clamp(18px,2vw,28px)/1.25 'Inter',sans-serif;color:#eaf4ff}
 .public-site .ad-body{margin:0;max-width:46ch;font-size:clamp(14px,1.2vw,17px);line-height:1.5;color:#c4d9ef}
 .public-site .ad-price{margin:0;display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px}
