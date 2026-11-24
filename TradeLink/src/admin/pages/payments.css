@@ -97,3 +97,12 @@
 @media(prefers-reduced-motion:reduce){.admin-layout .pm .pm-a,.admin-layout .pm .pm-card{transition:none}}
 
 @media(max-width:560px){.admin-layout .pm .pm-providers{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-layout .pm .pm-hero select{width:100%}.admin-layout .pm .pm-hero-top>div{min-width:0}.admin-layout .pm .pm-toolbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.admin-layout .pm .pm-toolbar select{min-width:0;width:100%}}
+
+/* Shared by Supplier Operations: cards with an action row, a hero button and danger-tinted buttons */
+.admin-layout .pm .pm-hero-btn{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border-radius:12px;border:0;background:#fff;color:#0a3a68;font:800 13.5px 'DM Sans',sans-serif;cursor:pointer}
+.admin-layout .pm .pm-card.so{grid-template-columns:auto minmax(0,1fr) auto}
+.admin-layout .pm .pm-acts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;padding-top:10px;border-top:1px dashed var(--pm-line)}
+.admin-layout .pm .pm-acts:empty{display:none}
+.admin-layout .pm .pm-go{border:0;gap:6px}.admin-layout .pm .pm-go.bad{background:#fdeeed;color:#b42318}
+.admin-layout .pm .pm-note.err{background:#fdeeed;color:#b42318}
+@media(max-width:560px){.admin-layout .pm .pm-card.so{grid-template-columns:auto minmax(0,1fr)}.admin-layout .pm .pm-card.so .pm-end{grid-column:1/-1}.admin-layout .pm .pm-acts{justify-content:stretch}.admin-layout .pm .pm-acts .pm-go{flex:1}}
