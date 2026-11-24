@@ -40,7 +40,7 @@ export default function Inventory() {
                   <span className="ord-dt">{p.package_size || "—"}</span>
                   <span className="ord-am r"><b>{p.stock_quantity} {p.unit}</b></span>
                   <span className="ord-dt r">{reorder > 0 ? `${p.reorder_level} ${p.unit}` : "—"}</span>
-                  <span className="ord-st"><i className={st.dot} />{st.label}</span>
+                  <span className={`ord-st ${st.dot}`}><i />{st.label}</span>
                   <span className="ord-ac">{can("stock.adjust") && <button className="ord-b main" onClick={() => setAdjusting(p)}>Adjust stock</button>}</span>
                 </div>
               </div>);
