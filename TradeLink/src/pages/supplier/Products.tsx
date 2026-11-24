@@ -108,14 +108,15 @@ export default function Products() {
     if (c.error) throw c.error;
     return { rows: (p.data ?? []) as SProduct[], cats: (c.data ?? []) as PublicCategory[], inds: new Map(((i.data ?? []) as { id: string; name: string }[]).map(x => [x.id, x.name])), rates: new Map(((r.data ?? []) as { category_id: string; rate: number }[]).map(x => [x.category_id, Number(x.rate)])) };
   });
-  // Only the categories of the supplier's own industry (with "Other ..." last). A category already on an older product stays selectable so editing it never fails.
-  // If the industry has no categories yet, every category is offered (grouped by industry) so the supplier is never stuck.
+  // Every category is offered, grouped by industry: the supplier's own industry first (with "Other ..." last), then all other industries.
+  // The industry name shows next to each category and can be typed in the search box.
   const myCats = useMemo<PickerOption[]>(() => {
     const all = data?.cats ?? [];
-    const own = all.filter(c => c.industry_id === supplier?.industry_id || (edit?.category_id === c.id));
-    const list = own.some(c => c.industry_id === supplier?.industry_id) ? own : all;
-    return sortCategories(list).map(c => ({ id: c.id, name: c.name, group: list === all ? data?.inds.get(c.industry_id) : undefined }));
-  }, [data, supplier, edit]);
+    const mine = sortCategories(all.filter(c => c.industry_id === supplier?.industry_id));
+    const others = all.filter(c => c.industry_id !== supplier?.industry_id)
+      .sort((a, b) => (data?.inds.get(a.industry_id) ?? "").localeCompare(data?.inds.get(b.industry_id) ?? "") || a.name.localeCompare(b.name));
+    return [...mine, ...others].map(c => ({ id: c.id, name: c.name, group: data?.inds.get(c.industry_id) }));
+  }, [data, supplier]);
   const catName = useMemo(() => new Map((data?.cats ?? []).map(c => [c.id, c.name])), [data]);
   const usedCats = useMemo(() => { const ids = new Set((data?.rows ?? []).map(r => r.category_id)); return sortCategories((data?.cats ?? []).filter(c => ids.has(c.id))); }, [data]);
   const shown = (data?.rows ?? []).filter(p => (!cf || p.category_id === cf) && (!st || (st === "inactive" ? !p.active : p.status === st)) && (!q || `${p.name} ${p.sku ?? ""} ${p.brand ?? ""}`.toLowerCase().includes(q.toLowerCase())));
