@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, Boxes, CheckCircle2, ClipboardList, Hourglass, Package, PackageCheck, Truck, Wallet } from "lucide-react";
+import { AlertTriangle, Boxes, CheckCircle2, Hourglass, Package, Truck, Wallet } from "lucide-react";
 import { requireSupabase } from "../../lib/supabase";
 import { useSupplier } from "./context";
 import { Pill, Spinner, dateOf, money, qty, useLoad } from "./ops";
@@ -46,56 +46,54 @@ export default function Dashboard() {
   const pts = useMemo(() => (d?.series ?? []).map(x => ({ label: new Date(x.day + "T00:00").toLocaleDateString([], { month: "short", day: "numeric" }), value: Number(x.value) })), [d]);
   if (loading) return <Spinner />;
   if (!d) return <p className="sp-note err" role="alert">{error}</p>;
-  const cards = [
-    { Icon: Package, label: "Products", value: d.products_total, note: `${d.products_active} active · ${d.products_pending} awaiting approval`, to: "/supplier/products" },
-    { Icon: Hourglass, label: "New orders", value: d.orders_new, note: d.orders_new ? "Waiting for your answer" : "Nothing waiting", to: "/supplier/orders", hot: d.orders_new > 0 },
-    { Icon: ClipboardList, label: "Accepted orders", value: d.orders_accepted, note: "Accepted or being prepared", to: "/supplier/orders" },
-    { Icon: Truck, label: "Awaiting delivery", value: d.orders_awaiting_delivery, note: "Ready for pickup or dispatched", to: "/supplier/orders" },
-    { Icon: PackageCheck, label: "Completed orders", value: d.orders_completed, note: "Delivered to stores", to: "/supplier/orders" },
-    { Icon: Wallet, label: "Wholesale sales", value: money(d.sales_total), note: `${money(d.sales_open)} in open orders`, to: "/supplier/orders" },
-    ...(earn ? [{ Icon: Wallet, label: "Marketplace earnings", value: money(earn.earning), note: `${money(earn.commission)} commission · ${Math.round(earn.units)} sold, 30 days`, to: "/supplier" }] : []),
-  ];
   const attn = [
-    d.orders_new > 0 && { Icon: Hourglass, text: `${d.orders_new} new ${d.orders_new === 1 ? "order" : "orders"} waiting`, to: "/supplier/orders" },
-    d.products_pending > 0 && { Icon: Package, text: `${d.products_pending} awaiting approval`, to: "/supplier/products" },
+    d.orders_new > 0 && { Icon: Hourglass, text: `${d.orders_new} new ${d.orders_new === 1 ? "order" : "orders"} waiting for you`, to: "/supplier/orders" },
+    d.products_pending > 0 && { Icon: Package, text: `${d.products_pending} ${d.products_pending === 1 ? "product" : "products"} awaiting approval`, to: "/supplier/products" },
     d.low_stock.length > 0 && { Icon: AlertTriangle, text: `${d.low_stock.length} low on stock`, to: "/supplier/inventory" },
   ].filter(Boolean) as { Icon: typeof Package; text: string; to: string }[];
+  const hour = new Date().getHours();
+  const hello = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const kpis = [
+    ...(earn ? [{ Icon: Wallet, label: "Earnings · 30 days", value: money(earn.earning), note: `${Math.round(earn.units)} sold`, to: "/supplier/payments" }] : []),
+    { Icon: Truck, label: "Wholesale sales", value: money(d.sales_total), note: `${money(d.sales_open)} in open orders`, to: "/supplier/orders" },
+    { Icon: Hourglass, label: "New orders", value: String(d.orders_new), note: d.orders_new ? "Waiting for your answer" : "Nothing waiting", to: "/supplier/orders", hot: d.orders_new > 0 },
+    { Icon: Package, label: "Products", value: String(d.products_total), note: `${d.products_active} active`, to: "/supplier/products" },
+  ];
+  const flow = [
+    { label: "New", n: d.orders_new }, { label: "Preparing", n: d.orders_accepted }, { label: "On the way", n: d.orders_awaiting_delivery }, { label: "Delivered", n: d.orders_completed },
+  ];
   return (
-    <div className="sp-dash">
-      <section className="dh">
-        <div className="dh-top"><small>Welcome back</small><h2>{supplier?.name ?? "Your business"}</h2></div>
-        <div className="dh-kpis">
-          {earn && <div><small>Marketplace earnings · 30 days</small><b>{money(earn.earning)}</b><em>{Math.round(earn.units)} sold · {money(earn.commission)} commission</em></div>}
-          <div><small>Wholesale sales</small><b>{money(d.sales_total)}</b><em>{money(d.sales_open)} in open orders</em></div>
-          <div><small>Products</small><b>{d.products_total}</b><em>{d.products_active} active</em></div>
-        </div>
-        {attn.length > 0 ? <div className="dh-attn">{attn.map(a => <button key={a.text} onClick={() => nav(a.to)}><a.Icon size={15} />{a.text}</button>)}</div>
-          : <p className="dh-ok"><CheckCircle2 size={16} /> Nothing needs your attention.</p>}
-      </section>
-      <div className="sp-stats">
-        {cards.filter(c => !["Products", "Wholesale sales", "Marketplace earnings"].includes(c.label)).map(c => (
-          <button key={c.label} className={`sp-stat${c.hot ? " hot" : ""}`} onClick={() => nav(c.to)}>
-            <span className="ico"><c.Icon size={18} /></span><small>{c.label}</small><b>{c.value}</b><em>{c.note}</em>
-          </button>
-        ))}
+    <div className="sd">
+      <header className="sd-head">
+        <div><small>{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</small><h2>{hello}, {supplier?.name ?? "welcome"}</h2></div>
+        <button className="sp-btn primary" onClick={() => nav("/supplier/products")}><Package size={16} /> Add product</button>
+      </header>
+      {attn.length > 0 && <div className="sd-attn" role="status">{attn.map(a => <button key={a.text} onClick={() => nav(a.to)}><a.Icon size={16} />{a.text}</button>)}</div>}
+      <div className="sd-kpis">
+        {kpis.map(k => (
+          <button key={k.label} className={`sd-kpi${k.hot ? " hot" : ""}`} onClick={() => nav(k.to)}>
+            <span><k.Icon size={18} /></span><small>{k.label}</small><b>{k.value}</b><em>{k.note}</em>
+          </button>))}
       </div>
-      <div className="sp-grid two">
-        <section className="sp-card"><div className="sp-card-head"><h3>Wholesale sales <small>last 30 days, delivered orders</small></h3></div>
-          {pts.some(p => p.value > 0) ? <Bars data={pts} /> : <p className="sp-empty small">No delivered orders in the last 30 days yet.</p>}
+      <section className="sd-card">
+        <div className="sd-card-head"><h3>Orders</h3><button className="sp-link" onClick={() => nav("/supplier/orders")}>All orders</button></div>
+        <div className="sd-flow">{flow.map((f, i) => <div key={f.label} className={f.n ? "on" : ""}><b>{f.n}</b><small>{f.label}</small>{i < flow.length - 1 && <i aria-hidden="true" />}</div>)}</div>
+        {d.recent.length === 0 ? <p className="sp-empty small"><Boxes size={20} /> No orders yet. New purchase orders from stores appear here.</p> : (
+          <ul className="sd-list">{d.recent.map(o => (
+            <li key={o.id}><button onClick={() => nav("/supplier/orders")}><span><b>{o.po_number}</b><small>{o.store_name} · {dateOf(o.created_at)}</small></span><Pill s={o.status} /><em>{money(o.total_amount)}</em></button></li>))}
+          </ul>)}
+      </section>
+      <div className="sd-two">
+        <section className="sd-card"><div className="sd-card-head"><h3>Wholesale sales <small>30 days</small></h3></div>
+          {pts.some(p => p.value > 0) ? <Bars data={pts} /> : <p className="sp-empty small">No delivered orders yet.</p>}
         </section>
-        <section className="sp-card"><div className="sp-card-head"><h3>Low stock</h3><button className="sp-link" onClick={() => nav("/supplier/inventory")}>Inventory</button></div>
+        <section className="sd-card"><div className="sd-card-head"><h3>Low stock</h3><button className="sp-link" onClick={() => nav("/supplier/inventory")}>Inventory</button></div>
           {d.low_stock.length === 0 ? <p className="sp-empty small"><CheckCircle2 size={20} /> Stock levels are fine.</p> : (
-            <ul className="sp-list">{d.low_stock.map(p => (
-              <li key={p.id}><AlertTriangle size={16} className="warn" /><span><b>{p.name}</b><small>{qty(p.available)} left · alert at {qty(p.level)}</small></span></li>))}
+            <ul className="sd-list">{d.low_stock.map(p => (
+              <li key={p.id}><div><AlertTriangle size={16} className="warn" /><span><b>{p.name}</b><small>{qty(p.available)} left · alert at {qty(p.level)}</small></span></div></li>))}
             </ul>)}
         </section>
       </div>
-      <section className="sp-card"><div className="sp-card-head"><h3>Recent orders</h3><button className="sp-link" onClick={() => nav("/supplier/orders")}>All orders</button></div>
-        {d.recent.length === 0 ? <p className="sp-empty small"><Boxes size={20} /> No orders yet. New purchase orders from stores appear here.</p> : (
-          <ul className="sp-rows">{d.recent.map(o => (
-            <li key={o.id}><button onClick={() => nav("/supplier/orders")}><b>{o.po_number}</b><span>{o.store_name}</span><Pill s={o.status} /><em>{money(o.total_amount)}</em><small>{dateOf(o.created_at)}</small></button></li>))}
-          </ul>)}
-      </section>
     </div>
   );
 }
