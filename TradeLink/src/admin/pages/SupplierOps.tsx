@@ -1,8 +1,11 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { Plus, Trash2, X } from "lucide-react";
-import { PageHeading } from "../../components/ui";
+import { AlertTriangle, Check, ClipboardList, Inbox, PackageCheck, Plus, Store, Trash2, Wallet, X } from "lucide-react";
+import { useAdmin } from "../AdminData";
+import { Tabs } from "../suite";
+import "./payments.css";
 import { errorText, requireSupabase } from "../../lib/supabase";
-import { PO_LABEL, dateOf, money, qty, useLoad, type PO, type POItem, type SProduct } from "../../pages/supplier/ops";
+import { money } from "../../lib/format";
+import { PO_LABEL, dateOf, qty, useLoad, type PO, type POItem, type SProduct } from "../../pages/supplier/ops";
 
 type SupRow = { id: string; name: string };
 type PRow = SProduct & { suppliers: { name: string } | null };
@@ -92,38 +95,87 @@ export default function SupplierOps() {
     const { error } = await requireSupabase().rpc("set_listing_price", { p_supplier_product: p.id, p_retail: n });
     if (error) setMsg(errorText(error, "Could not save the price")); else void reload();
   };
-  const pending = (data?.products ?? []).filter(p => p.status === "pending");
+  const { search } = useAdmin();
+  const q = search.toLowerCase();
+  const [pf, setPf] = useState("all"), [of, setOf] = useState("all");
+  const products = data?.products ?? [], orders = data?.orders ?? [];
+  const pending = products.filter(p => p.status === "pending");
+  const isOpen = (o: PORow) => !["delivered", "cancelled", "rejected"].includes(o.status);
+  const openOrders = orders.filter(isOpen);
+  const live = products.filter(p => data?.listings.get(p.id)?.listed).length;
+  const openValue = openOrders.reduce((n, o) => n + Number(o.total_amount), 0);
+  const pFilters = [{ id: "all", label: "All", n: products.length }, { id: "pending", label: "To approve", n: pending.length, hot: true }, { id: "approved", label: "Approved", n: products.filter(p => p.status === "approved").length }, { id: "rejected", label: "Rejected", n: products.filter(p => p.status === "rejected").length }];
+  const oFilters = [{ id: "all", label: "All", n: orders.length }, { id: "open", label: "Open", n: openOrders.length, hot: true }, { id: "delivered", label: "Delivered", n: orders.filter(o => o.status === "delivered").length }, { id: "closed", label: "Cancelled", n: orders.filter(o => o.status === "cancelled" || o.status === "rejected").length }];
+  const shownP = products.filter(p => (pf === "all" || p.status === pf) && `${p.name} ${p.brand ?? ""} ${p.sku ?? ""} ${p.suppliers?.name ?? ""}`.toLowerCase().includes(q));
+  const shownO = orders.filter(o => (of === "all" || (of === "open" ? isOpen(o) : of === "closed" ? o.status === "cancelled" || o.status === "rejected" : o.status === of)) && `${o.po_number} ${o.store_name} ${o.suppliers?.name ?? ""}`.toLowerCase().includes(q));
+  const tone = (st: string) => st === "approved" || st === "delivered" || st === "accepted" || st === "preparing" || st === "ready_for_pickup" ? "good" : st === "rejected" || st === "cancelled" ? "bad" : st === "dispatched" ? "info" : "warn";
+  const initial = (n: string) => (n.trim()[0] ?? "?").toUpperCase();
   return (
-    <>
-      <PageHeading title="Supplier Operations" sub="Approve supplier products and enter purchase orders." action={tab === "orders" ? <button className="btn green" onClick={() => setShow(true)}><Plus size={16} /> New purchase order</button> : undefined} />
-      <div className="rp-tabs" role="tablist" style={{ marginBottom: 12 }}>
-        <button role="tab" aria-selected={tab === "products"} className={tab === "products" ? "on" : ""} onClick={() => setTab("products")}><span>Product approvals{pending.length > 0 && ` (${pending.length})`}</span></button>
-        <button role="tab" aria-selected={tab === "orders"} className={tab === "orders" ? "on" : ""} onClick={() => setTab("orders")}><span>Purchase orders</span></button>
-      </div>
-      {msg && <p className="form-error" role="alert">{msg}</p>}
+    <div className="pm">
+      <section className="pm-hero" aria-label="Supplier operations overview">
+        <div className="pm-hero-top">
+          <div><small>Supplier operations</small><h1>Products &amp; Purchase orders</h1><p>Approve what suppliers sell, and enter orders for their stores.</p></div>
+          {tab === "orders" && <button className="pm-hero-btn" onClick={() => setShow(true)}><Plus size={16} /> New purchase order</button>}
+        </div>
+        <div className="pm-kpis">
+          <div className="pm-kpi wait"><span><PackageCheck /></span><small>To approve</small><b>{pending.length}</b></div>
+          <div className="pm-kpi in"><span><Store /></span><small>Live on marketplace</small><b>{live}</b></div>
+          <div className="pm-kpi out"><span><ClipboardList /></span><small>Open orders</small><b>{openOrders.length}</b></div>
+          <div className="pm-kpi owe"><span><Wallet /></span><small>Open order value</small><b>{money(openValue)}</b></div>
+        </div>
+      </section>
+      <Tabs label="Supplier operations views" value={tab} onChange={setTab} tabs={[
+        { id: "products", label: "Product approvals", icon: <PackageCheck />, count: pending.length },
+        { id: "orders", label: "Purchase orders", icon: <ClipboardList />, count: openOrders.length },
+      ]} />
+      {msg && <p className="pm-note err" role="alert"><AlertTriangle size={16} />{msg}</p>}
       {loading ? <p className="muted">Loading…</p> : !data ? <p className="form-error" role="alert">{error}</p> : tab === "products" ? (
-        <div className="table-panel"><div className="table-scroll"><table className="rt rt-s">
-          <thead><tr><th>Product</th><th>Supplier</th><th>Supplier price</th><th>Status</th><th>Marketplace</th><th /></tr></thead>
-          <tbody>{data.products.length === 0 ? <tr><td colSpan={6}>No supplier products yet.</td></tr> : data.products.map(p => (
-            <tr key={p.id}><td><b>{p.name}</b><br /><small>{p.brand || p.sku || ""}</small></td><td>{p.suppliers?.name}</td><td>{money(p.price)} / {p.unit}</td><td>{p.status}{!p.active && " · inactive"}</td>
-              <td>{(() => { const l = data.listings.get(p.id); return !l ? "Not listed" : !l.listed ? "Hidden" : l.retail_price > 0 ? `Live · ${money(l.retail_price)}` : "Live · wholesale only"; })()}</td>
-              <td className="row-actions">
-                {p.status === "approved" && data.listings.has(p.id) && <button className="btn" onClick={() => void setPrice(p, data.listings.get(p.id))}>Retail price</button>}
-                {p.status !== "approved" && <button className="btn green" onClick={() => void run("review_supplier_product", { p_id: p.id, p_action: "approve" })}>Approve</button>}
-                {p.status === "pending" && <button className="btn danger" onClick={() => void run("review_supplier_product", { p_id: p.id, p_action: "reject" }, "Why is this product rejected? The supplier will see this.")}>Reject</button>}
-              </td></tr>))}</tbody></table></div></div>
+        <>
+          <div className="pm-filters" role="tablist" aria-label="Filter products">
+            {pFilters.map(f => <button key={f.id} role="tab" aria-selected={pf === f.id} className={`${pf === f.id ? "on" : ""}${f.hot ? " hot" : ""}`} onClick={() => setPf(f.id)}>{f.label}<i>{f.n}</i></button>)}
+          </div>
+          <div className="pm-list">
+            {shownP.map(p => {
+              const l = data.listings.get(p.id);
+              const mk = !l ? "Not listed" : !l.listed ? "Hidden" : l.retail_price > 0 ? `Live · ${money(l.retail_price)}` : "Live · wholesale only";
+              return (
+                <div key={p.id} className="pm-card static so">
+                  <span className="pm-av">{initial(p.name)}</span>
+                  <span className="pm-main"><b>{p.name}<em>{p.suppliers?.name}</em></b><small>{[p.brand || p.sku, `${money(p.price)} / ${p.unit}`, mk].filter(Boolean).join(" · ")}</small></span>
+                  <span className="pm-end"><span className={`pm-pill ${tone(p.status)}`}>{p.status[0].toUpperCase() + p.status.slice(1)}{!p.active && " · inactive"}</span></span>
+                  <span className="pm-acts">
+                    {p.status === "approved" && l && <button className="pm-go" onClick={() => void setPrice(p, l)}>Retail price</button>}
+                    {p.status !== "approved" && <button className="pm-go hot" onClick={() => void run("review_supplier_product", { p_id: p.id, p_action: "approve" })}><Check size={15} /> Approve</button>}
+                    {p.status === "pending" && <button className="pm-go bad" onClick={() => void run("review_supplier_product", { p_id: p.id, p_action: "reject" }, "Why is this product rejected? The supplier will see this.")}><X size={15} /> Reject</button>}
+                  </span>
+                </div>);
+            })}
+            {!shownP.length && <div className="pm-empty"><Inbox /><b>{products.length ? "Nothing matches" : "No supplier products yet"}</b></div>}
+          </div>
+        </>
       ) : (
-        <div className="table-panel"><div className="table-scroll"><table className="rt rt-s">
-          <thead><tr><th>Order</th><th>Supplier</th><th>Store</th><th>Total</th><th>Status</th><th>Date</th><th /></tr></thead>
-          <tbody>{data.orders.length === 0 ? <tr><td colSpan={7}>No purchase orders yet.</td></tr> : data.orders.map(o => (
-            <tr key={o.id}><td><b>{o.po_number}</b></td><td>{o.suppliers?.name}</td><td>{o.store_name}</td><td>{money(o.total_amount)}</td><td>{PO_LABEL[o.status]}</td><td>{dateOf(o.created_at)}</td>
-              <td className="row-actions">
-                {o.status === "dispatched" && <button className="btn green" onClick={() => void run("admin_po_action", { p_po: o.id, p_action: "deliver" })}>Mark delivered</button>}
-                {!["delivered", "cancelled", "rejected"].includes(o.status) && <button className="btn danger" onClick={() => void run("admin_po_action", { p_po: o.id, p_action: "cancel" }, "Reason for cancelling this order?")}>Cancel</button>}
-              </td></tr>))}</tbody></table></div></div>
+        <>
+          <div className="pm-filters" role="tablist" aria-label="Filter orders">
+            {oFilters.map(f => <button key={f.id} role="tab" aria-selected={of === f.id} className={`${of === f.id ? "on" : ""}${f.hot ? " hot" : ""}`} onClick={() => setOf(f.id)}>{f.label}<i>{f.n}</i></button>)}
+          </div>
+          <div className="pm-list">
+            {shownO.map(o => (
+              <div key={o.id} className="pm-card static so">
+                <span className="pm-ic blue"><ClipboardList /></span>
+                <span className="pm-main"><b>{o.po_number}<em>{o.store_name}</em></b><small>{o.suppliers?.name} · {dateOf(o.created_at)}</small></span>
+                <span className="pm-end"><b>{money(o.total_amount)}</b><span className={`pm-pill ${tone(o.status)}`}>{PO_LABEL[o.status]}</span></span>
+                {(o.status === "dispatched" || isOpen(o)) && (
+                  <span className="pm-acts">
+                    {o.status === "dispatched" && <button className="pm-go hot" onClick={() => void run("admin_po_action", { p_po: o.id, p_action: "deliver" })}><Check size={15} /> Mark delivered</button>}
+                    {isOpen(o) && <button className="pm-go bad" onClick={() => void run("admin_po_action", { p_po: o.id, p_action: "cancel" }, "Reason for cancelling this order?")}><X size={15} /> Cancel</button>}
+                  </span>)}
+              </div>))}
+            {!shownO.length && <div className="pm-empty"><Inbox /><b>{orders.length ? "Nothing matches" : "No purchase orders yet"}</b></div>}
+          </div>
+        </>
       )}
       {show && data && <NewOrder suppliers={data.suppliers} onClose={() => setShow(false)} onDone={() => { setShow(false); void reload(); }} />}
-    </>
+    </div>
   );
 }
 export type { POItem };
