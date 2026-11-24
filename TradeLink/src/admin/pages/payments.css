@@ -131,3 +131,16 @@
 .admin-layout .sop .pm-go{height:32px;padding:0 12px;font-size:12.5px;border-radius:10px}
 .admin-layout .sop .su-tabs button{padding-block:8px;font-size:13px}
 @media(max-width:560px){.admin-layout .sop .pm-hero{padding:12px}.admin-layout .sop .pm-kpi{grid-template-columns:auto 1fr}.admin-layout .sop .pm-kpi span{grid-row:1/3}.admin-layout .sop .pm-card.so{grid-template-columns:auto minmax(0,1fr)}.admin-layout .sop .pm-acts .pm-go{height:34px}}
+
+/* Staff and Suppliers pages */
+.admin-layout .pm .pm-logo{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.admin-layout .pm .pm-ic:has(.pm-logo){overflow:hidden;padding:0;background:#fff;border:1px solid var(--pm-line)}
+.admin-layout .pm .pm-sel{height:32px;border-radius:10px;border:1px solid var(--pm-line);background:#fff;padding:0 10px;font:700 12.5px 'DM Sans',sans-serif;color:var(--pm-ink)}
+.admin-layout .pm a.pm-go{text-decoration:none}
+.admin-layout .pm .pm-form{display:grid;gap:12px;padding:16px;border-radius:18px;border:1px solid var(--pm-line);background:#fff}
+.admin-layout .pm .pm-fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.admin-layout .pm .pm-form label{display:grid;gap:6px;font-size:12.5px;font-weight:700;color:#2b4d70}
+.admin-layout .pm .pm-form label em{font-style:normal;font-weight:500;color:var(--pm-mute)}
+.admin-layout .pm .pm-form input,.admin-layout .pm .pm-form select{height:44px;border-radius:12px;border:1px solid var(--pm-line);padding:0 12px;font:500 14px 'DM Sans',sans-serif;background:#fff;color:var(--pm-ink);min-width:0}
+.admin-layout .pm .pm-form .pm-go{justify-self:start;border:0;height:42px}
+@media(max-width:560px){.admin-layout .pm .pm-fgrid{grid-template-columns:minmax(0,1fr)}.admin-layout .pm .pm-form .pm-go{justify-self:stretch}}

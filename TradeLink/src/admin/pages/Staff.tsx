@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { Check, Clock, Factory, Power, ShieldCheck, Users } from "lucide-react";
-import { PageHeading } from "../../components/ui";
-import { IconBtn, RecCard, RecordList, StatusChip, initialsOf } from "../Records";
+import { Check, Clock, Factory, Power, ShieldCheck, UserPlus, Users } from "lucide-react";
+import { initialsOf } from "../Records";
+import { Tabs } from "../suite";
+import "./payments.css";
 import { requireSupabase, type Profile, type Role, type Supplier } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
 
@@ -61,41 +62,82 @@ export default function Staff() {
     } catch (err) { notify(err instanceof Error ? err.message : "Update failed"); }
   };
 
+  const [tab, setTab] = useState<"team" | "suppliers">("team");
+  const [rf, setRf] = useState("all");
+  const [adding, setAdding] = useState(false);
+  const active = staff.filter(m => m.active).length;
+  const roleN = (r: string) => staff.filter(m => m.role === r).length;
+  const rowsR = rows.filter(m => rf === "all" || m.role === rf);
+  const supsShown = sups.filter(x => `${x.name} ${x.email ?? ""} ${x.owner_name ?? ""}`.toLowerCase().includes(s));
+  const filters = [["all", "All", staff.length], ...ALL_ROLES.filter(r => roleN(r) > 0).map(r => [r, r[0].toUpperCase() + r.slice(1), roleN(r)] as const)] as [string, string, number][];
+
   return (
-    <>
-      <PageHeading title="Staff Management" sub="Invite employees and manage their access roles." />
-      <div className="info-banner"><ShieldCheck /> Invite by email, or set a password.</div>
-      <form className="inline-form" onSubmit={invite}>
-        <label>Full name<input name="full_name" required placeholder="Staff member name" /></label>
-        <label>Email<input name="email" type="email" required placeholder="name@company.com" /></label>
-        <label>Password (optional)<input name="password" type="text" minLength={8} autoComplete="off" placeholder="Leave empty to email an invite" /></label>
-        <label>Role<select name="role" defaultValue="staff">{assignable.map(r => <option key={r}>{r}</option>)}</select></label>
-        <button className="btn green" disabled={busy}>{busy ? "Saving…" : "Add staff"}</button>
-      </form>
-      <RecordList isEmpty={!rows.length} empty="No staff yet" icon={<Users />}>
-        {rows.map((m, i) => (
-          <RecCard key={m.id} i={i} tone={m.active ? "good" : "muted"} initials={initialsOf(m.full_name || m.email)} title={m.full_name || "—"} sub={m.email}
-            control={canEdit(m)
-              ? <select className="status-select info" aria-label={`Role of ${m.email}`} value={m.role} onChange={e => void change(m, { role: e.target.value as Role })}>
-                  {[...assignable, ...(assignable.includes(m.role) ? [] : [m.role])].map(r => <option key={r}>{r}</option>)}
-                </select>
-              : <span className="role-pill"><ShieldCheck size={14} />{m.role}</span>}
-            status={<StatusChip tone={m.active ? "good" : "muted"} icon={m.active ? <Check size={14} /> : <Power size={14} />}>{m.active ? "Active" : "Off"}</StatusChip>}
-            actions={canEdit(m) ? <IconBtn tone={m.active ? "red" : "green"} icon={<Power size={17} />} label={m.active ? "Deactivate" : "Activate"} onClick={() => void change(m, { active: !m.active })} /> : undefined} />
-        ))}
-      </RecordList>
-      <h3 className="staff-sub"><Factory size={18} /> Suppliers <small>{sups.length}</small></h3>
-      <RecordList isEmpty={!sups.length} empty="No supplier accounts yet" icon={<Factory />}>
-        {sups.filter(x => `${x.name} ${x.email ?? ""} ${x.owner_name ?? ""}`.toLowerCase().includes(s)).map((x, i) => {
-          const st = x.status ?? "pending";
-          const tone = st === "approved" ? "good" : st === "pending" ? "warn" : "muted";
-          return (
-            <RecCard key={x.id} i={i} tone={tone} initials={initialsOf(x.name)} title={x.name} sub={x.email || x.owner_name || "—"}
-              control={<span className="role-pill"><Factory size={14} />supplier</span>}
-              status={<StatusChip tone={tone} icon={st === "approved" ? <Check size={14} /> : st === "pending" ? <Clock size={14} /> : <Power size={14} />}>{st === "approved" ? "Approved" : st === "pending" ? "Pending" : st}</StatusChip>}
-              actions={<Link className="role-pill" to="/admin/verification">Review</Link>} />);
-        })}
-      </RecordList>
-    </>
+    <div className="pm sop">
+      <section className="pm-hero" aria-label="Team overview">
+        <div className="pm-hero-top">
+          <div><small>Team</small><h1>Staff Management</h1><p>Invite employees and manage their access roles.</p></div>
+          {tab === "team" && <button className="pm-hero-btn" onClick={() => setAdding(a => !a)}><UserPlus size={16} /> {adding ? "Close" : "Add staff"}</button>}
+        </div>
+        <div className="pm-kpis">
+          <div className="pm-kpi out"><span><Users /></span><small>Team members</small><b>{staff.length}</b></div>
+          <div className="pm-kpi in"><span><Check /></span><small>Active</small><b>{active}</b></div>
+          <div className="pm-kpi owe"><span><Power /></span><small>Off</small><b>{staff.length - active}</b></div>
+          <div className="pm-kpi wait"><span><Factory /></span><small>Supplier accounts</small><b>{sups.length}</b></div>
+        </div>
+      </section>
+      <Tabs label="Staff views" value={tab} onChange={setTab} tabs={[
+        { id: "team", label: "Team", icon: <Users />, count: staff.length },
+        { id: "suppliers", label: "Suppliers", icon: <Factory />, count: sups.length },
+      ]} />
+
+      {tab === "team" && <>
+        {adding && (
+          <form className="pm-form" onSubmit={invite}>
+            <p className="pm-note"><ShieldCheck size={16} /> Invite by email, or set a password yourself.</p>
+            <div className="pm-fgrid">
+              <label>Full name<input name="full_name" required placeholder="Staff member name" /></label>
+              <label>Email<input name="email" type="email" required placeholder="name@company.com" /></label>
+              <label>Password <em>(optional)</em><input name="password" type="text" minLength={8} autoComplete="off" placeholder="Leave empty to email an invite" /></label>
+              <label>Role<select name="role" defaultValue="staff">{assignable.map(r => <option key={r}>{r}</option>)}</select></label>
+            </div>
+            <button className="pm-go hot" disabled={busy}>{busy ? "Saving…" : "Add staff"}</button>
+          </form>)}
+        <div className="pm-filters" role="tablist" aria-label="Filter by role">
+          {filters.map(([id, label, n]) => <button key={id} role="tab" aria-selected={rf === id} className={rf === id ? "on" : ""} onClick={() => setRf(id)}>{label}<i>{n}</i></button>)}
+        </div>
+        <div className="pm-list">
+          {rowsR.map(m => (
+            <div key={m.id} className="pm-card static so">
+              <span className="pm-av">{initialsOf(m.full_name || m.email)}</span>
+              <span className="pm-main"><b>{m.full_name || "—"}</b><small>{m.email}</small></span>
+              <span className="pm-end"><span className={`pm-pill ${m.active ? "good" : "bad"}`}>{m.active ? "Active" : "Off"}</span></span>
+              <span className="pm-acts">
+                {canEdit(m)
+                  ? <><select className="pm-sel" aria-label={`Role of ${m.email}`} value={m.role} onChange={e => void change(m, { role: e.target.value as Role })}>
+                      {[...assignable, ...(assignable.includes(m.role) ? [] : [m.role])].map(r => <option key={r}>{r}</option>)}
+                    </select>
+                    <button className={`pm-go ${m.active ? "bad" : "hot"}`} onClick={() => void change(m, { active: !m.active })}><Power size={15} /> {m.active ? "Deactivate" : "Activate"}</button></>
+                  : <span className="pm-pill info"><ShieldCheck size={12} />&nbsp;{m.role}</span>}
+              </span>
+            </div>))}
+          {!rowsR.length && <div className="pm-empty"><Users /><b>{staff.length ? "Nothing matches" : "No staff yet"}</b></div>}
+        </div>
+      </>}
+
+      {tab === "suppliers" && (
+        <div className="pm-list">
+          {supsShown.map(x => {
+            const st = x.status ?? "pending";
+            return (
+              <div key={x.id} className="pm-card static so">
+                <span className="pm-av">{initialsOf(x.name)}</span>
+                <span className="pm-main"><b>{x.name}</b><small>{x.email || x.owner_name || "—"}</small></span>
+                <span className="pm-end"><span className={`pm-pill ${st === "approved" ? "good" : st === "pending" ? "warn" : "bad"}`}>{st === "approved" ? "Approved" : st === "pending" ? "Pending" : st[0].toUpperCase() + st.slice(1)}</span></span>
+                <span className="pm-acts"><Link className="pm-go" to="/admin/verification"><Clock size={15} /> Review</Link></span>
+              </div>);
+          })}
+          {!supsShown.length && <div className="pm-empty"><Factory /><b>No supplier accounts yet</b></div>}
+        </div>)}
+    </div>
   );
 }

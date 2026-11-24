@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Building2, ClipboardCheck, Edit3, ExternalLink, EyeOff, FileText, MapPin, Plus, Trash2, X } from "lucide-react";
-import { PageHeading } from "../../components/ui";
+import { Building2, ClipboardCheck, Edit3, ExternalLink, Eye, EyeOff, FileText, Plus, Trash2, X } from "lucide-react";
+import "./payments.css";
 import { IconFor } from "../../lib/icons";
 import { errorText, requireSupabase, type Supplier, type SupplierStatus } from "../../lib/supabase";
 import { BUSINESS_TYPES } from "../../pages/supplier/Register";
@@ -200,50 +200,56 @@ export default function SuppliersPage() {
   const s = search.toLowerCase();
   const counts = (rows ?? []).reduce((m, r) => ({ ...m, [r.status ?? "approved"]: (m[r.status ?? "approved"] ?? 0) + 1 }), {} as Record<string, number>);
   const list = (rows ?? []).filter(r => (filter === "all" || (r.status ?? "approved") === filter) && (!s || `${r.name} ${r.location ?? ""} ${r.owner_name ?? ""}`.toLowerCase().includes(s)));
+  const total = rows?.length ?? 0;
+  const live = (rows ?? []).filter(r => (r.status ?? "approved") === "approved" && r.active).length;
+  const filters: [string, string, number][] = [["all", "All", total], ["pending", "Pending", counts.pending ?? 0], ["approved", "Approved", counts.approved ?? 0], ["rejected", "Needs changes", counts.rejected ?? 0], ["suspended", "Suspended", counts.suspended ?? 0]];
   return (
-    <>
-      <PageHeading title="Suppliers" sub="Businesses listed in the website's supplier directory. Only suppliers you leave visible are shown to visitors."
-        action={canEdit ? <button className="btn gold" onClick={() => setModal({ editing: null })}><Plus /> Add supplier</button> : undefined} />
+    <div className="pm sop">
+      <section className="pm-hero" aria-label="Suppliers overview">
+        <div className="pm-hero-top">
+          <div><small>Directory</small><h1>Suppliers</h1><p>Businesses in the website's supplier directory. Only visible, approved suppliers are shown to visitors.</p></div>
+          {canEdit && <button className="pm-hero-btn" onClick={() => setModal({ editing: null })}><Plus size={16} /> Add supplier</button>}
+        </div>
+        <div className="pm-kpis">
+          <div className="pm-kpi out"><span><Building2 /></span><small>Suppliers</small><b>{total}</b></div>
+          <div className="pm-kpi wait"><span><ClipboardCheck /></span><small>Pending approval</small><b>{counts.pending ?? 0}</b></div>
+          <div className="pm-kpi in"><span><Eye /></span><small>Live on website</small><b>{live}</b></div>
+          <div className="pm-kpi owe"><span><EyeOff /></span><small>Suspended or hidden</small><b>{(counts.suspended ?? 0) + (rows ?? []).filter(r => (r.status ?? "approved") === "approved" && !r.active).length}</b></div>
+        </div>
+      </section>
       {rows && rows.length > 0 && (
-        <div className="status-tabs" role="group" aria-label="Filter by status">
-          {([["all", "All"], ["pending", "Pending"], ["approved", "Approved"], ["rejected", "Needs changes"], ["suspended", "Suspended"]] as const).map(([id, label]) => (
-            <button key={id} className={filter === id ? "on" : ""} aria-pressed={filter === id} onClick={() => setFilter(id)}>
-              {label}{id === "all" ? ` (${rows.length})` : counts[id] ? ` (${counts[id]})` : ""}{id === "pending" && counts.pending ? <i aria-hidden="true" /> : null}
-            </button>
-          ))}
+        <div className="pm-filters" role="tablist" aria-label="Filter by status">
+          {filters.map(([id, label, n]) => <button key={id} role="tab" aria-selected={filter === id} className={`${filter === id ? "on" : ""}${id === "pending" && n ? " hot" : ""}`} onClick={() => setFilter(id as "all" | SupplierStatus)}>{label}<i>{n}</i></button>)}
         </div>
       )}
-      {failed && <div className="table-panel"><div className="empty-state"><p>The suppliers table is not set up yet. Run migration 0007_home_marketplace.sql in Supabase.</p></div></div>}
-      {!failed && rows && rows.length === 0 && <div className="table-panel"><div className="empty-state"><Building2 /><p>No suppliers yet</p></div></div>}
-      {list.length > 0 && (
-        <div className="table-panel"><div className="table-scroll"><table className="rt rt-s">
-          <thead><tr><th>Supplier</th><th>Industry</th><th>Location</th><th>Categories</th><th>Status</th>{(canEdit || canReview) && <th>Action</th>}</tr></thead>
-          <tbody>
-            {list.map(r => {
-              const ind = industries.find(i => i.id === r.industry_id);
-              return (
-                <tr key={r.id}>
-                  <td data-label="Supplier"><div className="table-product"><span className="thumb-icon"><IconFor name={ind?.icon} size={18} /></span><b>{r.name}</b></div></td>
-                  <td data-label="Industry">{ind?.name ?? "—"}</td>
-                  <td data-label="Location">{r.location ? <><MapPin size={13} /> {r.location}</> : "—"}</td>
-                  <td data-label="Categories">{r.cats.map(id => categories.find(c => c.id === id)?.name).filter(Boolean).join(", ") || "—"}</td>
-                  <td data-label="Status">
-                    {r.profile_id ? <span className={`status ${STATUS_TONE[r.status ?? "approved"]}`}>{STATUS_LABEL[r.status ?? "approved"]}</span>
-                      : <span className={`status ${r.active ? "good" : "muted"}`}>{r.active ? "Visible" : <><EyeOff size={13} /> Hidden</>}</span>}
-                  </td>
-                  {(canEdit || canReview) && <td data-label="Action" data-actions>
-                    {canReview && r.profile_id && <button className="icon-action" aria-label={`Review ${r.name}`} title="Review application" onClick={() => setReview(r)}><ClipboardCheck size={16} /></button>}{" "}
-                    {canEdit && <button className="icon-action" aria-label={`Edit ${r.name}`} onClick={() => setModal({ editing: r })}><Edit3 size={16} /></button>}{" "}
-                    {canEdit && <button className="icon-action" aria-label={`Delete ${r.name}`} onClick={() => void remove(r)}><Trash2 size={16} /></button>}
-                  </td>}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table></div></div>
-      )}
+      {failed && <div className="pm-empty"><b>The suppliers table is not set up yet.</b><small>Run migration 0007_home_marketplace.sql in Supabase.</small></div>}
+      {!failed && rows && rows.length === 0 && <div className="pm-empty"><Building2 /><b>No suppliers yet</b></div>}
+      <div className="pm-list">
+        {list.map(r => {
+          const ind = industries.find(i => i.id === r.industry_id);
+          const logo = logoUrl(r.logo_path);
+          const st = r.status ?? "approved";
+          const cats = r.cats.map(id => categories.find(c => c.id === id)?.name).filter(Boolean) as string[];
+          return (
+            <div key={r.id} className="pm-card static so">
+              <span className="pm-ic blue">{logo ? <img className="pm-logo" src={logo} alt="" /> : <IconFor name={ind?.icon} size={20} />}</span>
+              <span className="pm-main"><b>{r.name}</b>
+                <small>{[ind?.name, r.location, cats.length ? `${cats.slice(0, 3).join(", ")}${cats.length > 3 ? ` +${cats.length - 3}` : ""}` : ""].filter(Boolean).join(" · ") || "—"}</small></span>
+              <span className="pm-end">{r.profile_id
+                ? <span className={`pm-pill ${STATUS_TONE[st] === "muted" ? "bad" : STATUS_TONE[st]}`}>{STATUS_LABEL[st]}</span>
+                : <span className={`pm-pill ${r.active ? "good" : "warn"}`}>{r.active ? "Visible" : "Hidden"}</span>}</span>
+              {(canEdit || canReview) && (
+                <span className="pm-acts">
+                  {canReview && r.profile_id && <button className="pm-go hot" onClick={() => setReview(r)}><ClipboardCheck size={15} /> Review</button>}
+                  {canEdit && <button className="pm-go" onClick={() => setModal({ editing: r })}><Edit3 size={15} /> Edit</button>}
+                  {canEdit && <button className="pm-go bad" aria-label={`Delete ${r.name}`} onClick={() => void remove(r)}><Trash2 size={15} /></button>}
+                </span>)}
+            </div>);
+        })}
+        {rows && rows.length > 0 && !list.length && <div className="pm-empty"><Building2 /><b>Nothing matches</b></div>}
+      </div>
       {review && <ReviewModal row={review} onClose={() => setReview(null)} onDone={() => void load()} />}
       {modal && <SupplierModal editing={modal.editing} onClose={() => setModal(null)} onSaved={() => void load()} />}
-    </>
+    </div>
   );
 }
