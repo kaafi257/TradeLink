@@ -295,3 +295,7 @@
 .dh-ok{display:flex;align-items:center;gap:8px;margin:0;font-size:13.5px;color:#cfe3f8}
 .sp-stats{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:900px){.sp-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sp-rows.pay li+li{border-top:1px solid var(--line)}
+.pay-row{display:flex;align-items:center;gap:12px;padding:12px 4px}
+.pay-ic{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:#e3effa;color:#0b4f86;flex:none}
+.pay-main{display:grid;gap:2px;min-width:0;flex:1}.pay-main b{font:800 1.05rem Manrope,sans-serif;color:#073256}.pay-main small{color:var(--muted);font-size:12.5px;overflow-wrap:anywhere}

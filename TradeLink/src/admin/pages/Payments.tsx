@@ -6,6 +6,7 @@ import { useAdmin } from "../AdminData";
 import { ErrorNote, Form, Modal, Tabs, callRpc, dateOf, dayRange, label, useAction, useLoad } from "../suite";
 import CustomerPayments from "./CustomerPayments";
 import "./payments.css";
+import PayoutReceipt, { type PayoutRec } from "../../components/PayoutReceipt";
 
 type Summary = { received: number; outstanding: number; sales: number; paid_out: number; by_method: { method: string; amount: number }[] };
 type Received = { sale_id: string; receipt_number: string; customer_name: string; total_amount: number; amount_paid: number; outstanding: number; payment_method: string | null; sold_at: string };
@@ -28,6 +29,7 @@ export default function Payments() {
     return (data ?? []) as unknown as Payout[];
   }, []);
   const cstats = useLoad(() => callRpc<{ awaiting_verification: number; cod_to_collect: number; refunded: number }>("payment_stats"), []);
+  const [rcpt, setRcpt] = useState<PayoutRec | null>(null);
   const s = search.toLowerCase();
   const owed = (bal.data ?? []).reduce((a, b) => a + Number(b.balance), 0);
   const canPay = can("payments.manage");
@@ -126,26 +128,28 @@ export default function Payments() {
             <div key={p.id} className="pm-card static">
               <span className="pm-ic out"><ArrowUpFromLine /></span>
               <span className="pm-main"><b>{p.suppliers?.name ?? "Supplier"}</b><small>{dateOf(p.paid_at)} · {label(p.method)}{p.reference ? ` · ${p.reference}` : ""}{p.note ? ` · ${p.note}` : ""}</small></span>
-              <span className="pm-end"><b>{money(Number(p.amount))}</b><span className="pm-pill info">Paid out</span></span>
+              <span className="pm-end"><b>{money(Number(p.amount))}</b><span className="pm-go" role="button" tabIndex={0} onClick={() => setRcpt({ id: p.id, supplier_name: p.suppliers?.name ?? "Supplier", amount: Number(p.amount), method: p.method, reference: p.reference, note: p.note, paid_at: p.paid_at })} onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLElement).click(); }}>Receipt</span></span>
             </div>))}
           {!(his.data ?? []).length && <div className="pm-empty"><Inbox /><b>{his.loading ? "Loading…" : "No payouts recorded yet"}</b></div>}
         </div>
       </>}
 
-      {pay && <PayModal b={pay} onClose={() => setPay(null)} onDone={() => { setPay(null); refreshAll(); }} />}
+      {pay && <PayModal b={pay} onClose={() => setPay(null)} onDone={r => { setPay(null); refreshAll(); setRcpt(r); }} />}
+      {rcpt && <PayoutReceipt r={rcpt} onClose={() => setRcpt(null)} />}
     </div>
   );
 }
 
-function PayModal({ b, onClose, onDone }: { b: Balance; onClose: () => void; onDone: () => void }) {
+function PayModal({ b, onClose, onDone }: { b: Balance; onClose: () => void; onDone: (r: PayoutRec) => void }) {
   const { busy, run } = useAction();
   const [amount, setAmount] = useState(String(Number(b.balance)));
   const [method, setMethod] = useState("bank_transfer");
   const [ref, setRef] = useState("");
   const [note, setNote] = useState("");
   const submit = async () => {
-    const ok = await run(() => callRpc("record_payout", { p_supplier: b.supplier_id, p_amount: Number(amount), p_method: method, p_reference: ref, p_note: note }), "Payout recorded.");
-    if (ok) onDone();
+    let id = "";
+    const ok = await run(async () => { id = await callRpc<string>("record_payout", { p_supplier: b.supplier_id, p_amount: Number(amount), p_method: method, p_reference: ref, p_note: note }); }, "Payout recorded. The supplier has been notified.");
+    if (ok) onDone({ id, supplier_name: b.supplier_name, amount: Number(amount), method, reference: ref.trim() || null, note: note.trim() || null, paid_at: new Date().toISOString() });
   };
   return (
     <Modal title={`Pay ${b.supplier_name}`} kicker="RECORD PAYOUT" onClose={onClose}>
