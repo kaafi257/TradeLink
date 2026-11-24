@@ -192,7 +192,13 @@ export default function Dashboard() {
             <PanelHead icon={<ChartNoAxesCombined />} title="Sales">
               <div className="range-tabs">{RANGES.map(r => <button className={range === r ? "on" : ""} key={r} onClick={() => setRange(r)}>{r}</button>)}</div>
             </PanelHead>
-            {hasSales && <div className="chart-kpis"><div><b>{money(rangeTotal)}</b></div>{best.sales > 0 && <div className="best"><small>Best day</small><b>{best.day} · {money(best.sales)}</b></div>}</div>}
+            {hasSales && (
+              <div className="sc-stats">
+                <div><small>Total sales</small><b>{money(rangeTotal)}</b></div>
+                <div><small>Daily average</small><b>{money(Math.round(rangeTotal / Math.max(1, series.reduce((l, d, i) => (d.sales > 0 ? i + 1 : l), 0))))}</b></div>
+                {best.sales > 0 && <div><small>Best day</small><b>{money(best.sales)}</b><em>{/^\d+$/.test(String(best.day)) ? `Day ${best.day}` : best.day}</em></div>}
+                <div className="sc-legend" aria-hidden="true"><span><i className="bar" />Daily sales</span><span><i className="ln" />7-day average</span></div>
+              </div>)}
             <div className="chart-wrap">
               {hasSales ? <Suspense fallback={null}><SalesChart data={series} /></Suspense> : <div className="empty-state"><ChartNoAxesCombined /></div>}
             </div>
