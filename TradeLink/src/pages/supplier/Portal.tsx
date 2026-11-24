@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import { BadgeCheck, Bell, Boxes, Building2, CheckCircle2, CircleDashed, ClipboardList, Clock, Megaphone, Home, LayoutDashboard, LogOut, Menu, Package, PauseCircle, X, XCircle } from "lucide-react";
+import { BadgeCheck, Bell, Boxes, Building2, CheckCircle2, CircleDashed, ClipboardList, Clock, Megaphone, Wallet, Home, LayoutDashboard, LogOut, Menu, Package, PauseCircle, X, XCircle } from "lucide-react";
 import { Brand } from "../../components/Brand";
 import { useAuth } from "../../lib/auth";
 import { IconFor } from "../../lib/icons";
@@ -10,6 +10,7 @@ import { SupplierProvider, useSupplier } from "./context";
 import { logoUrl } from "./files";
 import Profile from "./Profile";
 import Dashboard from "./Dashboard";
+import Payments from "./Payments";
 import Products from "./Products";
 import Inventory from "./Inventory";
 import Orders from "./Orders";
@@ -144,6 +145,7 @@ const NAV = [
   { to: "/supplier/products", end: false, label: "Products", Icon: Package, ops: true },
   { to: "/supplier/inventory", end: false, label: "Inventory", Icon: Boxes, ops: true },
   { to: "/supplier/orders", end: false, label: "Purchase orders", Icon: ClipboardList, ops: true },
+  { to: "/supplier/payments", end: false, label: "Payments", Icon: Wallet, ops: true },
   { to: "/supplier/promotions", end: false, label: "Promotions", Icon: Megaphone, ops: true },
   { to: "/supplier/profile", end: false, label: "Business profile", Icon: Building2 },
   { to: "/supplier/notifications", end: false, label: "Notifications", Icon: Bell },
@@ -220,6 +222,7 @@ function Shell() {
               <Route path="products" element={<Products />} />
               <Route path="inventory" element={<Inventory />} />
               <Route path="orders" element={<Orders />} />
+              <Route path="payments" element={<Payments />} />
               <Route path="promotions" element={<Promotions />} />
             </>}
             <Route path="profile" element={<Profile />} />
