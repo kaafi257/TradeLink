@@ -421,12 +421,12 @@ export function SupplierStrip({ items, industries, onOpen, starred }: { items: P
     <Reveal className="tl-sec" as="section">
       <div className="tl-wrap" id="suppliers">
         <div className="tl-sh"><div><h2>Featured suppliers</h2></div></div>
-        <div className="tl-sups">
-          {items.slice(0, 6).map(sp => (
-            <button key={sp.id} onClick={() => onOpen(sp)}>
-              <span className="lg">{initials(sp.name)}</span>
-              <span className="tx"><b>{sp.name}</b><small>{[industries.find(i => i.id === sp.industry_id)?.name, sp.location].filter(Boolean).join(" · ")}</small></span>
-              {starred?.has(sp.id) ? <span className="star" title="Featured"><Star size={15} fill="currentColor" /></span> : <ChevronRight size={16} />}
+        <div className="tl-supr" role="list" aria-label="Featured suppliers">
+          {items.slice(0, 12).map(sp => (
+            <button key={sp.id} role="listitem" onClick={() => onOpen(sp)} title={sp.name}>
+              <span className="lg">{initials(sp.name)}{starred?.has(sp.id) && <i title="Featured"><Star size={10} fill="currentColor" /></i>}</span>
+              <b>{sp.name}</b>
+              <small>{industries.find(i => i.id === sp.industry_id)?.name ?? sp.location ?? ""}</small>
             </button>
           ))}
         </div>
