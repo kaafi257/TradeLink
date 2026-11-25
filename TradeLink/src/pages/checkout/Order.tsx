@@ -22,20 +22,25 @@ export default function Order() {
   const [error, setError] = useState("");
   const phoneRef = useRef(phone);
   phoneRef.current = phone;
+  // Only the signed-in person matters, not the session object: it is replaced on every silent token refresh (for example when the
+  // phone returns from the file picker), and reloading then would blank the page and lose the chosen receipt.
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+  const userId = session?.user?.id ?? "";
 
   const load = useCallback(async (quiet = false) => {
     if (!quiet) setState("loading");
     try {
       let o: OrderView | undefined;
       if (phoneRef.current) o = await trackOrder(number, phoneRef.current);
-      else if (session) o = (await myOrders()).find(x => x.order_number === number);
+      else if (sessionRef.current) o = (await myOrders()).find(x => x.order_number === number);
       if (o) { setOrder(o); setState("ready"); setError(""); } else if (!quiet) setState("ask");
     } catch (e) {
       if (!quiet) { setState("ask"); if (phoneRef.current) setError(e instanceof Error ? e.message : "We could not find that order."); }
     }
-  }, [number, session]);
+  }, [number]);
 
-  useEffect(() => { if (!authLoading) void load(); }, [authLoading, load]);
+  useEffect(() => { if (!authLoading) void load(); }, [authLoading, load, userId]);
   // While we wait for the bank or the delivery, the page refreshes itself so the customer sees the confirmation.
   const waiting = order?.payment && ["pending", "submitted", "processing"].includes(order.payment.status);
   useEffect(() => { if (!waiting) return; const t = window.setInterval(() => void load(true), 30000); return () => window.clearInterval(t); }, [waiting, load]);
@@ -139,7 +144,7 @@ function ProofForm({ order, phone, onDone }: { order: OrderView; phone: string; 
       <p className="co-note">Attach a photo or screenshot of your payment receipt (bank, Telebirr or eBirr). The transaction number is optional. We always check that the money arrived.</p>
       <form className="co-fields" onSubmit={submit}>
         <label className="wide">Transaction reference <small>(optional)</small><input name="txn" maxLength={40} autoComplete="off" placeholder="e.g. FT26323ABC12" /></label>
-        <label className="wide co-file"><span><FileUp size={16} /> Payment receipt <small>(required: photo, screenshot or PDF)</small></span><input type="file" accept="image/*,application/pdf" required onChange={e => setFile(e.target.files?.[0] ?? null)} />{file && <em className="co-fname">{file.name} · {(file.size / 1048576).toFixed(1)} MB</em>}</label>
+        <label className="wide co-file"><span><FileUp size={16} /> Payment receipt <small>(required: photo, screenshot or PDF)</small></span><input type="file" accept="image/*,application/pdf" onChange={e => setFile(e.target.files?.[0] ?? null)} />{file && <em className="co-fname">{file.name} · {(file.size / 1048576).toFixed(1)} MB</em>}</label>
         {error && <p className="co-err wide" role="alert">{error}</p>}
         <button className="btn green wide" type="submit" disabled={busy}>{busy ? "Sending…" : "Send payment details"}</button>
       </form>
