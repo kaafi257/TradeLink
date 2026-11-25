@@ -140,8 +140,8 @@ export function RequestModal({ products, mode, onMode, initial, onLines, onClose
               <div><h2>Your order</h2><p>{chosen.length ? `${chosen.length} ${chosen.length === 1 ? "item" : "items"}` : "Add a product to begin"}</p></div>
             </header>
             {!lockType && <div className="seg" role="group" aria-label="I am buying as">
-              <button type="button" className={type === "business" ? "on" : ""} onClick={() => switchType("business")}><Briefcase size={15} /> Business (wholesale)</button>
               <button type="button" className={type === "individual" ? "on" : ""} onClick={() => switchType("individual")}><User size={15} /> Individual (retail)</button>
+              <button type="button" className={type === "business" ? "on" : ""} onClick={() => switchType("business")}><Briefcase size={15} /> Business (wholesale)</button>
             </div>}
             <form className="rq-form" onSubmit={submit}>
               <div className="req-lines">
