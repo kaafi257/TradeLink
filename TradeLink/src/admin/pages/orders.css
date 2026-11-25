@@ -111,3 +111,6 @@
   .ord.qt:not(.inv) .ord-ss{grid-area:st;justify-self:end;align-self:start}
 }
 .admin-layout .ord .ord-sel{height:30px!important;min-height:0!important;font-size:12.5px!important;padding:5px 26px 5px 12px!important}
+
+/* The page entrance animation must not leave a transform behind: it would trap the position:fixed modals opened from this page inside the list. */
+.admin-layout .admin-content>.ord{animation-fill-mode:backwards}
