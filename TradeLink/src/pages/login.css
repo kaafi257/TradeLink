@@ -38,6 +38,7 @@
 .lg-field:focus-within{border-color:var(--b2);background:#fff;box-shadow:0 0 0 4px #1d6fc226}
 .lg-field input{flex:1;min-width:0;height:100%;border:0;outline:0;background:transparent;font-size:17px;color:var(--n1)}
 .lg-field input::placeholder{color:#6b84a0}
+.tl-login .lg-field input:focus,.tl-login .lg-field input:focus-visible{outline:0;box-shadow:none}
 .lg-eye{border:0;background:transparent;color:var(--n1);display:grid;place-items:center;width:40px;height:40px;margin-right:-8px;border-radius:12px;cursor:pointer}
 .lg-eye:hover{background:#e1edf9}
 .lg-msg{margin:0 0 14px;padding:11px 14px;border-radius:12px;font-size:14.5px;line-height:1.4}
