@@ -112,12 +112,12 @@ export default function Payments() {
                 <span className="pm-main"><b>{b.supplier_name} {b.verified ? <span className="pm-pill good">Verified</span> : <span className="pm-pill warn">Not verified</span>}</b>
                   <small>Earned {money(Number(b.earned))} · Paid {money(Number(b.paid))} · Last payout {dateOf(b.last_paid)}</small>
                   <span className="pm-meter" aria-hidden="true"><i style={{ width: `${pct}%` }} /></span></span>
-                <span className="pm-end"><small>Balance owed</small><b>{money(Number(b.balance))}</b>
+                <span className="pm-end"><small>{Number(b.earned) > 0 ? "Balance owed" : "No sales yet"}</small><b>{money(Number(b.balance))}</b>
                   {canPay && Number(b.balance) > 0 && <span className="pm-go hot" role="button" tabIndex={0} onClick={() => b.verified ? setPay(b) : notify("Verify this supplier first, in Supplier Verification.")}
                     onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLElement).click(); }}>Pay</span>}</span>
               </div>);
           })}
-          {!(bal.data ?? []).length && <div className="pm-empty"><Inbox /><b>{bal.loading ? "Loading…" : "Nothing is owed yet"}</b><small>{bal.loading ? "" : "Supplier sales will appear here."}</small></div>}
+          {!(bal.data ?? []).length && <div className="pm-empty"><Inbox /><b>{bal.loading ? "Loading…" : "No approved suppliers yet"}</b><small>{bal.loading ? "" : "Approved suppliers appear here, with what they have earned from sales."}</small></div>}
         </div>
       </>}
 
