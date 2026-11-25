@@ -787,7 +787,7 @@
 .admin-layout .toast{border-radius:999px;background:var(--deep)}
 
 /* gentle entrance for each page */
-.admin-layout .admin-content>*{animation:ad-in .45s var(--ease) both}
+.admin-layout .admin-content>*{animation:ad-in .45s var(--ease) backwards}   /* not "both": a kept transform would trap fixed pop-ups inside the page */
 @keyframes ad-in{from{opacity:0;transform:translateY(8px)}}
 @media(prefers-reduced-motion:reduce){.admin-layout .admin-content>*{animation:none}.admin-layout *{transition:none!important}}
 @media(max-width:900px){.admin-layout .admin-topbar{padding-inline:14px}.admin-layout .mobile-menu{border-radius:50%;border:1px solid var(--line)}}
@@ -950,7 +950,7 @@
   .admin-layout.collapsed .nav-marker:before{left:-10px}
 }
 /* page changes: short fade-and-slide, no blank flash while a lazy page loads */
-.admin-layout .admin-content>*{animation:ad-in .26s var(--mo) both}
+.admin-layout .admin-content>*{animation:ad-in .26s var(--mo) backwards}
 .admin-layout .page-skel{display:grid;gap:14px;animation:none}
 .admin-layout .page-skel i{display:block;height:96px;border-radius:16px;background:linear-gradient(90deg,#eef2f9 25%,#f7f9fd 50%,#eef2f9 75%);background-size:200% 100%;animation:skel 1.2s linear infinite}
 .admin-layout .page-skel i:first-child{height:44px;width:min(320px,60%)}
