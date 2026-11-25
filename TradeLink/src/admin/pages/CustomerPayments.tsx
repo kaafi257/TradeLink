@@ -122,6 +122,13 @@ function Detail({ row, onClose, onDone }: { row: Row; onClose: () => void; onDon
   const act = (fn: () => Promise<unknown>, msg: string) => void run(fn, msg).then(ok => { if (ok) onDone(); });
 
   const viewProof = async () => {
+    if (row.proof_path!.startsWith("db:")) {
+      const f = await callRpc<{ content_type: string; data: string } | null>("payment_receipt", { p_payment: row.id });
+      if (!f) return;
+      const bytes = Uint8Array.from(atob(f.data), c => c.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: f.content_type }));
+      setProofUrl(url); window.open(url, "_blank", "noopener"); return;
+    }
     const { data, error } = await requireSupabase().storage.from("payment-proofs").createSignedUrl(row.proof_path!, 120);
     if (error || !data) return;
     setProofUrl(data.signedUrl); window.open(data.signedUrl, "_blank", "noopener");
