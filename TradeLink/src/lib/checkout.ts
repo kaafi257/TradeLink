@@ -70,13 +70,30 @@ export const ordersByContact = (name: string, phone: string) => rpc<OrderView[]>
 export const myOrders = () => rpc<OrderView[]>("my_orders");
 export const submitProof = (number: string, phone: string, txn: string, proof: string | null) => rpc<OrderView>("submit_payment_proof", { p_number: number, p_phone: phone, p_txn_ref: txn, p_proof: proof });
 
+/** Phone photos are often 5-10 MB. Shrink them to a sharp, small JPEG before upload; PDFs and small files pass through unchanged. */
+async function shrinkImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || (file.size <= 1.5 * 1024 * 1024 && file.type === "image/jpeg")) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas"); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+    const ctx = c.getContext("2d"); if (!ctx) return file;
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(bmp, 0, 0, c.width, c.height); bmp.close?.();
+    const blob = await new Promise<Blob | null>(r => c.toBlob(r, "image/jpeg", 0.85));
+    return blob && blob.size < file.size ? new File([blob], "receipt.jpg", { type: "image/jpeg" }) : file;
+  } catch { return file; }
+}
+const guessType = (f: File) => f.type || (/\.pdf$/i.test(f.name) ? "application/pdf" : /\.png$/i.test(f.name) ? "image/png" : /\.webp$/i.test(f.name) ? "image/webp" : /\.jpe?g$/i.test(f.name) ? "image/jpeg" : "");
+
 /** Uploads a receipt photo or PDF to the private bucket and returns its stored file name. Staff open it to compare with the bank; it is never proof on its own. */
-export async function uploadProof(file: File): Promise<string> {
+export async function uploadProof(original: File): Promise<string> {
+  const typed = original.type ? original : new File([original], original.name, { type: guessType(original) });
+  const file = await shrinkImage(typed);
   const ext = file.type === "application/pdf" ? "pdf" : file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : file.type === "image/jpeg" ? "jpg" : "";
   if (!ext) throw new Error("Attach a photo (JPG, PNG, WebP) or a PDF.");
-  if (file.size > 5 * 1024 * 1024) throw new Error("The file is too large (5 MB max).");
+  if (file.size > 5 * 1024 * 1024) throw new Error("The file is too large (5 MB max). Take a screenshot of the receipt instead.");
   const name = `${crypto.randomUUID()}.${ext}`;
   const { error } = await requireSupabase().storage.from("payment-proofs").upload(name, file, { contentType: file.type, upsert: false });
-  if (error) throw new Error("Could not upload the receipt. You can still enter the transaction reference.");
+  if (error) throw new Error(`Could not upload the receipt (${error.message}).`);
   return name;
 }

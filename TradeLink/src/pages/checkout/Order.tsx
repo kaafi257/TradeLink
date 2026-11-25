@@ -127,8 +127,10 @@ function ProofForm({ order, phone, onDone }: { order: OrderView; phone: string; 
     setBusy(true); setError("");
     try {
       let stored: string | null = null;
-      if (file) { try { stored = await uploadProof(file); } catch (err) { if (!txn) throw err; } }
+      let warn = "";
+      if (file) { try { stored = await uploadProof(file); } catch (err) { if (!txn) throw err; warn = `${err instanceof Error ? err.message : "The receipt could not be uploaded."} Your transaction reference was sent without it.`; } }
       onDone(await submitProof(order.order_number, phone, txn, stored));
+      if (warn) window.alert(warn);
     } catch (err) { setError(err instanceof Error ? err.message : "Could not send your details."); }
     setBusy(false);
   };
@@ -139,7 +141,7 @@ function ProofForm({ order, phone, onDone }: { order: OrderView; phone: string; 
       <p className="co-note">Enter the transaction number from your receipt (bank, Telebirr or eBirr) and attach a screenshot. The screenshot helps, but it is never proof on its own: we always check that the money arrived.</p>
       <form className="co-fields" onSubmit={submit}>
         <label className="wide">Transaction reference<input name="txn" maxLength={40} autoComplete="off" placeholder="e.g. FT26323ABC12" /></label>
-        <label className="wide co-file"><span><FileUp size={16} /> Receipt screenshot or PDF <small>(optional, 5 MB)</small></span><input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label>
+        <label className="wide co-file"><span><FileUp size={16} /> Receipt screenshot or PDF <small>(optional)</small></span><input type="file" accept="image/*,application/pdf" onChange={e => setFile(e.target.files?.[0] ?? null)} />{file && <em className="co-fname">{file.name} · {(file.size / 1048576).toFixed(1)} MB</em>}</label>
         {error && <p className="co-err wide" role="alert">{error}</p>}
         <button className="btn green wide" type="submit" disabled={busy}>{busy ? "Sending…" : "Send payment details"}</button>
       </form>
