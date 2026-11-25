@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowDownToLine, ArrowUpFromLine, Banknote, Clock, HandCoins, Inbox, Receipt, ShieldCheck, Undo2, Wallet } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Banknote, Clock, HandCoins, Inbox, Package, Receipt, ShieldCheck, Undo2, Wallet } from "lucide-react";
 import { money } from "../../lib/format";
 import { requireSupabase } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
@@ -12,7 +12,8 @@ type Summary = { received: number; outstanding: number; sales: number; paid_out:
 type Received = { sale_id: string; receipt_number: string; customer_name: string; total_amount: number; amount_paid: number; outstanding: number; payment_method: string | null; sold_at: string };
 type Balance = { supplier_id: string; supplier_name: string; earned: number; paid: number; balance: number; verified: boolean; last_paid: string | null };
 type Payout = { id: string; amount: number; method: string; reference: string | null; note: string | null; paid_at: string; suppliers: { name: string } | null };
-type Tab = "customer" | "received" | "balances" | "history";
+type SupplierSale = { id: string; created_at: string; product_name: string; quantity: number; selling_unit_price: number; supplier_amount: number; commission: number; supplier_earning: number; rate: number; suppliers: { name: string } | null; orders: { order_number: string; customer_name: string } | null };
+type Tab = "customer" | "received" | "supsales" | "balances" | "history";
 
 export default function Payments() {
   const { can, search, notify } = useAdmin();
@@ -28,6 +29,11 @@ export default function Payments() {
     if (error) throw error;
     return (data ?? []) as unknown as Payout[];
   }, []);
+  const ssl = useLoad(async () => {
+    const { data, error } = await requireSupabase().from("sale_commissions").select("id, created_at, product_name, quantity, selling_unit_price, supplier_amount, commission, supplier_earning, rate, suppliers(name), orders(order_number, customer_name)").gte("created_at", range.p_from).lt("created_at", range.p_to).order("created_at", { ascending: false }).limit(500);
+    if (error) throw error;
+    return (data ?? []) as unknown as SupplierSale[];
+  }, [days]);
   const cstats = useLoad(() => callRpc<{ awaiting_verification: number; cod_to_collect: number; refunded: number }>("payment_stats"), []);
   const [rcpt, setRcpt] = useState<PayoutRec | null>(null);
   const s = search.toLowerCase();
@@ -76,6 +82,7 @@ export default function Payments() {
       <Tabs label="Payments views" value={tab} onChange={setTab} tabs={[
         { id: "customer", label: "Customer payments", icon: <Banknote />, count: need?.awaiting_verification },
         { id: "received", label: "Sales received", icon: <Receipt /> },
+        { id: "supsales", label: "Supplier sales", icon: <Package />, count: ssl.data?.length || undefined },
         { id: "balances", label: "Supplier balances", icon: <Wallet />, count: dueSuppliers },
         { id: "history", label: "Payout history", icon: <HandCoins /> },
       ]} />
@@ -97,6 +104,22 @@ export default function Payments() {
               </div>);
           })}
           {!(rec.data ?? []).length && <div className="pm-empty"><Inbox /><b>{rec.loading ? "Loading…" : "No sales payments in this period"}</b></div>}
+        </div>
+      </>}
+
+      {tab === "supsales" && <>
+        <ErrorNote text={ssl.error} />
+        <p className="pm-note"><Package size={16} /> Every customer purchase of a supplier's item: who sold it, when, and what the supplier earns after TradeLink's commission.</p>
+        <div className="pm-list">
+          {(ssl.data ?? []).filter(r => `${r.suppliers?.name ?? ""} ${r.product_name} ${r.orders?.order_number ?? ""} ${r.orders?.customer_name ?? ""}`.toLowerCase().includes(s)).map(r => (
+            <div key={r.id} className="pm-card static">
+              <span className="pm-av">{initial(r.suppliers?.name ?? "?")}</span>
+              <span className="pm-main"><b>{r.product_name} <em>× {Number(r.quantity)}</em></b>
+                <small>{r.suppliers?.name ?? "Supplier"} · {r.orders?.order_number ?? "Order"} · {r.orders?.customer_name ?? ""} · {dateOf(r.created_at)}</small>
+                <small>Sold for {money(Number(r.quantity) * Number(r.selling_unit_price))} · TradeLink {money(Number(r.commission))} ({Number(r.rate)}%)</small></span>
+              <span className="pm-end"><small>Supplier earns</small><b>{money(Number(r.supplier_earning))}</b></span>
+            </div>))}
+          {!(ssl.data ?? []).length && <div className="pm-empty"><Inbox /><b>{ssl.loading ? "Loading…" : "No supplier items sold in this period"}</b><small>{ssl.loading ? "" : "They appear here when you record the sale of an order."}</small></div>}
         </div>
       </>}
 
