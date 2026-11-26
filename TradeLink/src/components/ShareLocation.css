@@ -1,0 +1,7 @@
+.gps-share{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.gps-share button{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:12px;border:1.5px solid #c9dcf6;background:#eef4fd;color:#0b1f3a;font:600 14px 'DM Sans',sans-serif;cursor:pointer}
+.gps-share.ok button{background:#e3edfb;border-color:#2f6fd6}
+.gps-share small{color:#5a6f8f;font-size:12.5px;line-height:1.4}
+.gps-share .gps-err{color:#b3261e}
+.gps-spin{animation:gps-rot .9s linear infinite}
+@keyframes gps-rot{to{transform:rotate(360deg)}}

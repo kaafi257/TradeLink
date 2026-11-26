@@ -366,3 +366,4 @@
 .sd-none.ok i{background:#e3f3ec;color:#1f7a55}
 .sd-none small{color:#5b7890;font-weight:500;font-size:12.5px}
 @media(max-width:620px){.sd-hero{grid-template-columns:minmax(0,1fr);padding:18px}.sd-hero-acts{justify-content:flex-start}}
+

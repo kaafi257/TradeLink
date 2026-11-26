@@ -1,6 +1,8 @@
-import { useRef, useState, type FormEvent } from "react";
-import { Building2, ExternalLink, FileText, ImagePlus, Loader2, Trash2, Upload } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { MapPin, Building2, ExternalLink, FileText, ImagePlus, Loader2, Trash2, Upload } from "lucide-react";
 import { errorText, requireSupabase, type SupplierDocument } from "../../lib/supabase";
+import ShareLocation from "../../components/ShareLocation";
+import type { Fix } from "../../lib/gps";
 import { BUSINESS_TYPES } from "./Register";
 import { useSupplier } from "./context";
 import { DOC_ACCEPT, LOGO_ACCEPT, MAX_DOCS, documentLink, logoUrl, removeStored, uploadDocument, uploadLogo } from "./files";
@@ -11,6 +13,15 @@ export default function Profile() {
   const [busy, setBusy] = useState(false);
   const [fileBusy, setFileBusy] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [shop, setShop] = useState<{ lat: number; lng: number; capturedAt: string } | null>(null);
+  useEffect(() => { void requireSupabase().rpc("supplier_my_shop_location").then(r => { if (!r.error) setShop((r.data ?? null) as typeof shop); }); }, []);
+  const saveShop = async (f: Fix) => {
+    try {
+      const { error } = await requireSupabase().rpc("supplier_set_shop_location", { p_lat: f.lat, p_lng: f.lng, p_accuracy: f.accuracy });
+      if (error) throw error;
+      setShop({ lat: f.lat, lng: f.lng, capturedAt: new Date().toISOString() }); say(true, "Shop location saved.");
+    } catch (err) { say(false, errorText(err, "Could not save your shop location")); }
+  };
   const logoInput = useRef<HTMLInputElement>(null);
   const docInput = useRef<HTMLInputElement>(null);
   if (!supplier) return null;
@@ -98,6 +109,11 @@ export default function Profile() {
       </form>
 
       <div className="sp-stack">
+        <section className="sp-card">
+          <h3><MapPin size={17} /> Shop location</h3>
+          <p className="sp-muted">{shop ? `Saved on ${new Date(shop.capturedAt).toLocaleDateString()}. Drivers collect orders from this point.` : "Not saved yet. Drivers need it to find your shop."} Update it only while you are inside your shop.</p>
+          <ShareLocation fix={null} onFix={f => void saveShop(f)} label={shop ? "Update from my GPS" : "Share my shop location"} doneLabel="Saved" />
+        </section>
         <section className="sp-card">
           <h3>Logo</h3>
           <div className="sp-logo-pick">
