@@ -537,7 +537,7 @@ body:has(.public-site),.public-site{background:var(--tl-bg)!important}
   .public-site .tl-prods .tl-card{flex:0 0 clamp(138px,40vw,164px)}
   .public-site .mk-shop-grid{gap:8px}
   .public-site .tl-card{border-radius:10px}
-  .public-site .tl-card .media{aspect-ratio:5/4}
+  .public-site .tl-card .media{aspect-ratio:1/.9}
   .public-site .tl-card .info{padding:7px 9px 9px;gap:2px}
   .public-site .tl-card h3,.public-site .tl-card h3{font-size:13px;line-height:1.28;min-height:2.56em}
   .public-site .tl-card .price b{font-size:15px}.public-site .tl-card .price.ask{font-size:13px}

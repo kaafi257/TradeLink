@@ -208,7 +208,7 @@
   .public-site .tl-sh{margin-bottom:8px}
   .public-site .tl-sh small{margin-top:1px}
   .public-site .tl-prods,.public-site .mk-shop-grid{gap:8px}
-  .public-site .tl-card .media{aspect-ratio:5/4}
+  .public-site .tl-card .media{aspect-ratio:1/.9}
   .public-site .tl-card .info{padding:7px 9px 9px;gap:2px}
   .public-site .tl-card .price{row-gap:0}
   .public-site .lp-h{margin-bottom:10px}
