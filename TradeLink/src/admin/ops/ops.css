@@ -80,3 +80,7 @@
 .admin-layout .drv-card small{color:var(--muted)}
 .admin-layout .drv-row{display:flex;gap:8px;flex-wrap:wrap}
 .admin-layout .drv-online{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.admin-layout .pp-wrap{position:relative}
+.admin-layout .pp-wrap .pp-map{height:360px;margin-bottom:0}
+.admin-layout .pp-locate{position:absolute;z-index:500;right:10px;top:10px;width:40px;height:40px;border-radius:12px;border:0;background:#fff;color:#0b1f3a;font-size:20px;box-shadow:0 2px 10px #0b1f3a33;cursor:pointer}
+.admin-layout .drv-dist{color:#1d4fa8!important;font-weight:600}

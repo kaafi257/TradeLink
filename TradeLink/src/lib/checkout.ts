@@ -59,6 +59,8 @@ export const placeOrder = (a: { items: CheckoutItem[]; name: string; phone: stri
   rpc<{ order_number: string; payment_reference: string; total: number; method?: PayMethod; repeat: boolean }>("place_order", {
     p_items: a.items, p_name: a.name, p_phone: a.phone, p_email: a.email, p_location: a.location, p_notes: a.notes, p_method: a.method, p_key: a.key, p_website: a.website,
   });
+export const shareOrderLocation = (number: string, phone: string, f: { lat: number; lng: number; accuracy: number }) =>
+  rpc("set_order_location", { p_number: number, p_phone: phone, p_lat: f.lat, p_lng: f.lng, p_accuracy: f.accuracy });
 export const trackOrder = (number: string, phone: string) => rpc<OrderView>("track_order", { p_number: number, p_phone: phone });
 /** Who this device ordered as. Kept so a refresh, or coming back later, still shows the customer's orders. */
 const WHO = "tradelink-customer";

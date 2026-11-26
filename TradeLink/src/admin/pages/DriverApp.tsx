@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CheckCheck, Crosshair, MapPin, Navigation, Phone, Play, Power, X } from "lucide-react";
 import { PageHeading } from "../../components/ui";
 import { callRpc, useAction, useLoad, ErrorNote } from "../suite";
+import { distanceKm, getFix } from "../../lib/gps";
 import DriverMap from "../ops/DriverMap";
 import "../ops/ops.css";
 
@@ -37,7 +38,13 @@ export default function DriverApp({ embedded = false }: { embedded?: boolean }) 
   }, [online]);
 
   useEffect(() => { const t = window.setInterval(() => mine.reload(), 15000); return () => window.clearInterval(t); }, [mine.reload]);
-  const toggle = useCallback(() => run(() => callRpc("driver_set_online", { p_online: !online }).then(() => mine.reload())), [online, run, mine]);
+  // A driver can only go online with GPS on: the first position is requested here, so the browser asks for permission right away.
+  const toggle = useCallback(() => run(async () => {
+    if (!online) { const f = await getFix(); setHere([f.lat, f.lng]); }
+    await callRpc("driver_set_online", { p_online: !online });
+    if (online) setHere(null);
+    mine.reload();
+  }), [online, run, mine]);
   const mark = (id: string, kind: "pickup" | "dropoff") => {
     if (!here) { setGps("Waiting for your GPS position. Make sure you are online and location is allowed."); return Promise.resolve(false); }
     return run(() => callRpc("driver_set_pin", { p_delivery: id, p_kind: kind, p_lat: here[0], p_lng: here[1] }).then(() => mine.reload()), kind === "pickup" ? "Pickup saved here." : "Drop-off saved here.");
@@ -56,6 +63,7 @@ export default function DriverApp({ embedded = false }: { embedded?: boolean }) 
           <button type="button" className={`btn ${online ? "outline" : ""}`} disabled={busy || mine.loading && !mine.data} onClick={() => void toggle()}><Power size={16} /> {online ? "Go offline" : "Go online"}</button>
         </div>
         {gps && <div className="ops-banner" role="alert">{gps}</div>}
+        {online && !here && !gps && <div className="ops-banner" role="status">Waiting for your GPS position. Keep location turned on while you work.</div>}
         {online && <DriverMap here={here} jobs={mine.data?.jobs ?? []} />}
         {mine.data && mine.data.jobs.length === 0 && <p className="ops-empty" style={{ textAlign: "center" }}>No deliveries assigned to you right now.</p>}
         {mine.data?.jobs.map(j => (
@@ -63,6 +71,7 @@ export default function DriverApp({ embedded = false }: { embedded?: boolean }) 
             <div className="top"><b>{j.ref}</b><small>{j.status === "in_transit" ? "On the way" : "Assigned"}</small></div>
             <div>{j.customer}<br /><small>{j.address}</small></div>
             <small>{j.items}</small>
+            {here && (() => { const t = j.status === "assigned" ? j.supplier : j.dropoff; return t ? <small className="drv-dist">{j.status === "assigned" ? "To pickup" : "To drop-off"}: about {distanceKm(here[0], here[1], t.lat, t.lng).toFixed(1)} km straight line</small> : null; })()}
             <div className="drv-row">
               {j.status === "assigned" && !j.supplier && <button type="button" className="btn outline" disabled={busy || !online} onClick={() => void mark(j.id, "pickup")}><Crosshair size={15} /> Mark pickup here</button>}
               {!j.dropoff && <button type="button" className="btn outline" disabled={busy || !online} onClick={() => void mark(j.id, "dropoff")}><Crosshair size={15} /> Mark drop-off here</button>}
@@ -71,7 +80,7 @@ export default function DriverApp({ embedded = false }: { embedded?: boolean }) 
               {j.phone && <a className="btn outline" href={`tel:${j.phone}`}><Phone size={15} /> Call</a>}
             </div>
             <div className="drv-row">
-              {j.status === "assigned" && <button type="button" className="btn" disabled={busy} onClick={() => void move(j.id, "in_transit")}><Play size={15} /> Start</button>}
+              {j.status === "assigned" && <button type="button" className="btn" disabled={busy || !here} title={here ? undefined : "Turn on GPS to start"} onClick={() => void move(j.id, "in_transit")}><Play size={15} /> Start</button>}
               {j.status === "in_transit" && <><button type="button" className="btn" disabled={busy} onClick={() => void move(j.id, "delivered")}><CheckCheck size={15} /> Delivered</button>
                 <button type="button" className="btn outline" disabled={busy} onClick={() => void move(j.id, "failed")}><X size={15} /> Failed</button></>}
             </div>

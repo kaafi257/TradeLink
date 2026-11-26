@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Building2, CheckCircle2, ClipboardCheck, FileText, ImagePlus, Loader2, ShieldCheck, Store, Upload, X } from "lucide-react";
+import { Building2, CheckCircle2, MapPin, ClipboardCheck, FileText, ImagePlus, Loader2, ShieldCheck, Store, Upload, X } from "lucide-react";
 import { Brand } from "../../components/Brand";
 import { TURNSTILE_SITE_KEY, Turnstile } from "../../components/Turnstile";
 import { isSupabaseConfigured, requireSupabase, supabase, type BusinessType, type PublicIndustry, type SupplierDocument } from "../../lib/supabase";
+import ShareLocation from "../../components/ShareLocation";
+import type { Fix } from "../../lib/gps";
 import { DOC_ACCEPT, LOGO_ACCEPT, MAX_DOCS, checkDoc, checkLogo, uploadDocument, uploadLogo } from "./files";
 import "./supplier.css";
 
@@ -39,6 +41,7 @@ export default function SupplierRegister() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [previewBad, setPreviewBad] = useState(false);
   const [docs, setDocs] = useState<File[]>([]);
+  const [shop, setShop] = useState<Fix | null>(null);
   const [token, setToken] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -82,6 +85,7 @@ export default function SupplierRegister() {
     const g = (k: string) => String(f.get(k) ?? "").trim();
     if (g("password") !== String(f.get("password2") ?? "")) { setError("The two passwords do not match."); return; }
     if (!industryId && !g("industry_id")) { setError("Please choose your industry."); return; }
+    if (!shop) { setError("Please press \"Share my shop location\" while you are inside your shop."); return; }
     if (TURNSTILE_SITE_KEY && !token) { setError("Please complete the security check."); return; }
     setBusy(true);
     try {
@@ -101,6 +105,8 @@ export default function SupplierRegister() {
       if (signIn.error || !supplierId) {
         if (logo || docs.length) warnings.push("Your files could not be uploaded yet. Sign in and add them from Business profile.");
       } else {
+        const { error: locErr } = await db.rpc("supplier_set_shop_location", { p_lat: shop.lat, p_lng: shop.lng, p_accuracy: shop.accuracy });
+        if (locErr) warnings.push("Your shop location could not be saved yet. Add it from Business profile.");
         const patch: { logo_path?: string; documents?: SupplierDocument[] } = {};
         if (logo) { try { patch.logo_path = await uploadLogo(supplierId, logo); } catch (err) { warnings.push(`Logo: ${(err as Error).message}`); } }
         const uploaded: SupplierDocument[] = [];
@@ -165,6 +171,12 @@ export default function SupplierRegister() {
               <label>Street address <em>(optional)</em><input name="address" maxLength={200} autoComplete="street-address" /></label>
             </div>
             <label>About the business<textarea name="about" required minLength={10} maxLength={300} rows={3} placeholder="What you sell and who you serve (shown on your public profile)" /></label>
+          </fieldset>
+
+          <fieldset>
+            <legend><MapPin size={16} /> Shop location</legend>
+            <p className="sp-note">Register while you are inside your shop. Turn on GPS and press the button. Drivers use this exact point to collect orders. It is private and never shown on the public site.</p>
+            <ShareLocation fix={shop} onFix={setShop} label="Share my shop location" doneLabel="Shop location saved" />
           </fieldset>
 
           <fieldset>
