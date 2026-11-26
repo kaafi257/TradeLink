@@ -1094,3 +1094,7 @@
   .admin-layout .modal{width:100%;max-height:86vh;max-height:86dvh;border-radius:22px;padding:22px 18px;animation:ad-in .22s var(--ease) both}
   .admin-layout .modal::before{display:none}
 }
+
+/* The payment review card sits at the top of the screen so its buttons are reachable without scrolling the page behind it. */
+.admin-layout .modal-backdrop:has(.pay-detail){align-items:start;padding-top:84px}
+@media(max-width:640px){.admin-layout .modal-backdrop:has(.pay-detail){align-items:start;padding-top:76px}.admin-layout .modal-backdrop:has(.pay-detail) .modal{max-height:calc(100dvh - 92px)}}

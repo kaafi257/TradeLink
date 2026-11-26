@@ -136,6 +136,7 @@ function Detail({ row, onClose, onDone }: { row: Row; onClose: () => void; onDon
 
   return (
     <Modal title={`${row.order_number} · ${etb(row.amount)}`} kicker={METHOD_LABEL[row.method].toUpperCase()} onClose={onClose}>
+      <i className="pay-detail" hidden />
       <p className="su-muted">{row.customer_name} · {row.phone} · <b>{STATUS_LABEL[row.status]}</b> · payment {row.reference}{row.customer_txn_ref ? ` · customer reference ${row.customer_txn_ref}` : ""}</p>
       {row.review_note && <p className="su-muted">Note: {row.review_note}</p>}
       {row.proof_path && <p><button className="btn outline" onClick={() => void viewProof()}><FileText size={15} /> Open receipt file</button>{proofUrl && <small> opened in a new tab</small>}<br /><small className="su-muted">A receipt file or screenshot is only a hint and can be faked. Mark it paid only after you see the money in the bank account or in the Telebirr / eBirr app.</small></p>}
