@@ -4,7 +4,7 @@ import { useOpsData, effectiveStatus, isLate, isOpen, lastSeenText, waitingMinut
 import { AgentTag, JobTag, Tag } from "../ops/parts";
 import "../ops/ops.css";
 
-export default function Operations() {
+export default function Operations({ embedded = false }: { embedded?: boolean }) {
   const { snapshot, unpinned, loading, error, now } = useOpsData();
   const [q, setQ] = useState("");
   const [lateOnly, setLateOnly] = useState(false);
@@ -26,7 +26,9 @@ export default function Operations() {
 
   return (
     <>
+      {!embedded && (
       <PageHeading title="Operations" sub="Everyone and every package right now: drivers, suppliers and customers waiting." />
+      )}
       {error && <div className="ops-banner" role="alert">{error}</div>}
       {!error && !loading && unpinned.length > 0 && <div className="ops-banner" role="status">{unpinned.length} active deliver{unpinned.length > 1 ? "ies have" : "y has"} no map pins yet: {unpinned.map(u => u.ref).join(", ")}. Add pins in Deliveries.</div>}
 

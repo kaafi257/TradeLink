@@ -1,19 +1,22 @@
 import { useState } from "react";
-import { Banknote, CheckCheck, Clock, MapPin, MapPinned, Play, Truck, User, X } from "lucide-react";
+import { Activity, Banknote, CheckCheck, Clock, MapPin, MapPinned, Map as MapIcon, Play, Truck, User, X } from "lucide-react";
 import { PageHeading } from "../../components/ui";
 import { IconBtn, RecCard, RecordList, StatusChip, type Tone } from "../Records";
 import { shortDate } from "../../lib/format";
 import { errorText, requireSupabase, type DeliveryRow } from "../../lib/supabase";
 import { useAdmin } from "../AdminData";
+import LiveMap from "./LiveMap";
+import Operations from "./Operations";
+import DriverApp from "./DriverApp";
 import PinPicker from "../ops/PinPicker";
-import { Form, Modal, callRpc, useAction, useLoad } from "../suite";
+import { Form, Modal, Tabs, callRpc, useAction, useLoad } from "../suite";
 
 type Due = { payment_id: string; order_number: string; customer_name: string; delivery_location: string; amount: number; delivery_status: string };
 
 const label = (s: string) => s.replace("_", " ");
 const tone = (s: string) => (s === "delivered" ? "good" : s === "failed" ? "muted" : "warn");
 
-export default function Deliveries() {
+function DeliveryList() {
   const { deliveries, staff, profile, search, can, notify, reload } = useAdmin();
   const s = search.toLowerCase();
   const who = (id: string | null) => { const p = staff.find(x => x.id === id); return p ? p.full_name || p.email : id === profile.id ? "You" : "—"; };
@@ -71,5 +74,26 @@ function CashModal({ due, onClose, onDone }: { due: Due; onClose: () => void; on
         <label>Amount collected (ETB)<input type="number" min="0.01" step="0.01" required value={amount} onChange={e => setAmount(e.target.value)} /></label>
       </Form>
     </Modal>
+  );
+}
+
+type Tab = "list" | "map" | "ops" | "driver";
+
+/** One Delivery section: the list, the live map, operations and (for drivers) the phone page. */
+export default function Deliveries() {
+  const { profile } = useAdmin();
+  const boss = profile.role === "owner" || profile.role === "manager";
+  const [tab, setTab] = useState<Tab>("list");
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [{ id: "list", label: "Deliveries", icon: <Truck size={15} /> }];
+  if (boss) tabs.push({ id: "map", label: "Live map", icon: <MapIcon size={15} /> }, { id: "ops", label: "Operations", icon: <Activity size={15} /> });
+  if (profile.role === "delivery") tabs.push({ id: "driver", label: "Driver", icon: <MapPin size={15} /> });
+  return (
+    <>
+      {tabs.length > 1 && <Tabs tabs={tabs} value={tab} onChange={setTab} label="Delivery sections" />}
+      {tab === "list" && <DeliveryList />}
+      {tab === "map" && boss && <LiveMap embedded />}
+      {tab === "ops" && boss && <Operations embedded />}
+      {tab === "driver" && profile.role === "delivery" && <DriverApp embedded />}
+    </>
   );
 }

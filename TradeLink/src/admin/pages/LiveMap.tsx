@@ -6,7 +6,7 @@ import OpsMap, { type Layers, type Selection } from "../ops/OpsMap";
 import { DetailPanel } from "../ops/parts";
 import "../ops/ops.css";
 
-export default function LiveMap() {
+export default function LiveMap({ embedded = false }: { embedded?: boolean }) {
   const { snapshot, unpinned, loading, error, refreshedAt, now, reload } = useOpsData();
   const [layers, setLayers] = useState<Layers>({ drivers: true, suppliers: true, customers: true, lateOnly: false });
   const [selection, setSelection] = useState<Selection>(null);
@@ -30,8 +30,11 @@ export default function LiveMap() {
 
   return (
     <>
+      {!embedded && (
       <PageHeading title="Live map" sub="Every driver, supplier pickup and waiting customer on one street map."
         action={<button type="button" className="btn outline" onClick={reload}><RefreshCw size={15} /> Refresh</button>} />
+      )}
+      {embedded && <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}><button type="button" className="btn outline" onClick={reload}><RefreshCw size={15} /> Refresh</button></div>}
       {error && <div className="ops-banner" role="alert">{error}</div>}
       {!error && !loading && jobs.length === 0 && agents.every(a => a.status === "offline") && (
         <div className="ops-banner" role="status">No active deliveries or online drivers right now.{unpinned.length > 0 && <> {unpinned.length} delivery{unpinned.length > 1 ? " needs" : "ies need"} map pins (open Deliveries).</>}</div>
