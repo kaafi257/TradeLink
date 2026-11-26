@@ -42,7 +42,7 @@
 
 /* Product cards: whole picture visible, quick add, New badge */
 .tl-card .media{background:#fff}
-.tl-card .media img{object-fit:contain;padding:10px}
+.tl-card .media img{object-fit:contain;padding:4px}
 .tl-card .new{position:absolute;left:8px;top:8px;background:#f2b01e;color:#3a2a00;font:800 11px 'Inter',sans-serif;padding:3px 8px;border-radius:6px;letter-spacing:.03em;text-transform:uppercase}
 .tl-card .qadd{position:absolute;right:10px;bottom:10px;z-index:2;width:36px;height:36px;border:0;border-radius:50%;background:var(--tl-blue);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 14px -8px var(--tl-blue);transition:transform .15s,background .2s}
 .tl-card .qadd:hover{transform:scale(1.1)}.tl-card .qadd:active{transform:scale(.9)}
@@ -194,7 +194,7 @@
 
 /* ===== Compact product cards: smaller, tighter, a "Shop" button, clearer text and price colours ===== */
 .tl-card{border-radius:14px;border-color:#e3e8f0}
-.tl-card .media img{object-fit:contain;padding:6px}
+.tl-card .media img{object-fit:contain;padding:2px}
 .tl-card .media{aspect-ratio:1/1}
 .tl-card .info{padding:8px 9px 9px!important;gap:3px!important}
 .public-site .tl-card h3{font:600 12.5px/1.3 'Inter',sans-serif;color:#1b2a41;min-height:2.6em}
