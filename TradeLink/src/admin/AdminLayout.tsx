@@ -17,6 +17,9 @@ import Quotations from "./pages/Quotations";
 import SalesPage from "./pages/Sales";
 import Orders from "./pages/Orders";
 import Deliveries from "./pages/Deliveries";
+import LiveMap from "./pages/LiveMap";
+import Operations from "./pages/Operations";
+import DriverApp from "./pages/DriverApp";
 import Staff from "./pages/Staff";
 import Inventory from "./pages/Inventory";
 const loadReports = () => import("./pages/Reports");
@@ -188,6 +191,9 @@ function Shell() {
             <Route path="supplier-ops" element={g(["owner", "manager"], <SupplierOps />)} />
             <Route path="quotations" element={g(["owner", "manager", "sales"], <Quotations />)} />
             <Route path="orders" element={g(["owner", "manager", "sales"], <Orders />)} />
+            <Route path="live-map" element={g(["owner", "manager"], <LiveMap />)} />
+            <Route path="operations" element={g(["owner", "manager"], <Operations />)} />
+            <Route path="driver" element={g(["delivery"], <DriverApp />)} />
             <Route path="deliveries" element={g(["owner", "manager", "sales", "delivery"], <Deliveries />)} />
             <Route path="sales" element={g(["owner", "manager", "sales"], <SalesPage />)} />
             <Route path="staff" element={g(["owner", "manager"], <Staff />)} />
