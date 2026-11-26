@@ -1,6 +1,6 @@
 import {
   Activity as ActivityIcon, Boxes, Box, Building2, ChartNoAxesCombined, ClipboardList, FileText, Globe, HandCoins, Headset, Layers, MessageCircle, Home, Megaphone,
-  Map as MapIcon, PackageCheck, Percent, Radar, Receipt, RotateCcw, Settings, ShieldCheck, Star, Truck, Users, Wallet,
+  PackageCheck, Percent, Receipt, RotateCcw, Settings, ShieldCheck, Star, Truck, Users, Wallet,
 } from "lucide-react";
 import type { Role } from "../lib/supabase";
 
@@ -27,9 +27,6 @@ export const NAV: NavItem[] = [
   { path: "/admin/quotations", label: "Quotations", icon: FileText, group: "Marketplace", roles: ["owner", "manager", "sales"] },
   { path: "/admin/orders", label: "Orders", icon: ClipboardList, group: "Marketplace", roles: ["owner", "manager", "sales"] },
   { path: "/admin/deliveries", label: "Deliveries", icon: Truck, group: "Marketplace", roles: ["owner", "manager", "sales", "delivery"] },
-  { path: "/admin/live-map", label: "Live Map", icon: MapIcon, group: "Marketplace", roles: ["owner", "manager"] },
-  { path: "/admin/operations", label: "Operations", icon: Radar, group: "Marketplace", roles: ["owner", "manager"] },
-  { path: "/admin/driver", label: "Driver", icon: Truck, group: "Marketplace", roles: ["delivery"] },
   { path: "/admin/inventory", label: "Inventory", icon: Boxes, group: "Marketplace", roles: ["owner", "manager", "inventory"] },
   { path: "/admin/returns", label: "Returns & Disputes", icon: RotateCcw, group: "Marketplace", roles: [], perm: "returns.manage" },
   { path: "/admin/reviews", label: "Reviews & Ratings", icon: Star, group: "Marketplace", roles: [], perm: "reviews.moderate" },

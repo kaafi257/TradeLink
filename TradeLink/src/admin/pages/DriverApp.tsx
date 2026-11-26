@@ -11,7 +11,7 @@ type Mine = { online: boolean; vehicle: string; jobs: Job[] };
 const nav = (p: { lat: number; lng: number }) => `https://www.openstreetmap.org/directions?to=${p.lat}%2C${p.lng}`;
 
 /** The driver's phone page: go online to share location, see assigned deliveries, start and finish them. */
-export default function DriverApp() {
+export default function DriverApp({ embedded = false }: { embedded?: boolean }) {
   const mine = useLoad(() => callRpc<Mine>("driver_my_jobs"), []);
   const { busy, run } = useAction();
   const [gps, setGps] = useState("");
@@ -39,7 +39,9 @@ export default function DriverApp() {
 
   return (
     <>
+      {!embedded && (
       <PageHeading title="Driver" sub="Go online to share your location and receive deliveries." />
+      )}
       <div className="drv">
         <ErrorNote text={mine.error} />
         <div className="drv-card drv-online">
