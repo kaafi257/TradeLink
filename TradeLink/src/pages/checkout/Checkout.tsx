@@ -128,7 +128,7 @@ export default function Checkout() {
               <label>Phone<input name="phone" required type="tel" inputMode="tel" maxLength={20} autoComplete="tel" placeholder="+251 …" defaultValue={meta.phone ?? ""} /></label>
               <label className="wide">Email <small>(optional)</small><input name="email" type="email" maxLength={160} autoComplete="email" defaultValue={session?.user.email ?? ""} /></label>
               <label className="wide">Delivery address<input name="location" required minLength={2} maxLength={160} autoComplete="street-address" placeholder="Area, street, landmark" /></label>
-              <div className="wide"><ShareLocation fix={where} onFix={setWhere} label="Share my delivery location" doneLabel="Delivery location saved" />
+              <div className="wide"><ShareLocation fix={where} onFix={setWhere} label="Share my delivery location" doneLabel="Delivery location saved" maxAccuracy={300} />
                 <small className="co-note">Turn on GPS and stand where you want to receive the order. Only the delivery team sees it.</small></div>
               <label className="wide">Delivery instructions <small>(optional)</small><textarea name="notes" rows={2} maxLength={500} placeholder="Gate, floor, a call before arrival…" /></label>
               <div className="honeypot" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Crosshair, MapPin, Store } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { getBestFix } from "../../lib/gps";
 import { Form, Modal, callRpc, useAction } from "../suite";
 import "./ops.css";
 
@@ -28,9 +29,9 @@ export default function PinPicker({ delivery, title, onClose, onDone }: { delive
   }
   const useGps = () => {
     setGpsMsg("");
-    if (!navigator.geolocation) { setGpsMsg("This device cannot share its location."); return; }
-    navigator.geolocation.getCurrentPosition(pos => { const p: Pt = [pos.coords.latitude, pos.coords.longitude]; place(p); mapRef.current?.setView(p, 16); },
-      () => setGpsMsg("Could not get your location. Allow location access, or tap the map."), { enableHighAccuracy: true, timeout: 15000 });
+    setGpsMsg("Finding an accurate position…");
+    getBestFix({ targetM: 30, maxMs: 20000 }).then(f => { const p: Pt = [f.lat, f.lng]; place(p); mapRef.current?.setView(p, 18); setGpsMsg(`GPS accuracy about ${f.accuracy} m. Drag or tap the map to adjust.`); })
+      .catch(e => setGpsMsg(e instanceof Error ? e.message : "Could not get your location. Tap the map instead."));
   };
 
   useEffect(() => {
