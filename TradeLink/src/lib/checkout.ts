@@ -99,3 +99,9 @@ export async function uploadProof(original: File, orderNumber: string, phone: st
   if (file.size > 1.5 * 1024 * 1024) throw new Error("The file is too large. Take a screenshot of the receipt and attach that.");
   return rpc<string>("upload_payment_receipt", { p_number: orderNumber, p_phone: phone, p_content_type: file.type, p_data: await toBase64(file) });
 }
+
+/** Cities (and optional areas) the customer can choose at checkout. Empty until the owner adds cities, and then checkout works as before. */
+export type CityOption = { id: string; name: string; zones: { id: string; name: string }[] };
+export const fetchCities = () => rpc<CityOption[]>("public_cities").then(v => (Array.isArray(v) ? v : []));
+export const shareOrderCity = (number: string, phone: string, city: string, zone: string | null) =>
+  rpc("set_order_city", { p_number: number, p_phone: phone, p_city: city, p_zone: zone });
