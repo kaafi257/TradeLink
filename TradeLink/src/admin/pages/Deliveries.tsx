@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShieldCheck, Activity, Banknote, Camera, Coins, CheckCheck, Clock, MapPin, MapPinned, Map as MapIcon, Play, Truck, User, X } from "lucide-react";
+import { AlertTriangle, Building2, ShieldCheck, Activity, Banknote, Camera, Coins, CheckCheck, Clock, MapPin, MapPinned, Map as MapIcon, Play, Truck, User, X } from "lucide-react";
 import { PageHeading } from "../../components/ui";
 import { IconBtn, RecCard, RecordList, StatusChip, type Tone } from "../Records";
 import { shortDate } from "../../lib/format";
@@ -11,6 +11,8 @@ import DriverApp from "./DriverApp";
 import SuppliersTab from "../ops/SuppliersTab";
 import DriversTab from "../ops/DriversTab";
 import PinPicker from "../ops/PinPicker";
+import DeliveryFilters, { NO_FILTERS, dateFrom, type Filters } from "../ops/DeliveryFilters";
+import { ATTENTION, type ListExtras } from "../ops/cities";
 import { CashModal, type Due } from "../ops/CashModal";
 import { Form, Modal, Tabs, callRpc, useAction, useLoad } from "../suite";
 
@@ -22,7 +24,20 @@ function DeliveryList() {
   const { deliveries, staff, profile, search, can, notify, reload } = useAdmin();
   const s = search.toLowerCase();
   const who = (id: string | null) => { const p = staff.find(x => x.id === id); return p ? p.full_name || p.email : id === profile.id ? "You" : "—"; };
-  const rows = deliveries.filter(d => `${d.orders?.order_number ?? ""} ${d.orders?.customer_name ?? ""} ${d.orders?.delivery_location ?? ""}`.toLowerCase().includes(s));
+  const [filters, setFilters] = useState<Filters>(NO_FILTERS);
+  const boss = profile.role === "owner" || profile.role === "manager";
+  // City, area and "needs attention" come from the database (owner/manager). Before migration 0042 is run this stays empty and the other filters still work.
+  const extras = useLoad(() => (boss ? callRpc<ListExtras>("ops_delivery_list").catch(() => ({ thresholds: { notAcceptedMinutes: 30 }, rows: [] } as ListExtras)) : Promise.resolve({ thresholds: { notAcceptedMinutes: 30 }, rows: [] } as ListExtras)), [deliveries.length]);
+  const ex = (id: string) => extras.data?.rows.find(r => r.id === id);
+  const from = dateFrom(filters.date);
+  const matches = (d: DeliveryRow) => `${d.orders?.order_number ?? ""} ${d.orders?.customer_name ?? ""} ${d.orders?.delivery_location ?? ""}`.toLowerCase().includes(s)
+    && (!filters.status || d.status === filters.status) && (!filters.driver || d.assigned_to === filters.driver)
+    && (!filters.city || ex(d.id)?.cityId === filters.city) && (from === null || new Date(d.created_at).getTime() >= from)
+    && (!filters.attention || (ex(d.id)?.attention.length ?? 0) > 0);
+  const rows = deliveries.filter(matches);
+  const cityOptions = Array.from(new Map((extras.data?.rows ?? []).filter(r => r.cityId && r.city).map(r => [r.cityId!, r.city!])).entries()).map(([id, name]) => ({ id, name }));
+  const driverOptions = Array.from(new Set(deliveries.map(d => d.assigned_to).filter(Boolean) as string[])).map(id => ({ id, name: who(id) }));
+  const attentionCount = deliveries.filter(d => (ex(d.id)?.attention.length ?? 0) > 0).length;
   // Cash on Delivery: only the person assigned to a delivery sees (and can confirm) its cash. The payment becomes "paid" only when they confirm.
   const due = useLoad(() => (can("payments.collect") ? callRpc<Due[]>("my_cod_due") : Promise.resolve([] as Due[])), [deliveries.length]);
   const dueFor = (n?: string) => (due.data ?? []).find(x => x.order_number === n);
@@ -49,12 +64,13 @@ function DeliveryList() {
   return (
     <>
       <PageHeading title="Deliveries" sub={profile.role === "delivery" ? "Deliveries assigned to you." : "Track every assigned delivery. Assign new ones from the Orders page."} />
-      <RecordList isEmpty={!rows.length} empty="No deliveries yet" icon={<Truck />}>
+      <DeliveryFilters value={filters} onChange={setFilters} drivers={driverOptions} cities={cityOptions} showBoss={boss} attentionCount={attentionCount} shown={rows.length} total={deliveries.length} />
+      <RecordList isEmpty={!rows.length} empty={deliveries.length ? "No deliveries match these filters" : "No deliveries yet"} icon={<Truck />}>
         {rows.map((d, i) => {
           const tn: Tone = d.status === "delivered" ? "good" : d.status === "failed" ? "bad" : "info";
           return (
             <RecCard key={d.id} i={i} tone={tn} lead={<Truck size={22} />} title={<span className="docno">{d.orders?.order_number ?? d.order_id.slice(0, 8)}</span>} sub={d.orders?.customer_name}
-              facts={[{ icon: <MapPin size={14} />, text: d.orders?.delivery_location ?? "", tone: "place" }, { icon: <User size={14} />, text: who(d.assigned_to) }, { icon: <Clock size={14} />, text: d.scheduled_at ? shortDate(d.scheduled_at) : "", tone: "time" }]}
+              facts={[...(ex(d.id)?.attention ?? []).map(a => ({ icon: <AlertTriangle size={14} />, text: ATTENTION[a] ?? a, tone: "warn" as const })), { icon: <MapPin size={14} />, text: d.orders?.delivery_location ?? "", tone: "place" }, { icon: <Building2 size={14} />, text: [ex(d.id)?.city, ex(d.id)?.zone].filter(Boolean).join(" · ") }, { icon: <User size={14} />, text: who(d.assigned_to) }, { icon: <Clock size={14} />, text: d.scheduled_at ? shortDate(d.scheduled_at) : "", tone: "time" }]}
               status={<StatusChip tone={tn} pulse={d.status === "in_transit"} icon={d.status === "delivered" ? <CheckCheck size={14} /> : d.status === "failed" ? <X size={14} /> : <Truck size={14} />}>{label(d.status)}</StatusChip>}
               actions={<>
                 {canPin && d.status !== "delivered" && d.status !== "failed" && <IconBtn icon={<MapPinned size={17} />} label="Map pins" onClick={() => setPin(d)} />}

@@ -1,8 +1,11 @@
 import { useState, type FormEvent, type ReactNode } from "react";
-import { X } from "lucide-react";
+import { BadgeCheck, MapPinned, Truck, X } from "lucide-react";
 import { money } from "../lib/format";
 import { errorText, requireSupabase, type OrderRow, type Quote } from "../lib/supabase";
 import { useAdmin } from "./AdminData";
+import { callRpc, useLoad } from "./suite";
+import { byAvailability, type Candidate, type Candidates } from "./ops/cities";
+import type { CityOption } from "../lib/checkout";
 
 function Modal({ kicker, title, onClose, children }: { kicker: string; title: string; onClose: () => void; children: ReactNode }) {
   return (
@@ -85,23 +88,66 @@ export function SaleModal({ order, onClose }: { order: OrderRow; onClose: () => 
 }
 
 export function AssignModal({ order, onClose }: { order: OrderRow; onClose: () => void }) {
-  const { staff } = useAdmin();
+  const { staff, notify } = useAdmin();
   const { busy, run } = useRun(onClose);
-  const drivers = staff.filter(s => s.active && ["delivery", "manager", "owner"].includes(s.role));
+  const [who, setWho] = useState("");
+  const [pick, setPick] = useState({ city: "", zone: "" });
+  const [savingCity, setSavingCity] = useState(false);
+  const cands = useLoad(() => callRpc<Candidates>("ops_assign_candidates", { p_order: order.id }), [order.id]);
+  const cityList = useLoad(() => callRpc<CityOption[]>("public_cities").catch(() => [] as CityOption[]), []);
+  // If the city update (migration 0042) has not been run yet, fall back to the plain staff list so assigning still works.
+  const legacy = !!cands.error && !cands.data;
+  const legacyDrivers = staff.filter(s => s.active && ["delivery", "manager", "owner"].includes(s.role));
+  const rows = legacy
+    ? legacyDrivers.map(d => ({ profileId: d.id, name: d.full_name || d.email, role: d.role, verified: false, online: false, lastSeen: null, openJobs: 0 } as Candidate))
+    : [...(cands.data?.drivers ?? [])].sort(byAvailability);
+  const zones = cityList.data?.find(c => c.id === pick.city)?.zones ?? [];
+  const saveCity = async () => {
+    setSavingCity(true);
+    try { await callRpc("ops_set_order_city", { p_order: order.id, p_city: pick.city, p_zone: pick.zone || null }); notify("City saved."); cands.reload(); }
+    catch (e) { notify(errorText(e, "Could not save the city.")); }
+    finally { setSavingCity(false); }
+  };
   const save = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const when = String(f.get("when") || "");
-    void run("assign_delivery", { p_order: order.id, p_assignee: String(f.get("who")), p_scheduled: when ? new Date(when).toISOString() : null, p_notes: String(f.get("notes") || "") }, "Delivery assigned.");
+    void run("assign_delivery", { p_order: order.id, p_assignee: who, p_scheduled: when ? new Date(when).toISOString() : null, p_notes: String(f.get("notes") || "") }, "Delivery assigned.");
   };
+  const needsCity = !!cands.data?.needsCity;
   return (
     <Modal kicker={order.order_number} title={`Assign delivery to ${order.delivery_location}`} onClose={onClose}>
       <form className="form-grid" onSubmit={save}>
-        <label>Delivery staff<select name="who" required defaultValue=""><option value="" disabled>Choose…</option>{drivers.map(d => <option key={d.id} value={d.id}>{d.full_name || d.email} ({d.role})</option>)}</select></label>
+        {cands.data?.citiesOn && cands.data.cityName && <p className="asg-note full"><MapPinned size={16} /> <span><b>{cands.data.cityName}</b>{cands.data.zoneName ? ` · ${cands.data.zoneName}` : ""}. Only drivers who serve this city are listed.</span></p>}
+        {needsCity && (
+          <div className="full">
+            <p className="asg-note"><MapPinned size={16} /> <span>This order has no city yet. Choose it to see the drivers who can take it.</span></p>
+            <div className="asg-pick" style={{ marginTop: 8 }}>
+              <select aria-label="City" value={pick.city} onChange={e => setPick({ city: e.target.value, zone: "" })}><option value="" disabled>City…</option>{(cityList.data ?? []).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+              {zones.length > 0 && <select aria-label="Area" value={pick.zone} onChange={e => setPick({ ...pick, zone: e.target.value })}><option value="" disabled>Area…</option>{zones.map(z => <option key={z.id} value={z.id}>{z.name}</option>)}</select>}
+            </div>
+            <button type="button" className="btn green" style={{ marginTop: 8 }} disabled={savingCity || !pick.city || (zones.length > 0 && !pick.zone)} onClick={() => void saveCity()}>{savingCity ? "Saving…" : "Save city"}</button>
+          </div>
+        )}
+        {!needsCity && (
+          <div className="full" role="radiogroup" aria-label="Delivery staff">
+            <div className="asg-list">
+              {rows.map(d => (
+                <button key={d.profileId} type="button" role="radio" aria-checked={who === d.profileId} className={`asg-row ${who === d.profileId ? "on" : ""}`} onClick={() => setWho(d.profileId)}>
+                  <Truck size={18} aria-hidden="true" />
+                  <span className="grow">
+                    <b>{d.name}{d.verified && <BadgeCheck size={14} aria-label="Verified" style={{ marginLeft: 5, color: "#0b6bb0", verticalAlign: "-2px" }} />}</b>
+                    <small>{d.role !== "delivery" ? "Office staff" : legacy ? "Driver" : <><i className={`drs-dot ${d.online ? "on" : ""}`} /> {d.online ? "Online" : "Offline"} · {d.openJobs} open job{d.openJobs === 1 ? "" : "s"}</>}</small>
+                  </span>
+                </button>
+              ))}
+            </div>
+            {!rows.length && !cands.loading && <p className="form-error" role="alert">{cands.data?.citiesOn ? `No driver serves ${cands.data.cityName ?? "this city"} yet. Add the city to a driver in Deliveries, Drivers.` : "No active delivery staff yet. Invite one on the Staff page."}</p>}
+          </div>
+        )}
         <label>Scheduled for<input name="when" type="datetime-local" /></label>
         <label className="full">Notes<textarea name="notes" rows={2} maxLength={500} /></label>
-        {!drivers.length && <p className="form-error full" role="alert">No active delivery staff yet. Invite one on the Staff page.</p>}
-        <button className="btn green full" type="submit" disabled={busy || !drivers.length}>{busy ? "Assigning…" : "Assign delivery"}</button>
+        <button className="btn green full" type="submit" disabled={busy || needsCity || !who}>{busy ? "Assigning…" : "Assign delivery"}</button>
       </form>
     </Modal>
   );

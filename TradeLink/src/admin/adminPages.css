@@ -142,3 +142,8 @@ html[data-theme=dark] .admin-layout .rec-actions .ibtn.red{background:#3f1f1c;co
 .admin-layout .rec-facts>span>.ft-body{display:grid;background:none!important;border:0!important;padding:0!important;border-radius:0;max-width:none;animation:none;box-shadow:none;transform:none;gap:2px}
 .admin-layout .rec-facts>span>.ft-body em{white-space:normal;overflow:visible;text-overflow:clip}
 .admin-layout .rec-facts>span{max-width:none}
+
+/* Phase 1: a card fact that needs attention (late, not accepted, no pins) */
+.admin-layout .rec-facts .ft-warn{--c:#b45f06;--b:#fff1d6;background:var(--b);border:0}
+.admin-layout .rec-facts .ft-warn .ft-ico{background:#f2a53a;color:#fff}
+html[data-theme=dark] .admin-layout .rec-facts .ft-warn{background:#3a2c12}

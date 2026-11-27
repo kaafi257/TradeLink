@@ -83,3 +83,7 @@
 .co-track{list-style:none;margin:0 0 12px;padding:0;display:flex;gap:6px;flex-wrap:wrap}
 .co-track li{padding:6px 12px;border-radius:99px;background:#eef4fd;color:#5a6f8f;font:600 12.5px 'DM Sans',sans-serif}
 .co-track li.on{background:#0b1f3a;color:#fff}
+
+.co-fields select{font-weight:500;width:100%;border:1px solid #cfdeeb;border-radius:10px;padding:0 12px;min-height:46px;font-size:15px;color:#0f3a5c;background:#fff;font-family:inherit}
+.co-fields select:focus{border-color:#0b6bb0;box-shadow:0 0 0 3px #0b6bb01f;outline:0}
+.co-fields .cp-l{display:inline-flex;align-items:center;gap:6px}

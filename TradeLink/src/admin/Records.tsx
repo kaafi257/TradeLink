@@ -55,8 +55,8 @@ export function RecordList({ isEmpty, empty, icon, children }: { isEmpty: boolea
   return <div className="rec-list">{children}</div>;
 }
 
-export type Fact = { icon: ReactNode; text: string; tone?: "price" | "cost" | "stock" | "place" | "time"; label?: string };
-const FACT_LABEL = { price: "Wholesale", cost: "Retail", stock: "Pack", place: "Area", time: "When" } as const;
+export type Fact = { icon: ReactNode; text: string; tone?: "price" | "cost" | "stock" | "place" | "time" | "warn"; label?: string };
+const FACT_LABEL = { price: "Wholesale", cost: "Retail", stock: "Pack", place: "Area", time: "When", warn: "Attention" } as const;
 
 /** One record as a glass card: icon or picture, title, a few icon facts, status and actions. Details open on tap. */
 export function RecCard({ i = 0, tone = "info", lead, img, initials, title, sub, facts, control, amount, meter, status, actions, details }: {

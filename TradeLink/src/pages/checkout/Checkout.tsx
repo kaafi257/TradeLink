@@ -3,8 +3,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { Banknote, Landmark, Loader2, Minus, Package, Plus, Smartphone, Trash2, ShoppingBag } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { supabase, withPhoto, type PublicProduct } from "../../lib/supabase";
-import { checkoutKey, clearCheckoutCart, fetchCheckoutOptions, loadCheckoutCart, saveIdentity, placeOrder, resetCheckoutKey, saveCheckoutCart, shareOrderLocation, type CheckoutItem, type CheckoutOptions, type PayMethod } from "../../lib/checkout";
+import { checkoutKey, clearCheckoutCart, fetchCheckoutOptions, loadCheckoutCart, saveIdentity, placeOrder, resetCheckoutKey, saveCheckoutCart, shareOrderLocation, fetchCities, shareOrderCity, type CityOption, type CheckoutItem, type CheckoutOptions, type PayMethod } from "../../lib/checkout";
 import ShareLocation from "../../components/ShareLocation";
+import CityPicker, { type CityChoice } from "../../components/CityPicker";
 import type { Fix } from "../../lib/gps";
 import { CoShell, etb } from "./parts";
 
@@ -24,6 +25,10 @@ export default function Checkout() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [where, setWhere] = useState<Fix | null>(null);
+  const [cities, setCities] = useState<CityOption[]>([]);
+  const [cityPick, setCityPick] = useState<CityChoice>({ city: "", zone: "" });
+  // Cities are optional: if none are set up (or the list cannot load), checkout works exactly as before.
+  useEffect(() => { let live = true; fetchCities().then(c => { if (live) setCities(c); }).catch(() => undefined); return () => { live = false; }; }, []);
   const meta = (session?.user.user_metadata ?? {}) as { full_name?: string; phone?: string };
 
   useEffect(() => {
@@ -66,6 +71,8 @@ export default function Checkout() {
     if (!method) { setError("Choose how you want to pay."); return; }
     if (!lines.length) { setError("Your cart is empty."); return; }
     if (!where) { setError("Please turn on GPS and press \"Share my delivery location\" so the driver can find you."); return; }
+    if (cities.length && !cityPick.city) { setError("Please choose your city."); return; }
+    if (cities.length && (cities.find(c => c.id === cityPick.city)?.zones.length ?? 0) > 0 && !cityPick.zone) { setError("Please choose your area."); return; }
     const f = new FormData(e.currentTarget);
     const phone = String(f.get("phone") ?? "");
     setBusy(true); setError("");
@@ -76,6 +83,7 @@ export default function Checkout() {
       });
       // Best effort: the order is already placed, so a failed location save must not block the customer.
       try { await shareOrderLocation(r.order_number, phone, where); } catch { /* the team can still pin the drop-off by hand */ }
+      if (cityPick.city) { try { await shareOrderCity(r.order_number, phone, cityPick.city, cityPick.zone || null); } catch { /* staff set the city before assigning a driver */ } }
       clearCheckoutCart(); resetCheckoutKey(); saveIdentity({ name: String(f.get("name") ?? "").trim(), phone });
       try { sessionStorage.setItem(`tl-order-phone-${r.order_number}`, phone); } catch { /* storage unavailable */ }
       navigate(`/order/${r.order_number}`, { replace: true });
@@ -127,6 +135,7 @@ export default function Checkout() {
               <label>Full name<input name="name" required minLength={2} maxLength={120} autoComplete="name" defaultValue={meta.full_name ?? ""} /></label>
               <label>Phone<input name="phone" required type="tel" inputMode="tel" maxLength={20} autoComplete="tel" placeholder="+251 …" defaultValue={meta.phone ?? ""} /></label>
               <label className="wide">Email <small>(optional)</small><input name="email" type="email" maxLength={160} autoComplete="email" defaultValue={session?.user.email ?? ""} /></label>
+              <CityPicker cities={cities} value={cityPick} onChange={setCityPick} />
               <label className="wide">Delivery address<input name="location" required minLength={2} maxLength={160} autoComplete="street-address" placeholder="Area, street, landmark" /></label>
               <div className="wide"><ShareLocation fix={where} onFix={setWhere} label="Share my delivery location" doneLabel="Delivery location saved" maxAccuracy={300} />
                 <small className="co-note">Turn on GPS and stand where you want to receive the order. Only the delivery team sees it.</small></div>
