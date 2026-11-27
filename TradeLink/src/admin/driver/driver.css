@@ -54,3 +54,4 @@
 .admin-layout .dv-err{color:#b3261e;font-size:13px;margin:0}
 .admin-layout .dv-empty{text-align:center;color:#5a6f8f;padding:26px 8px}
 .admin-layout .dv-empty svg{display:block;margin:0 auto 8px;color:#9ab6e0}
+.admin-layout.nav-open .dv-nav{display:none}
