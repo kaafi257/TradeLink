@@ -16,31 +16,40 @@ export default function ShareLocation({ fix, onFix, confirm, label, doneLabel, m
   const [seen, setSeen] = useState<number | null>(null);
   const [err, setErr] = useState("");
   const [draft, setDraft] = useState<Fix | null>(null);
-  const shown = confirm ? draft : fix;
+  const [byHand, setByHand] = useState(false);
+  const rough = !!draft && draft.accuracy > maxAccuracy && !byHand;
 
   const go = async () => {
-    setBusy(true); setErr(""); setSeen(null);
+    setBusy(true); setErr(""); setSeen(null); setByHand(false);
     try {
       const f = await getBestFix({ targetM: 30, maxMs: 25000, onProgress: setSeen });
-      if (f.accuracy > maxAccuracy) { setErr(`Your GPS is only accurate to about ${f.accuracy} m. Go outside or near a window, make sure GPS (high accuracy) is on, and try again.`); return; }
-      if (confirm) setDraft(f); else onFix(f);
+      setDraft(f);
+      // A reading that is accurate enough is used straight away. A rough one is only a starting point: the person must place the pin by hand.
+      if (f.accuracy <= maxAccuracy && !confirm) onFix(f);
     } catch (e) { setErr(e instanceof Error ? e.message : "Could not get your location."); } finally { setBusy(false); }
   };
-  const moved = (p: { lat: number; lng: number }) => { const base = shown ?? { lat: p.lat, lng: p.lng, accuracy: 10 }; const f = { ...base, lat: p.lat, lng: p.lng }; if (confirm) setDraft(f); else onFix(f); };
-  const save = async () => { if (!draft) return; setBusy(true); try { await confirm!(draft); setDraft(null); } finally { setBusy(false); } };
+  const moved = (p: { lat: number; lng: number }) => {
+    const f: Fix = { lat: p.lat, lng: p.lng, accuracy: 5 };   // placed by hand on the map: exact to the pin
+    setByHand(true); setDraft(f); if (!confirm) onFix(f);
+  };
+  const save = async () => { if (!draft || rough) return; setBusy(true); try { await confirm!(draft); setDraft(null); setByHand(false); } finally { setBusy(false); } };
+  const ready = !!draft && !rough;
 
   return (
-    <div className={`gps-share ${fix ? "ok" : ""} ${className}`}>
+    <div className={`gps-share ${ready ? "ok" : ""} ${className}`}>
       <button type="button" onClick={() => void go()} disabled={busy}>
-        {busy ? <Loader2 size={16} className="gps-spin" /> : fix && !confirm ? <Check size={16} /> : <Crosshair size={16} />}
-        {busy ? (seen != null ? `Improving accuracy… about ${seen} m` : "Finding your location…") : fix && !confirm ? doneLabel : label}
+        {busy ? <Loader2 size={16} className="gps-spin" /> : ready && !confirm ? <Check size={16} /> : <Crosshair size={16} />}
+        {busy ? (seen != null ? `Improving accuracy… about ${seen} m` : "Finding your location…") : ready && !confirm ? doneLabel : label}
       </button>
+      {!draft && !busy && <small>For the best result choose <b>Precise</b> location when your phone asks, turn on GPS, and stand outside or by a window.</small>}
       {err && <small className="gps-err" role="alert">{err}</small>}
-      {shown && (
+      {draft && (
         <>
-          <small>GPS accuracy about {shown.accuracy} m. Drag the pin onto the exact spot, then {confirm ? "press Save" : "continue"}.</small>
-          <Suspense fallback={<small>Loading map…</small>}><PinAdjust lat={shown.lat} lng={shown.lng} onMove={moved} /></Suspense>
-          {confirm && <button type="button" onClick={() => void save()} disabled={busy}><Check size={16} /> Save this location</button>}
+          {rough
+            ? <small className="gps-err">Your phone could only find you within about {draft.accuracy} m, so this is not exact. Zoom in and drag the pin onto the exact spot (your shop door or where you want the delivery).</small>
+            : <small>{byHand ? "Pin placed by hand." : `GPS accuracy about ${draft.accuracy} m.`} Drag the pin if it is not on the exact spot{confirm ? ", then press Save" : ""}.</small>}
+          <Suspense fallback={<small>Loading map…</small>}><PinAdjust lat={draft.lat} lng={draft.lng} radius={byHand ? 0 : draft.accuracy} onMove={moved} /></Suspense>
+          {confirm && <button type="button" onClick={() => void save()} disabled={busy || rough}><Check size={16} /> {rough ? "Place the pin first" : "Save this location"}</button>}
         </>
       )}
     </div>
