@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-import { Phone } from "lucide-react";
+import { BadgeCheck, MapPin, Phone, Store } from "lucide-react";
+import { logoUrl } from "../../pages/supplier/files";
 import {
   AGENT_LABEL, JOB_LABEL, effectiveStatus, isLate, isOpen, km, lastSeenText, waitingMinutes,
-  type Agent, type AgentStatus, type Job,
+  type Agent, type AgentStatus, type DriverInfo, type Job, type SupplierPlace,
 } from "./ops";
 import type { Selection } from "./OpsMap";
 
@@ -24,7 +25,35 @@ export function JobTag({ j, now }: { j: Job; now: number }) {
 export const money = (n: number) => `ETB ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 /** One chain: supplier, driver, customer, for the order the admin clicked. */
-export function DetailPanel({ selection, agents, jobs, now }: { selection: Selection; agents: Agent[]; jobs: Job[]; now: number }) {
+export function DetailPanel({ selection, agents, jobs, now, places = [], driverInfo = [], photos = {}, onChangeShop }: {
+  selection: Selection; agents: Agent[]; jobs: Job[]; now: number; places?: SupplierPlace[]; driverInfo?: DriverInfo[]; photos?: Record<string, string>; onChangeShop?: (s: SupplierPlace) => void;
+}) {
+  if (selection?.kind === "shop") {
+    const sp = places.find(x => x.id === selection.id);
+    if (!sp) return <div className="ops-detail empty"><p>That supplier is no longer listed.</p></div>;
+    const logo = logoUrl(sp.logo);
+    return (
+      <div className="ops-detail">
+        <div className="ops-detail-head">
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <span className="ops-logo">{logo ? <img src={logo} alt="" /> : <Store size={22} />}</span>
+            <div><small>Supplier</small><h3>{sp.name}</h3></div>
+          </div>
+          <Tag tone={sp.status === "approved" && sp.active ? "ok" : "warn"}>{sp.status === "approved" && sp.active ? "Approved" : sp.status}</Tag>
+        </div>
+        <dl className="ops-facts">
+          {sp.businessType && <div><dt>Type</dt><dd>{sp.businessType}</dd></div>}
+          {sp.owner && <div><dt>Owner</dt><dd>{sp.owner}</dd></div>}
+          {sp.address && <div><dt>Address</dt><dd>{sp.address}</dd></div>}
+          <div><dt>Open deliveries</dt><dd>{sp.openJobs}</dd></div>
+          <div><dt>Shop location</dt><dd>{sp.capturedAt ? `Saved ${new Date(sp.capturedAt).toLocaleDateString()}${sp.accuracy != null ? `, about ${Math.round(sp.accuracy)} m` : ""}` : "Not saved"}</dd></div>
+        </dl>
+        {sp.phone && <a className="btn outline ops-call" href={`tel:${sp.phone.replace(/\s/g, "")}`}><Phone size={16} /> Call {sp.name}</a>}
+        {sp.lat != null && sp.lng != null && <a className="btn outline ops-call" href={`https://www.google.com/maps/dir/?api=1&destination=${sp.lat},${sp.lng}`} target="_blank" rel="noopener noreferrer"><MapPin size={16} /> Open in Maps</a>}
+        {onChangeShop && <button type="button" className="btn ops-call" onClick={() => onChangeShop(sp)}><MapPin size={16} /> Change shop location</button>}
+      </div>
+    );
+  }
   if (!selection) return <div className="ops-detail empty"><p>Select a driver, a supplier or a customer on the map to see the whole delivery.</p></div>;
   const agent = selection.kind === "agent" ? agents.find(a => a.id === selection.id) : undefined;
   const job = selection.kind === "job" ? jobs.find(j => j.id === selection.id) : jobs.find(j => j.id === agent?.jobId);
@@ -61,6 +90,13 @@ export function DetailPanel({ selection, agents, jobs, now }: { selection: Selec
           {job.distanceKm !== null && <div><dt>Estimated distance</dt><dd>{job.distanceKm.toFixed(1)} km</dd></div>}
         </dl>
       )}
+
+      {driver && (() => { const di = driverInfo.find(d => d.id === driver.id); const ph = photos[driver.id]; return (
+        <div className="ops-driver">
+          <span className="ops-logo round">{ph ? <img src={ph} alt="" /> : <b>{driver.name[0]}</b>}</span>
+          <div><b>{driver.name}</b>{di?.verified && <span className="ops-ver"><BadgeCheck size={14} /> Verified</span>}
+            <small>{driver.vehicle}{di?.plate ? ` · ${di.plate}` : ""} · {di?.deliveries ?? 0} delivered</small></div>
+        </div>); })()}
 
       {driver && driver.phone && <a className="btn outline ops-call" href={`tel:${driver.phone.replace(/\s/g, "")}`}><Phone size={16} /> Call {driver.name.split(" ")[0]}</a>}
     </div>
