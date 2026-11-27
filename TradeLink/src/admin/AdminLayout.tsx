@@ -129,7 +129,7 @@ function Shell() {
   const g = (roles: Role[], el: ReactNode) => <Guard role={role} roles={roles}>{el}</Guard>;
 
   return (
-    <div className={`admin-layout${collapsed && wide ? " collapsed" : ""}`}>
+    <div className={`admin-layout${collapsed && wide ? " collapsed" : ""}${mobileNav ? " nav-open" : ""}`}>
       <aside id="admin-sidebar" className={`sidebar ${mobileNav ? "show" : ""}`}>
         <div className="sidebar-brand"><Brand light /></div>
         <nav className="side-nav" aria-label="Admin navigation" ref={navRef}>
