@@ -15,7 +15,7 @@ export type NavItem = { path: string; label: string; icon: typeof Home; group: N
 
 /** Mirrors the database row-level security, so people only see pages their role can actually use. */
 export const NAV: NavItem[] = [
-  { path: "/admin", label: "Dashboard", icon: Home, group: "Overview", roles: "all", end: true },
+  { path: "/admin", label: "Dashboard", icon: Home, group: "Overview", roles: ["owner", "manager", "sales", "inventory", "staff"], end: true },
   { path: "/admin/reports", label: "Reports & Analytics", icon: ChartNoAxesCombined, group: "Overview", roles: ["owner", "manager"] },
   { path: "/admin/activity", label: "Activity Log", icon: ActivityIcon, group: "Overview", roles: ["owner", "manager"] },
 

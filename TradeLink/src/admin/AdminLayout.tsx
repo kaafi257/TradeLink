@@ -181,7 +181,7 @@ function Shell() {
 
         <main className="admin-content dash-glass">
           <PageBoundary key={pathname}><Suspense fallback={<div className="page-skel" aria-busy="true"><i /><i /><i /></div>}><Routes>
-            <Route index element={<Dashboard />} />
+            <Route index element={role === "delivery" ? <Navigate to="/admin/deliveries" replace /> : <Dashboard />} />
             <Route path="products" element={g(["owner", "manager", "sales", "inventory"], <Products />)} />
             <Route path="categories" element={g(["owner", "manager", "inventory"], <Categories />)} />
             <Route path="suppliers" element={g(["owner", "manager", "inventory"], <Suppliers />)} />
