@@ -19,7 +19,7 @@ export const NAV: NavItem[] = [
   { path: "/admin/reports", label: "Reports & Analytics", icon: ChartNoAxesCombined, group: "Overview", roles: ["owner", "manager"] },
   { path: "/admin/activity", label: "Activity Log", icon: ActivityIcon, group: "Overview", roles: ["owner", "manager"] },
 
-  { path: "/admin/products", label: "Products", icon: Box, group: "Marketplace", roles: ["owner", "manager", "sales", "inventory", "delivery"] },
+  { path: "/admin/products", label: "Products", icon: Box, group: "Marketplace", roles: ["owner", "manager", "sales", "inventory"] },
   { path: "/admin/categories", label: "Categories", icon: Layers, group: "Marketplace", roles: ["owner", "manager", "inventory"] },
   { path: "/admin/suppliers", label: "Suppliers", icon: Building2, group: "Marketplace", roles: ["owner", "manager", "inventory"] },
   { path: "/admin/supplier-ops", label: "Supplier Operations", icon: PackageCheck, group: "Marketplace", roles: ["owner", "manager"] },
