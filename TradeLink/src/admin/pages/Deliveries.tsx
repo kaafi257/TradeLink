@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Activity, Banknote, Camera, Coins, CheckCheck, Clock, MapPin, MapPinned, Map as MapIcon, Play, Truck, User, X } from "lucide-react";
+import { ShieldCheck, Activity, Banknote, Camera, Coins, CheckCheck, Clock, MapPin, MapPinned, Map as MapIcon, Play, Truck, User, X } from "lucide-react";
 import { PageHeading } from "../../components/ui";
 import { IconBtn, RecCard, RecordList, StatusChip, type Tone } from "../Records";
 import { shortDate } from "../../lib/format";
@@ -8,6 +8,7 @@ import { useAdmin } from "../AdminData";
 import LiveMap from "./LiveMap";
 import Operations from "./Operations";
 import DriverApp from "./DriverApp";
+import DriversTab from "../ops/DriversTab";
 import PinPicker from "../ops/PinPicker";
 import { CashModal, type Due } from "../ops/CashModal";
 import { Form, Modal, Tabs, callRpc, useAction, useLoad } from "../suite";
@@ -87,7 +88,7 @@ function FeeModal({ d, current, onClose, onDone }: { d: DeliveryRow; current: nu
   );
 }
 
-type Tab = "list" | "map" | "ops";
+type Tab = "list" | "map" | "ops" | "drivers";
 
 /** One Delivery section: the list, the live map, operations and (for drivers) the phone page. */
 export default function Deliveries() {
@@ -95,7 +96,7 @@ export default function Deliveries() {
   const boss = profile.role === "owner" || profile.role === "manager";
   const [tab, setTab] = useState<Tab>("list");
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [{ id: "list", label: "Deliveries", icon: <Truck size={15} /> }];
-  if (boss) tabs.push({ id: "map", label: "Live map", icon: <MapIcon size={15} /> }, { id: "ops", label: "Operations", icon: <Activity size={15} /> });
+  if (boss) tabs.push({ id: "map", label: "Live map", icon: <MapIcon size={15} /> }, { id: "ops", label: "Operations", icon: <Activity size={15} /> }, { id: "drivers", label: "Drivers", icon: <ShieldCheck size={15} /> });
   // Drivers get their own phone app (Home, Deliveries, Earnings, Profile).
   if (profile.role === "delivery") return <DriverApp />;
   return (
@@ -104,6 +105,7 @@ export default function Deliveries() {
       {tab === "list" && <DeliveryList />}
       {tab === "map" && boss && <LiveMap embedded />}
       {tab === "ops" && boss && <Operations embedded />}
+      {tab === "drivers" && boss && <DriversTab />}
     </>
   );
 }
