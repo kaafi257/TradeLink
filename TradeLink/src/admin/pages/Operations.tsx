@@ -1,3 +1,4 @@
+import { callRpc, useLoad } from "../suite";
 import { useMemo, useState } from "react";
 import { PageHeading } from "../../components/ui";
 import { useOpsData, effectiveStatus, isLate, isOpen, lastSeenText, waitingMinutes, JOB_LABEL, type Agent, type Job } from "../ops/ops";
@@ -6,6 +7,9 @@ import "../ops/ops.css";
 
 export default function Operations({ embedded = false }: { embedded?: boolean }) {
   const { snapshot, unpinned, loading, error, now } = useOpsData();
+  const drv = useLoad(() => callRpc<{ id: string; verified: boolean }[]>("ops_drivers").catch(() => []), [snapshot.agents.length]);
+  const verified = (id: string) => !!drv.data?.find(d => d.id === id)?.verified;
+  const setVerified = (id: string, v: boolean) => void callRpc("ops_set_driver_verified", { p_agent: id, p_verified: v }).then(() => drv.reload());
   const [q, setQ] = useState("");
   const [lateOnly, setLateOnly] = useState(false);
   const s = q.trim().toLowerCase();
@@ -54,6 +58,7 @@ export default function Operations({ embedded = false }: { embedded?: boolean })
             return (
               <div className="ops-row" key={a.id}>
                 <div className="top"><b>{a.name}</b><AgentTag a={a} now={now} /></div>
+                <button type="button" className="ops-tag" style={{ cursor: "pointer", border: 0, justifySelf: "start" }} onClick={() => setVerified(a.id, !verified(a.id))}>{verified(a.id) ? "Verified · tap to remove" : "Tap to verify driver"}</button>
                 <small>{a.vehicle}. {job ? `Order ${job.ref} to ${job.customer.area}. ` : "No job. "}{a.status === "offline" ? "" : `Seen ${lastSeenText(a.updatedAt, now)}.`}</small>
               </div>
             );
