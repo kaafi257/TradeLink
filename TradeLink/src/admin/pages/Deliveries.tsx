@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Activity, Banknote, CheckCheck, Clock, MapPin, MapPinned, Map as MapIcon, Play, Truck, User, X } from "lucide-react";
+import { Activity, Banknote, Camera, Coins, CheckCheck, Clock, MapPin, MapPinned, Map as MapIcon, Play, Truck, User, X } from "lucide-react";
 import { PageHeading } from "../../components/ui";
 import { IconBtn, RecCard, RecordList, StatusChip, type Tone } from "../Records";
 import { shortDate } from "../../lib/format";
@@ -9,9 +9,9 @@ import LiveMap from "./LiveMap";
 import Operations from "./Operations";
 import DriverApp from "./DriverApp";
 import PinPicker from "../ops/PinPicker";
+import { CashModal, type Due } from "../ops/CashModal";
 import { Form, Modal, Tabs, callRpc, useAction, useLoad } from "../suite";
 
-type Due = { payment_id: string; order_number: string; customer_name: string; delivery_location: string; amount: number; delivery_status: string };
 
 const label = (s: string) => s.replace("_", " ");
 const tone = (s: string) => (s === "delivered" ? "good" : s === "failed" ? "muted" : "warn");
@@ -27,6 +27,12 @@ function DeliveryList() {
   const [cash, setCash] = useState<Due | null>(null);
   const [pin, setPin] = useState<DeliveryRow | null>(null);
   const canPin = profile.role === "owner" || profile.role === "manager";
+  type Prog = { id: string; accepted: boolean; pickedUp: boolean; fee: number | null; hasProof: boolean };
+  const prog = useLoad(() => (canPin ? callRpc<Prog[]>("ops_delivery_progress").catch(() => [] as Prog[]) : Promise.resolve([] as Prog[])), [deliveries.length]);
+  const pg = (id: string) => (prog.data ?? []).find(x => x.id === id);
+  const [feeFor, setFeeFor] = useState<DeliveryRow | null>(null);
+  const [proof, setProof] = useState<{ ref: string; src: string } | null>(null);
+  const viewProof = async (d: DeliveryRow) => { try { const src = await callRpc<string | null>("ops_delivery_proof", { p_delivery: d.id }); if (src) setProof({ ref: d.orders?.order_number ?? "", src }); else notify("No proof photo for this delivery."); } catch (e) { notify(errorText(e, "Could not open the photo")); } };
   const mayAct = (d: DeliveryRow) => can("deliveries.assign") || (can("deliveries.update") && d.assigned_to === profile.id);
 
   const move = async (d: DeliveryRow, status: string) => {
@@ -50,6 +56,8 @@ function DeliveryList() {
               status={<StatusChip tone={tn} pulse={d.status === "in_transit"} icon={d.status === "delivered" ? <CheckCheck size={14} /> : d.status === "failed" ? <X size={14} /> : <Truck size={14} />}>{label(d.status)}</StatusChip>}
               actions={<>
                 {canPin && d.status !== "delivered" && d.status !== "failed" && <IconBtn icon={<MapPinned size={17} />} label="Map pins" onClick={() => setPin(d)} />}
+                {canPin && d.status !== "failed" && <IconBtn icon={<Coins size={17} />} label={pg(d.id)?.fee != null ? `Driver pay ${pg(d.id)!.fee} ETB` : "Set driver pay"} onClick={() => setFeeFor(d)} />}
+                {canPin && pg(d.id)?.hasProof && <IconBtn icon={<Camera size={17} />} label="Delivery photo" onClick={() => void viewProof(d)} />}
                 {dueFor(d.orders?.order_number) && <IconBtn primary tone="gold" icon={<Banknote size={17} />} label={`Cash ${Math.round(dueFor(d.orders?.order_number)!.amount)} ETB`} onClick={() => setCash(dueFor(d.orders?.order_number)!)} />}
                 {mayAct(d) && d.status === "assigned" && <IconBtn primary tone="gold" icon={<Play size={16} />} label="Start" onClick={() => void move(d, "in_transit")} />}
                 {mayAct(d) && d.status === "in_transit" && <><IconBtn primary tone="green" icon={<CheckCheck size={17} />} label="Delivered" onClick={() => void move(d, "delivered")} /><IconBtn tone="red" icon={<X size={17} />} label="Failed" onClick={() => void move(d, "failed")} /></>}
@@ -58,26 +66,28 @@ function DeliveryList() {
           );
         })}
       </RecordList>
+      {feeFor && <FeeModal d={feeFor} current={pg(feeFor.id)?.fee ?? null} onClose={() => setFeeFor(null)} onDone={() => { setFeeFor(null); prog.reload(); }} />}
+      {proof && <Modal title={`Delivery photo · ${proof.ref}`} onClose={() => setProof(null)}><img src={proof.src} alt="Proof of delivery" style={{ width: "100%", borderRadius: 12 }} /></Modal>}
       {pin && <PinPicker delivery={pin.id} title={pin.orders?.order_number ?? "Delivery"} onClose={() => setPin(null)} onDone={() => setPin(null)} />}
       {cash && <CashModal due={cash} onClose={() => setCash(null)} onDone={() => { setCash(null); due.reload(); }} />}
     </>
   );
 }
 
-function CashModal({ due, onClose, onDone }: { due: Due; onClose: () => void; onDone: () => void }) {
+function FeeModal({ d, current, onClose, onDone }: { d: DeliveryRow; current: number | null; onClose: () => void; onDone: () => void }) {
+  const [fee, setFee] = useState(current != null ? String(current) : "");
   const { busy, run } = useAction();
-  const [amount, setAmount] = useState(String(Number(due.amount)));
   return (
-    <Modal title={`Cash for ${due.order_number}`} kicker="CASH ON DELIVERY" onClose={onClose}>
-      <p className="su-muted">{due.customer_name}. Confirm only after you have the cash in your hand. The amount must equal what is due.</p>
-      <Form onSubmit={() => void run(() => callRpc("confirm_cod_collection", { p_payment: due.payment_id, p_amount: Number(amount) }), "Cash confirmed.").then(ok => { if (ok) onDone(); })} busy={busy} submit="Cash received">
-        <label>Amount collected (ETB)<input type="number" min="0.01" step="0.01" required value={amount} onChange={e => setAmount(e.target.value)} /></label>
+    <Modal title={d.orders?.order_number ?? "Delivery"} kicker="DRIVER PAY" onClose={onClose}>
+      <Form onSubmit={() => void run(() => callRpc("ops_set_driver_fee", { p_delivery: d.id, p_fee: Number(fee) }), "Driver pay saved.").then(ok => { if (ok) onDone(); })} busy={busy} submit="Save">
+        <label>Pay for this delivery (ETB)<input required type="number" inputMode="decimal" min={0} max={1000000} step="0.01" value={fee} onChange={e => setFee(e.target.value)} autoFocus /></label>
+        <p className="su-muted">The driver sees this on the job and in Earnings once it is delivered.</p>
       </Form>
     </Modal>
   );
 }
 
-type Tab = "list" | "map" | "ops" | "driver";
+type Tab = "list" | "map" | "ops";
 
 /** One Delivery section: the list, the live map, operations and (for drivers) the phone page. */
 export default function Deliveries() {
@@ -86,14 +96,14 @@ export default function Deliveries() {
   const [tab, setTab] = useState<Tab>("list");
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [{ id: "list", label: "Deliveries", icon: <Truck size={15} /> }];
   if (boss) tabs.push({ id: "map", label: "Live map", icon: <MapIcon size={15} /> }, { id: "ops", label: "Operations", icon: <Activity size={15} /> });
-  if (profile.role === "delivery") tabs.push({ id: "driver", label: "Driver", icon: <MapPin size={15} /> });
+  // Drivers get their own phone app (Home, Deliveries, Earnings, Profile).
+  if (profile.role === "delivery") return <DriverApp />;
   return (
     <>
       {tabs.length > 1 && <Tabs tabs={tabs} value={tab} onChange={setTab} label="Delivery sections" />}
       {tab === "list" && <DeliveryList />}
       {tab === "map" && boss && <LiveMap embedded />}
       {tab === "ops" && boss && <Operations embedded />}
-      {tab === "driver" && profile.role === "delivery" && <DriverApp embedded />}
     </>
   );
 }

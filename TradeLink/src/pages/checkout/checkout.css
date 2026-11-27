@@ -79,3 +79,7 @@
 .co-sech{font:800 15px Manrope,sans-serif;margin:8px 0 0;color:#09385e}
 
 .co-fname{display:block;margin-top:6px;font-style:normal;font-size:12.5px;color:#4a6178;overflow-wrap:anywhere}
+
+.co-track{list-style:none;margin:0 0 12px;padding:0;display:flex;gap:6px;flex-wrap:wrap}
+.co-track li{padding:6px 12px;border-radius:99px;background:#eef4fd;color:#5a6f8f;font:600 12.5px 'DM Sans',sans-serif}
+.co-track li.on{background:#0b1f3a;color:#fff}
