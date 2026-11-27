@@ -7,9 +7,9 @@ import "../ops/ops.css";
 
 export default function Operations({ embedded = false }: { embedded?: boolean }) {
   const { snapshot, unpinned, loading, error, now } = useOpsData();
-  const drv = useLoad(() => callRpc<{ id: string; verified: boolean }[]>("ops_drivers").catch(() => []), [snapshot.agents.length]);
+  const drv = useLoad(() => callRpc<{ id: string | null; profileId: string; verified: boolean }[]>("ops_drivers").catch(() => []), [snapshot.agents.length]);
   const verified = (id: string) => !!drv.data?.find(d => d.id === id)?.verified;
-  const setVerified = (id: string, v: boolean) => void callRpc("ops_set_driver_verified", { p_agent: id, p_verified: v }).then(() => drv.reload());
+  const setVerified = (id: string, v: boolean) => void callRpc("ops_verify_driver", { p_profile: drv.data?.find(d => d.id === id)?.profileId, p_verified: v }).then(() => drv.reload());
   const [q, setQ] = useState("");
   const [lateOnly, setLateOnly] = useState(false);
   const s = q.trim().toLowerCase();
