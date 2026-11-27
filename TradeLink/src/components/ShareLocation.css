@@ -5,3 +5,5 @@
 .gps-share .gps-err{color:#b3261e}
 .gps-spin{animation:gps-rot .9s linear infinite}
 @keyframes gps-rot{to{transform:rotate(360deg)}}
+.gps-share{width:100%}
+.leaflet-container{isolation:isolate;z-index:0}

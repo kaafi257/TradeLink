@@ -112,7 +112,7 @@ export default function Profile() {
         <section className="sp-card">
           <h3><MapPin size={17} /> Shop location</h3>
           <p className="sp-muted">{shop ? `Saved on ${new Date(shop.capturedAt).toLocaleDateString()}. Drivers collect orders from this point.` : "Not saved yet. Drivers need it to find your shop."} Update it only while you are inside your shop.</p>
-          <ShareLocation fix={null} onFix={f => void saveShop(f)} label={shop ? "Update from my GPS" : "Share my shop location"} doneLabel="Saved" />
+          <ShareLocation fix={null} onFix={() => {}} confirm={saveShop} label={shop ? "Update from my GPS" : "Share my shop location"} doneLabel="Saved" />
         </section>
         <section className="sp-card">
           <h3>Logo</h3>

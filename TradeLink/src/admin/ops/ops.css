@@ -84,3 +84,6 @@
 .admin-layout .pp-wrap .pp-map{height:360px;margin-bottom:0}
 .admin-layout .pp-locate{position:absolute;z-index:500;right:10px;top:10px;width:40px;height:40px;border-radius:12px;border:0;background:#fff;color:#0b1f3a;font-size:20px;box-shadow:0 2px 10px #0b1f3a33;cursor:pointer}
 .admin-layout .drv-dist{color:#1d4fa8!important;font-weight:600}
+/* Keep every map below the menu, the scrim and modals (Leaflet's own panes use z-index up to 1000). */
+.admin-layout .leaflet-container,.admin-layout .ops-stage,.admin-layout .pp-wrap{isolation:isolate;z-index:0}
+.admin-layout .dv-nav{z-index:15}
