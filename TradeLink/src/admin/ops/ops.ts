@@ -90,3 +90,30 @@ export function useOpsData(pollMs = 10_000): OpsState {
 
   return useMemo(() => ({ snapshot, unpinned, loading, error, refreshedAt, now, reload: () => void load() }), [snapshot, unpinned, loading, error, refreshedAt, now, load]);
 }
+
+export type SupplierPlace = {
+  id: string; name: string; owner: string | null; phone: string | null; email: string | null; businessType: string | null; address: string | null;
+  status: string; active: boolean; logo: string | null; lat: number | null; lng: number | null; accuracy: number | null; capturedAt: string | null; openJobs: number;
+};
+export type DriverInfo = { id: string; verified: boolean; plate: string | null; hasPhoto: boolean; deliveries: number };
+
+/** Suppliers (with saved shop locations) and extra driver facts for the admin map. Photos are fetched once because they are large. */
+export function usePlaces(pollMs = 30_000) {
+  const [suppliers, setSuppliers] = useState<SupplierPlace[]>([]);
+  const [drivers, setDrivers] = useState<DriverInfo[]>([]);
+  const [photos, setPhotos] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+  const load = useCallback(async () => {
+    if (!supabase) { setLoading(false); return; }
+    const { data } = await supabase.rpc("ops_map_places");
+    if (data) { setSuppliers((data.suppliers ?? []) as SupplierPlace[]); setDrivers((data.drivers ?? []) as DriverInfo[]); }
+    setLoading(false);
+  }, []);
+  useEffect(() => {
+    void load();
+    void supabase?.rpc("ops_driver_photos").then(r => { if (r.data) setPhotos(r.data as Record<string, string>); });
+    const t = window.setInterval(() => void load(), pollMs);
+    return () => window.clearInterval(t);
+  }, [load, pollMs]);
+  return { suppliers, drivers, photos, loading, reload: () => void load() };
+}

@@ -111,8 +111,12 @@ export default function Profile() {
       <div className="sp-stack">
         <section className="sp-card">
           <h3><MapPin size={17} /> Shop location</h3>
-          <p className="sp-muted">{shop ? `Saved on ${new Date(shop.capturedAt).toLocaleDateString()}. Drivers collect orders from this point.` : "Not saved yet. Drivers need it to find your shop."} Update it only while you are inside your shop.</p>
-          <ShareLocation fix={null} onFix={() => {}} confirm={saveShop} label={shop ? "Update from my GPS" : "Share my shop location"} doneLabel="Saved" />
+          {shop
+            ? <p className="sp-muted">Your shop location is saved ({new Date(shop.capturedAt).toLocaleDateString()}) and locked. Drivers collect orders from this point. To change it, contact TradeLink.</p>
+            : <>
+                <p className="sp-muted">Not saved yet. Drivers need it to find your shop. Do this while you are inside your shop. You can save it once, and only TradeLink can change it afterwards.</p>
+                <ShareLocation fix={null} onFix={() => {}} confirm={saveShop} label="Share my shop location" doneLabel="Saved" />
+              </>}
         </section>
         <section className="sp-card">
           <h3>Logo</h3>

@@ -1,10 +1,11 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { effectiveStatus, isLate, isOpen, type Agent, type Job } from "./ops";
+import { logoUrl } from "../../pages/supplier/files";
+import { AGENT_LABEL, effectiveStatus, isLate, isOpen, type Agent, type DriverInfo, type Job, type SupplierPlace } from "./ops";
 
 export type Layers = { drivers: boolean; suppliers: boolean; customers: boolean; lateOnly: boolean };
-export type Selection = { kind: "agent" | "job"; id: string } | null;
+export type Selection = { kind: "agent" | "job" | "shop"; id: string } | null;
 
 const CITY: [number, number] = [9.5931, 41.8661];
 
@@ -39,13 +40,27 @@ function customerIcon(late: boolean, selected: boolean) {
   });
 }
 
+const esc = (t: string) => t.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+const initials = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]!.toUpperCase()).join("") || "?";
+
+/** A round photo or logo marker with a status ring and a name label, so every pin says who it is. */
+function badgeIcon(o: { img: string | null; text: string; label: string; ring: string; selected: boolean; square?: boolean; tick?: boolean }) {
+  const r = o.square ? "12px" : "50%";
+  const inner = o.img ? `<img src="${esc(o.img)}" alt="" />` : `<b>${esc(o.text)}</b>`;
+  return L.divIcon({
+    className: "ops-marker", iconSize: [46, 62], iconAnchor: [23, 23],
+    html: `<div class="ops-badge ${o.selected ? "sel" : ""}"><span class="ops-av" style="border-color:${o.ring};border-radius:${r}">${inner}</span>${o.tick ? '<i class="ops-tick">✓</i>' : ""}<em>${esc(o.label)}</em></div>`,
+  });
+}
+
 type Props = {
   agents: Agent[]; jobs: Job[]; layers: Layers; selection: Selection; now: number;
+  places: SupplierPlace[]; driverInfo: DriverInfo[]; photos: Record<string, string>;
   onSelect: (s: Selection) => void;
 };
 
 /** A real street map (OpenStreetMap tiles) with every driver, supplier pickup and waiting customer on it. */
-export default function OpsMap({ agents, jobs, layers, selection, now, onSelect }: Props) {
+export default function OpsMap({ agents, jobs, layers, selection, now, places, driverInfo, photos, onSelect }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const map = useRef<any>(null);
   const group = useRef<any>(null);
@@ -93,10 +108,23 @@ export default function OpsMap({ agents, jobs, layers, selection, now, onSelect 
       }
     }
 
+    const shopNames = new Set<string>();
+    if (layers.suppliers && !layers.lateOnly) {
+      for (const sp of places) {
+        if (sp.lat == null || sp.lng == null) continue;
+        shopNames.add(sp.name);
+        const ring = sp.status === "approved" && sp.active ? COLORS.supplier : COLORS.driverPaused;
+        const sel = selection?.kind === "shop" && selection.id === sp.id;
+        const mk = L.marker([sp.lat, sp.lng], { icon: badgeIcon({ img: logoUrl(sp.logo), text: initials(sp.name), label: sp.name, ring, selected: sel, square: true }), title: sp.name, keyboard: true }).addTo(g);
+        mk.on("click", () => onSelectRef.current({ kind: "shop", id: sp.id }));
+        pts.push([sp.lat, sp.lng]);
+      }
+    }
     if (layers.suppliers) {
       const seen = new Set<string>();
       for (const j of open) {
         if (layers.lateOnly && !isLate(j, now)) continue;
+        if (shopNames.has(j.supplier.name)) continue;
         const key = `${j.supplier.lat},${j.supplier.lng}`;
         const sel = selection?.kind === "job" && selection.id === j.id;
         if (seen.has(key) && !sel) continue;
@@ -121,20 +149,25 @@ export default function OpsMap({ agents, jobs, layers, selection, now, onSelect 
         if (a.lat == null || a.lng == null || a.status === "offline") continue;
         if (layers.lateOnly) { const job = jobs.find(j => j.id === a.jobId); if (!job || !isLate(job, now)) continue; }
         const sel = selection?.kind === "agent" && selection.id === a.id;
-        const mk = L.marker([a.lat, a.lng], { icon: agentIcon(a, sel), title: `${a.name}, ${a.vehicle}`, keyboard: true, zIndexOffset: 1000 }).addTo(g);
+        const info = driverInfo.find(d => d.id === a.id);
+        const st = effectiveStatus(a, now);
+        const ring = st === "paused" ? COLORS.driverPaused : COLORS.driver;
+        const icon = photos[a.id] || info?.verified ? badgeIcon({ img: photos[a.id] ?? null, text: initials(a.name), label: `${a.name.split(" ")[0]} · ${AGENT_LABEL[st]}`, ring, selected: sel, tick: !!info?.verified }) : agentIcon(a, sel);
+        const mk = L.marker([a.lat, a.lng], { icon, title: `${a.name}, ${a.vehicle}`, keyboard: true, zIndexOffset: 1000 }).addTo(g);
         mk.on("click", () => onSelectRef.current({ kind: "agent", id: a.id }));
         pts.push([a.lat, a.lng]);
       }
     }
 
     if (!fitted.current && pts.length) { m.fitBounds(pts, { padding: [60, 60], maxZoom: 14 }); fitted.current = true; }
-  }, [agents, jobs, layers, selection, now]);
+  }, [agents, jobs, layers, selection, now, places, driverInfo, photos]);
 
   // Selecting something from the list brings it into view.
   useEffect(() => {
     const m = map.current;
     if (!m || !selection) return;
     if (selection.kind === "agent") { const a = agents.find(x => x.id === selection.id); if (a?.lat != null && a.lng != null) m.panTo([a.lat, a.lng]); }
+    else if (selection.kind === "shop") { const sp = places.find(x => x.id === selection.id); if (sp?.lat != null && sp.lng != null) m.setView([sp.lat, sp.lng], Math.max(m.getZoom(), 15)); }
     else { const j = jobs.find(x => x.id === selection.id); if (j) m.fitBounds([[j.supplier.lat, j.supplier.lng], [j.customer.lat, j.customer.lng]], { padding: [90, 90], maxZoom: 15 }); }
     // Only when the selection itself changes, not on every refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
