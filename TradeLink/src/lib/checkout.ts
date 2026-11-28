@@ -55,10 +55,23 @@ const rpc = async <T,>(name: string, args?: Record<string, unknown>): Promise<T>
   return data as T;
 };
 export const fetchCheckoutOptions = () => rpc<CheckoutOptions>("checkout_options");
-export const placeOrder = (a: { items: CheckoutItem[]; name: string; phone: string; email: string; location: string; notes: string; method: PayMethod; key: string; website: string }) =>
-  rpc<{ order_number: string; payment_reference: string; total: number; method?: PayMethod; repeat: boolean }>("place_order", {
-    p_items: a.items, p_name: a.name, p_phone: a.phone, p_email: a.email, p_location: a.location, p_notes: a.notes, p_method: a.method, p_key: a.key, p_website: a.website,
-  });
+export type DeliveryQuote = { fee: number; source: "flat" | "distance" | "free"; distanceKm: number | null; needsLocation: boolean; subtotal: number };
+/** What delivery costs for this cart, city and position. The server works it out; the same number is charged when the order is placed. */
+export const quoteDeliveryFee = (items: CheckoutItem[], city: string | null, zone: string | null, fix: { lat: number; lng: number } | null) =>
+  rpc<DeliveryQuote>("quote_delivery_fee", { p_items: items, p_city: city, p_zone: zone, p_lat: fix?.lat ?? null, p_lng: fix?.lng ?? null });
+type Placed = { order_number: string; payment_reference: string; total: number; delivery_fee?: number; method?: PayMethod; repeat: boolean };
+export type PlaceArgs = { items: CheckoutItem[]; name: string; phone: string; email: string; location: string; notes: string; method: PayMethod; key: string; website: string; city?: string | null; zone?: string | null; fix?: { lat: number; lng: number; accuracy: number } | null };
+/** Places the order with city and position in one step. If the shop's database has not been updated yet it falls back to the original call (`legacy`), and the caller saves city and position afterwards. */
+export const placeOrder = async (a: PlaceArgs): Promise<Placed & { legacy: boolean }> => {
+  const base = { p_items: a.items, p_name: a.name, p_phone: a.phone, p_email: a.email, p_location: a.location, p_notes: a.notes, p_method: a.method, p_key: a.key, p_website: a.website };
+  try {
+    const r = await rpc<Placed>("place_order", { ...base, p_city: a.city ?? null, p_zone: a.zone ?? null, p_lat: a.fix?.lat ?? null, p_lng: a.fix?.lng ?? null, p_accuracy: a.fix?.accuracy ?? null });
+    return { ...r, legacy: false };
+  } catch (e) {
+    if (!(e instanceof Error) || !/could not find the function|schema cache/i.test(e.message)) throw e;
+    return { ...(await rpc<Placed>("place_order", base)), legacy: true };
+  }
+};
 export const shareOrderLocation = (number: string, phone: string, f: { lat: number; lng: number; accuracy: number }) =>
   rpc("set_order_location", { p_number: number, p_phone: phone, p_lat: f.lat, p_lng: f.lng, p_accuracy: f.accuracy });
 export const trackOrder = (number: string, phone: string) => rpc<OrderView>("track_order", { p_number: number, p_phone: phone });

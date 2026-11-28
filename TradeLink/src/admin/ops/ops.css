@@ -148,3 +148,19 @@
 .admin-layout .cty-sw{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:0 14px;border-radius:12px;border:1.5px solid #d4deec;background:#f4f7fb;color:#5a6f8f;font:700 13px 'DM Sans',sans-serif;cursor:pointer}
 .admin-layout .cty-sw.on{background:#e1f4ea;border-color:#bfe3cf;color:#17613c}
 .admin-layout .cty-sw:disabled{opacity:.55}
+
+.admin-layout .prc-head{display:flex;justify-content:flex-start}
+.admin-layout .prc-row{display:flex;flex-direction:column;gap:8px;padding:10px;background:#f4f8fe;border:1px solid #dbe5f3;border-radius:12px}
+.admin-layout .prc-row.off{opacity:.6}.admin-layout .prc-row>b{color:#0b1f3a;font-size:14px}
+.admin-layout .prc-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.admin-layout .prc-fields label,.admin-layout .prc-range label{display:flex;flex-direction:column;gap:3px;font:600 12px 'DM Sans',sans-serif;color:#5a6f8f}
+.admin-layout .prc-fields input,.admin-layout .prc-range input{min-height:40px;border-radius:10px;border:1.5px solid #d4deec;padding:0 10px;background:#fff;font:400 14px 'DM Sans',sans-serif;color:var(--ink);min-width:0}
+.admin-layout .prc-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.admin-layout .prc-range{display:flex;gap:10px;flex-wrap:wrap}
+.admin-layout .pay-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.admin-layout .pay-nums div{background:#f4f8fe;border:1px solid #dbe5f3;border-radius:12px;padding:9px;display:flex;flex-direction:column;gap:2px}
+.admin-layout .pay-nums span{font-size:12px;color:#5a6f8f}.admin-layout .pay-nums b{font-size:16px;color:#0b1f3a}
+.admin-layout .pay-nums .owe{background:#0b1f3a;border-color:#0b1f3a}.admin-layout .pay-nums .owe span{color:#b9cdf0}.admin-layout .pay-nums .owe b{color:#fff}
+.admin-layout .ops-empty.warn,.admin-layout .pay-hist small.warn{color:#8a4b00}
+.admin-layout .pay-hist{display:flex;flex-direction:column;gap:3px;padding:10px 0;border-bottom:1px solid #e3ebf6}.admin-layout .pay-hist.void b{text-decoration:line-through;color:#7d8ea8}
+.admin-layout .pay-void{display:flex;gap:8px;margin-top:6px}.admin-layout .pay-void input{flex:1;min-width:0;min-height:38px;border-radius:10px;border:1.5px solid #d4deec;padding:0 10px}

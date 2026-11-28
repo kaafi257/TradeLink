@@ -60,3 +60,10 @@
 .admin-layout .dv-cats{display:flex;flex-wrap:wrap;gap:8px}
 .admin-layout .dv-cat{min-height:44px;padding:0 14px;border-radius:12px;border:1.5px solid #c9dcf6;background:#fff;color:#0b1f3a;font:600 14px 'DM Sans',sans-serif;cursor:pointer}
 .admin-layout .dv-cat.on{background:#0b1f3a;color:#fff;border-color:#0b1f3a}
+.admin-layout .dv-owed{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
+.admin-layout .dv-owed div{background:#f4f8fe;border:1px solid #dbe5f3;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:2px}
+.admin-layout .dv-owed span{font-size:12px;color:#5a6f8f}.admin-layout .dv-owed b{font-size:18px;color:#0b1f3a}
+.admin-layout .dv-owed .owe{background:#0b1f3a;border-color:#0b1f3a}.admin-layout .dv-owed .owe span{color:#b9cdf0}.admin-layout .dv-owed .owe b{color:#fff}
+.admin-layout .dv-seg{display:inline-flex;background:#eef3fb;border-radius:12px;padding:3px}
+.admin-layout .dv-seg button{min-height:34px;padding:0 12px;border:0;border-radius:10px;background:transparent;color:#5a6f8f;font:700 13px 'DM Sans',sans-serif;cursor:pointer}
+.admin-layout .dv-seg button.on{background:#fff;color:#0b1f3a;box-shadow:0 1px 3px #0b1f3a22}

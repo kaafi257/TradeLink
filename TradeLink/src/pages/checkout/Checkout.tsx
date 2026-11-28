@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Banknote, Landmark, Loader2, Minus, Package, Plus, Smartphone, Trash2, ShoppingBag } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { supabase, withPhoto, type PublicProduct } from "../../lib/supabase";
-import { checkoutKey, clearCheckoutCart, fetchCheckoutOptions, loadCheckoutCart, saveIdentity, placeOrder, resetCheckoutKey, saveCheckoutCart, shareOrderLocation, claimOrderCode, saveOrderCode, fetchCities, shareOrderCity, type CityOption, type CheckoutItem, type CheckoutOptions, type PayMethod } from "../../lib/checkout";
+import { checkoutKey, clearCheckoutCart, fetchCheckoutOptions, loadCheckoutCart, saveIdentity, placeOrder, resetCheckoutKey, saveCheckoutCart, shareOrderLocation, claimOrderCode, saveOrderCode, fetchCities, shareOrderCity, quoteDeliveryFee, type DeliveryQuote, type CityOption, type CheckoutItem, type CheckoutOptions, type PayMethod } from "../../lib/checkout";
 import ShareLocation from "../../components/ShareLocation";
 import CityPicker, { type CityChoice } from "../../components/CityPicker";
 import type { Fix } from "../../lib/gps";
@@ -27,6 +27,7 @@ export default function Checkout() {
   const [where, setWhere] = useState<Fix | null>(null);
   const [cities, setCities] = useState<CityOption[]>([]);
   const [cityPick, setCityPick] = useState<CityChoice>({ city: "", zone: "" });
+  const [quote, setQuote] = useState<DeliveryQuote | null>(null);
   // Cities are optional: if none are set up (or the list cannot load), checkout works exactly as before.
   useEffect(() => { let live = true; fetchCities().then(c => { if (live) setCities(c); }).catch(() => undefined); return () => { live = false; }; }, []);
   const meta = (session?.user.user_metadata ?? {}) as { full_name?: string; phone?: string };
@@ -59,7 +60,19 @@ export default function Checkout() {
   const lines = items.map(i => ({ ...i, p: byId.get(i.product_id) })).filter((l): l is typeof l & { p: PublicProduct } => !!l.p);
   const missing = items.length - lines.length;
   const sub = lines.reduce((s, l) => s + unitPrice(l.p) * l.quantity, 0);
-  const fee = !opts ? 0 : opts.free_delivery_over !== null && sub >= opts.free_delivery_over ? 0 : opts.delivery_fee;
+  const flat = !opts ? 0 : opts.free_delivery_over !== null && sub >= opts.free_delivery_over ? 0 : opts.delivery_fee;
+  const fee = quote ? quote.fee : flat;
+  const cartKey = lines.map(l => `${l.product_id}:${l.quantity}`).join(",");
+  const needZone = (cities.find(c => c.id === cityPick.city)?.zones.length ?? 0) > 0;
+  // Ask the server what delivery costs once the city (and area) is chosen. If it cannot answer, the usual flat fee is shown and charged.
+  useEffect(() => {
+    if (!cartKey || !cityPick.city || (needZone && !cityPick.zone)) { setQuote(null); return; }
+    let live = true;
+    quoteDeliveryFee(lines.map(l => ({ product_id: l.product_id, quantity: l.quantity })), cityPick.city, cityPick.zone || null, where ? { lat: where.lat, lng: where.lng } : null)
+      .then(q => { if (live) setQuote(q); }).catch(() => { if (live) setQuote(null); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartKey, cityPick.city, cityPick.zone, needZone, where?.lat, where?.lng]);
   const saved = lines.reduce((s, l) => { const r = Number(l.p.retail_price ?? 0); return s + Math.max(0, r - unitPrice(l.p)) * l.quantity; }, 0);
   const setQty = (id: string, q: number) => setItems(it => it.map(i => (i.product_id === id ? { ...i, quantity: Math.max(1, Math.min(99, q)) } : i)));
   const remove = (id: string) => setItems(it => it.filter(i => i.product_id !== id));
@@ -80,10 +93,11 @@ export default function Checkout() {
       const r = await placeOrder({
         items: lines.map(l => ({ product_id: l.product_id, quantity: l.quantity })), name: String(f.get("name") ?? ""), phone, email: String(f.get("email") ?? ""),
         location: String(f.get("location") ?? ""), notes: String(f.get("notes") ?? ""), method, key: checkoutKey(), website: String(f.get("website") ?? ""),
+        city: cityPick.city || null, zone: cityPick.zone || null, fix: where,
       });
       // Best effort: the order is already placed, so a failed location save must not block the customer.
-      try { await shareOrderLocation(r.order_number, phone, where); } catch { /* the team can still pin the drop-off by hand */ }
-      if (cityPick.city) { try { await shareOrderCity(r.order_number, phone, cityPick.city, cityPick.zone || null); } catch { /* staff set the city before assigning a driver */ } }
+      if (r.legacy) try { await shareOrderLocation(r.order_number, phone, where); } catch { /* the team can still pin the drop-off by hand */ }
+      if (r.legacy && cityPick.city) { try { await shareOrderCity(r.order_number, phone, cityPick.city, cityPick.zone || null); } catch { /* staff set the city before assigning a driver */ } }
       // The delivery code is created once and kept on this phone. If this step fails the order still works: the tracking page shows the code instead.
       try { saveOrderCode(r.order_number, await claimOrderCode(r.order_number, phone)); } catch { /* shown on the tracking page instead */ }
       clearCheckoutCart(); resetCheckoutKey(); saveIdentity({ name: String(f.get("name") ?? "").trim(), phone });
@@ -179,7 +193,8 @@ export default function Checkout() {
             <dl>
               <div><dt>Items</dt><dd>{etb(sub + saved)}</dd></div>
               {saved > 0 && <div className="save"><dt>Discount</dt><dd>− {etb(saved)}</dd></div>}
-              <div><dt>Delivery</dt><dd>{fee > 0 ? etb(fee) : "Free"}</dd></div>
+              <div><dt>Delivery{quote?.source === "distance" && quote.distanceKm ? <small className="co-km"> · {quote.distanceKm} km</small> : null}</dt><dd>{fee > 0 ? etb(fee) : "Free"}</dd></div>
+              {quote?.needsLocation && <p className="co-note co-hint">Share your location to see the exact delivery fee for your address.</p>}
               <div className="sum"><dt>Total</dt><dd>{etb(sub + fee)}</dd></div>
             </dl>
             <p className="co-note">The final total is confirmed by TradeLink when you place the order.</p>

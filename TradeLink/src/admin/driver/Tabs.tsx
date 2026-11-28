@@ -6,6 +6,7 @@ import { imageToDataUrl } from "../../lib/photo";
 import DriverMap from "../ops/DriverMap";
 import JobCard from "./JobCard";
 import { ReportSheet } from "./Sheets";
+import DriverMoney, { type EarnPlus } from "./DriverMoney";
 import { etb, type Ctx, type Earn, type Hist, type Job, type Prof } from "./types";
 import type { Due } from "../ops/CashModal";
 import { CashModal } from "../ops/CashModal";
@@ -89,7 +90,7 @@ export function JobsTab({ c }: { c: Ctx }) {
 }
 
 export function EarnTab() {
-  const e = useLoad(() => callRpc<Earn>("driver_earnings"), []);
+  const e = useLoad(() => callRpc<EarnPlus>("driver_earnings"), []);
   const d = e.data;
   const max = Math.max(1, ...(d?.days.map(x => x.amount) ?? [1]));
   const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Addis_Ababa" });
@@ -102,6 +103,7 @@ export function EarnTab() {
         <div className="dv-stat" style={{ gridColumn: "1 / -1" }}><span>This month</span><b>{etb(d?.month.amount)}</b><span>{d?.month.count ?? 0} deliveries</span></div>
       </div>
       {!!d?.unpriced && <p className="dv-muted">{d.unpriced} delivery{d.unpriced > 1 ? "ies have" : " has"} no pay set yet. It will count once the team sets it.</p>}
+      <DriverMoney d={d ?? undefined} />
       <div className="dv-card">
         <h2>Last 14 days</h2>
         <div className="dv-bars">{d?.days.map(x => <div key={x.day} className={x.day.slice(0, 10) === todayKey ? "today" : ""} title={`${x.day.slice(0, 10)}: ${etb(x.amount)}`}><i style={{ height: `${Math.round((x.amount / max) * 100)}%` }} /><small>{x.day.slice(8, 10)}</small></div>)}</div>
