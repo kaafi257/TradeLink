@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, Building2, ShieldCheck, Activity, Banknote, Camera, Coins, CheckCheck, Clock, MapPin, MapPinned, Map as MapIcon, Play, Truck, User, X } from "lucide-react";
+import { AlertTriangle, Building2, ShieldCheck, Activity, Banknote, Camera, Coins, CheckCheck, Clock, MapPin, MapPinned, Map as MapIcon, Play, Truck, User, X, KeyRound, ShieldAlert, Repeat } from "lucide-react";
 import { PageHeading } from "../../components/ui";
 import { IconBtn, RecCard, RecordList, StatusChip, type Tone } from "../Records";
 import { shortDate } from "../../lib/format";
@@ -13,6 +13,7 @@ import DriversTab from "../ops/DriversTab";
 import PinPicker from "../ops/PinPicker";
 import DeliveryFilters, { NO_FILTERS, dateFrom, type Filters } from "../ops/DeliveryFilters";
 import { ATTENTION, type ListExtras } from "../ops/cities";
+import { CodeModal, FailModal, OverrideModal, ReassignModal, ReissueModal, failLabel } from "../ops/FailedTools";
 import { CashModal, type Due } from "../ops/CashModal";
 import { Form, Modal, Tabs, callRpc, useAction, useLoad } from "../suite";
 
@@ -43,6 +44,9 @@ function DeliveryList() {
   const dueFor = (n?: string) => (due.data ?? []).find(x => x.order_number === n);
   const [cash, setCash] = useState<Due | null>(null);
   const [pin, setPin] = useState<DeliveryRow | null>(null);
+  const [tool, setTool] = useState<{ kind: "code" | "override" | "fail" | "reassign" | "reissue"; d: DeliveryRow } | null>(null);
+  const canOverride = can("deliveries.override");
+  const manage = can("deliveries.assign");
   const canPin = profile.role === "owner" || profile.role === "manager";
   type Prog = { id: string; accepted: boolean; pickedUp: boolean; fee: number | null; hasProof: boolean };
   const prog = useLoad(() => (canPin ? callRpc<Prog[]>("ops_delivery_progress").catch(() => [] as Prog[]) : Promise.resolve([] as Prog[])), [deliveries.length]);
@@ -70,7 +74,7 @@ function DeliveryList() {
           const tn: Tone = d.status === "delivered" ? "good" : d.status === "failed" ? "bad" : "info";
           return (
             <RecCard key={d.id} i={i} tone={tn} lead={<Truck size={22} />} title={<span className="docno">{d.orders?.order_number ?? d.order_id.slice(0, 8)}</span>} sub={d.orders?.customer_name}
-              facts={[...(ex(d.id)?.attention ?? []).map(a => ({ icon: <AlertTriangle size={14} />, text: ATTENTION[a] ?? a, tone: "warn" as const })), { icon: <MapPin size={14} />, text: d.orders?.delivery_location ?? "", tone: "place" }, { icon: <Building2 size={14} />, text: [ex(d.id)?.city, ex(d.id)?.zone].filter(Boolean).join(" · ") }, { icon: <User size={14} />, text: who(d.assigned_to) }, { icon: <Clock size={14} />, text: d.scheduled_at ? shortDate(d.scheduled_at) : "", tone: "time" }]}
+              facts={[...(d.status === "failed" && ex(d.id)?.failCategory ? [{ icon: <X size={14} />, text: `${failLabel(ex(d.id)?.failCategory)}${ex(d.id)?.attempt && ex(d.id)!.attempt! > 1 ? ` · attempt ${ex(d.id)!.attempt}` : ""}`, tone: "warn" as const }] : []), ...(ex(d.id)?.attention ?? []).map(a => ({ icon: <AlertTriangle size={14} />, text: ATTENTION[a] ?? a, tone: "warn" as const })), { icon: <MapPin size={14} />, text: d.orders?.delivery_location ?? "", tone: "place" }, { icon: <Building2 size={14} />, text: [ex(d.id)?.city, ex(d.id)?.zone].filter(Boolean).join(" · ") }, { icon: <User size={14} />, text: who(d.assigned_to) }, { icon: <Clock size={14} />, text: d.scheduled_at ? shortDate(d.scheduled_at) : "", tone: "time" }]}
               status={<StatusChip tone={tn} pulse={d.status === "in_transit"} icon={d.status === "delivered" ? <CheckCheck size={14} /> : d.status === "failed" ? <X size={14} /> : <Truck size={14} />}>{label(d.status)}</StatusChip>}
               actions={<>
                 {canPin && d.status !== "delivered" && d.status !== "failed" && <IconBtn icon={<MapPinned size={17} />} label="Map pins" onClick={() => setPin(d)} />}
@@ -78,7 +82,12 @@ function DeliveryList() {
                 {canPin && pg(d.id)?.hasProof && <IconBtn icon={<Camera size={17} />} label="Delivery photo" onClick={() => void viewProof(d)} />}
                 {dueFor(d.orders?.order_number) && <IconBtn primary tone="gold" icon={<Banknote size={17} />} label={`Cash ${Math.round(dueFor(d.orders?.order_number)!.amount)} ETB`} onClick={() => setCash(dueFor(d.orders?.order_number)!)} />}
                 {mayAct(d) && d.status === "assigned" && <IconBtn primary tone="gold" icon={<Play size={16} />} label="Start" onClick={() => void move(d, "in_transit")} />}
-                {mayAct(d) && d.status === "in_transit" && <><IconBtn primary tone="green" icon={<CheckCheck size={17} />} label="Delivered" onClick={() => void move(d, "delivered")} /><IconBtn tone="red" icon={<X size={17} />} label="Failed" onClick={() => void move(d, "failed")} /></>}
+                {mayAct(d) && d.status === "in_transit" && d.assigned_to === profile.id && <IconBtn primary tone="green" icon={<CheckCheck size={17} />} label="Delivered · code" onClick={() => setTool({ kind: "code", d })} />}
+                {canOverride && d.status === "in_transit" && <IconBtn icon={<ShieldAlert size={17} />} label="Override: delivered" onClick={() => setTool({ kind: "override", d })} />}
+                {manage && d.status === "in_transit" && <IconBtn icon={<KeyRound size={17} />} label="New code" onClick={() => setTool({ kind: "reissue", d })} />}
+                {mayAct(d) && d.status === "in_transit" && <IconBtn tone="red" icon={<X size={17} />} label="Failed" onClick={() => setTool({ kind: "fail", d })} />}
+                {manage && d.status === "assigned" && <IconBtn icon={<Repeat size={17} />} label="Reassign" onClick={() => setTool({ kind: "reassign", d })} />}
+                {manage && d.status === "failed" && <IconBtn primary tone="green" icon={<Repeat size={17} />} label="Retry or reassign" onClick={() => setTool({ kind: "reassign", d })} />}
               </>}
               details={d.orders?.phone ? [["Phone", d.orders.phone]] : undefined} />
           );
@@ -87,6 +96,11 @@ function DeliveryList() {
       {feeFor && <FeeModal d={feeFor} current={pg(feeFor.id)?.fee ?? null} onClose={() => setFeeFor(null)} onDone={() => { setFeeFor(null); prog.reload(); }} />}
       {proof && <Modal title={`Delivery photo · ${proof.ref}`} onClose={() => setProof(null)}><img src={proof.src} alt="Proof of delivery" style={{ width: "100%", borderRadius: 12 }} /></Modal>}
       {pin && <PinPicker delivery={pin.id} title={pin.orders?.order_number ?? "Delivery"} onClose={() => setPin(null)} onDone={() => setPin(null)} />}
+      {tool?.kind === "code" && <CodeModal d={tool.d} onClose={() => setTool(null)} onDone={() => { setTool(null); notify("Delivered. Well done!"); void reload(); }} />}
+      {tool?.kind === "override" && <OverrideModal d={tool.d} onClose={() => setTool(null)} onDone={() => { setTool(null); void reload(); }} />}
+      {tool?.kind === "fail" && <FailModal d={tool.d} manager={manage} onClose={() => setTool(null)} onDone={() => { setTool(null); void reload(); }} />}
+      {tool?.kind === "reassign" && <ReassignModal d={tool.d} onClose={() => setTool(null)} onDone={() => { setTool(null); void reload(); }} />}
+      {tool?.kind === "reissue" && <ReissueModal d={tool.d} onClose={() => { setTool(null); extras.reload(); }} onDone={() => { setTool(null); extras.reload(); }} />}
       {cash && <CashModal due={cash} onClose={() => setCash(null)} onDone={() => { setCash(null); due.reload(); }} />}
     </>
   );

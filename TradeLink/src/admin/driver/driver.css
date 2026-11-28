@@ -55,3 +55,8 @@
 .admin-layout .dv-empty{text-align:center;color:#5a6f8f;padding:26px 8px}
 .admin-layout .dv-empty svg{display:block;margin:0 auto 8px;color:#9ab6e0}
 .admin-layout.nav-open .dv-nav{display:none}
+.admin-layout .dv-code{min-height:64px;border-radius:16px;border:2px solid #c9dcf6;background:#fff;text-align:center;font:800 30px 'DM Sans',sans-serif;letter-spacing:.35em;color:#0b1f3a;padding:0 12px;width:100%}
+.admin-layout .dv-code:focus{outline:0;border-color:#2f6fd6;box-shadow:0 0 0 4px #2f6fd622}
+.admin-layout .dv-cats{display:flex;flex-wrap:wrap;gap:8px}
+.admin-layout .dv-cat{min-height:44px;padding:0 14px;border-radius:12px;border:1.5px solid #c9dcf6;background:#fff;color:#0b1f3a;font:600 14px 'DM Sans',sans-serif;cursor:pointer}
+.admin-layout .dv-cat.on{background:#0b1f3a;color:#fff;border-color:#0b1f3a}

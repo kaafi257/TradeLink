@@ -105,3 +105,11 @@ export type CityOption = { id: string; name: string; zones: { id: string; name: 
 export const fetchCities = () => rpc<CityOption[]>("public_cities").then(v => (Array.isArray(v) ? v : []));
 export const shareOrderCity = (number: string, phone: string, city: string, zone: string | null) =>
   rpc("set_order_city", { p_number: number, p_phone: phone, p_city: city, p_zone: zone });
+
+/** The delivery code: created once right after checkout and kept on this device. The driver never sees it. */
+const codeKey = (n: string) => `tl-code-${n}`;
+export const readOrderCode = (n: string): string => { try { return localStorage.getItem(codeKey(n)) ?? ""; } catch { return ""; } };
+export const saveOrderCode = (n: string, code: string) => { try { localStorage.setItem(codeKey(n), code); } catch { /* storage unavailable */ } };
+export const claimOrderCode = (number: string, phone: string) => rpc<string>("claim_order_code", { p_number: number, p_phone: phone });
+export type CodeView = { state: "none" | "device" | "show" | "locked" | "expired"; code?: string };
+export const trackOrderCode = (number: string, phone: string) => rpc<CodeView>("track_order_code", { p_number: number, p_phone: phone });

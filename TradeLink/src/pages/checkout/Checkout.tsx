@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Banknote, Landmark, Loader2, Minus, Package, Plus, Smartphone, Trash2, ShoppingBag } from "lucide-react";
 import { useAuth } from "../../lib/auth";
 import { supabase, withPhoto, type PublicProduct } from "../../lib/supabase";
-import { checkoutKey, clearCheckoutCart, fetchCheckoutOptions, loadCheckoutCart, saveIdentity, placeOrder, resetCheckoutKey, saveCheckoutCart, shareOrderLocation, fetchCities, shareOrderCity, type CityOption, type CheckoutItem, type CheckoutOptions, type PayMethod } from "../../lib/checkout";
+import { checkoutKey, clearCheckoutCart, fetchCheckoutOptions, loadCheckoutCart, saveIdentity, placeOrder, resetCheckoutKey, saveCheckoutCart, shareOrderLocation, claimOrderCode, saveOrderCode, fetchCities, shareOrderCity, type CityOption, type CheckoutItem, type CheckoutOptions, type PayMethod } from "../../lib/checkout";
 import ShareLocation from "../../components/ShareLocation";
 import CityPicker, { type CityChoice } from "../../components/CityPicker";
 import type { Fix } from "../../lib/gps";
@@ -84,6 +84,8 @@ export default function Checkout() {
       // Best effort: the order is already placed, so a failed location save must not block the customer.
       try { await shareOrderLocation(r.order_number, phone, where); } catch { /* the team can still pin the drop-off by hand */ }
       if (cityPick.city) { try { await shareOrderCity(r.order_number, phone, cityPick.city, cityPick.zone || null); } catch { /* staff set the city before assigning a driver */ } }
+      // The delivery code is created once and kept on this phone. If this step fails the order still works: the tracking page shows the code instead.
+      try { saveOrderCode(r.order_number, await claimOrderCode(r.order_number, phone)); } catch { /* shown on the tracking page instead */ }
       clearCheckoutCart(); resetCheckoutKey(); saveIdentity({ name: String(f.get("name") ?? "").trim(), phone });
       try { sessionStorage.setItem(`tl-order-phone-${r.order_number}`, phone); } catch { /* storage unavailable */ }
       navigate(`/order/${r.order_number}`, { replace: true });

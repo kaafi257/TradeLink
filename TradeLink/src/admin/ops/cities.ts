@@ -4,7 +4,7 @@ export type City = { id: string; name: string; active: boolean; drivers: number;
 export type DriverLoad = { profileId: string; cities: string[]; openJobs: number; online: boolean; lastSeen: string | null };
 export type Candidate = { profileId: string; name: string; role: string; verified: boolean; online: boolean; lastSeen: string | null; openJobs: number };
 export type Candidates = { citiesOn: boolean; cityId: string | null; cityName: string | null; zoneId: string | null; zoneName: string | null; needsCity: boolean; drivers: Candidate[] };
-export type ListExtra = { id: string; cityId: string | null; city: string | null; zone: string | null; attention: string[] };
+export type ListExtra = { id: string; cityId: string | null; city: string | null; zone: string | null; attention: string[]; failCategory?: string | null; attempt?: number; retryOf?: string | null; codeLocked?: boolean };
 export type ListExtras = { thresholds: { notAcceptedMinutes: number }; rows: ListExtra[] };
 
 export const ATTENTION: Record<string, string> = {
@@ -13,6 +13,8 @@ export const ATTENTION: Record<string, string> = {
   failed_open: "Failed, needs a new driver",
   no_pins: "No map pins",
   no_city: "No city",
+  code_locked: "Code locked",
+  many_failures: "3+ failed attempts",
 };
 
 /** Drivers before office staff; online first, then fewest open jobs. */

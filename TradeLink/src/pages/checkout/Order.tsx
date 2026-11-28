@@ -1,4 +1,5 @@
 import DriverTracker from "./DriverTracker";
+import OrderCode from "./OrderCode";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Check, Copy, FileUp, Loader2, Printer, Search, Truck } from "lucide-react";
@@ -103,6 +104,7 @@ export default function Order() {
         <p className="co-note"><Truck size={15} /> Delivery to {order.delivery_location} · <b>{order.delivery_status ? order.delivery_status.replace(/_/g, " ") : order.status === "cancelled" ? "cancelled" : "not dispatched yet"}</b></p>
       </section>
 
+      {order.status !== "cancelled" && <OrderCode number={order.order_number} phone={phone} deliveryStatus={order.delivery_status} />}
       {order.delivery_status && phone && <DriverTracker number={order.order_number} phone={phone} />}
 
       {p?.status === "paid" && <button type="button" className="btn outline co-print" onClick={() => window.print()}><Printer size={16} /> Download receipt</button>}
